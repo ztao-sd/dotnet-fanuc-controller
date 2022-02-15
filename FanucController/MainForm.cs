@@ -12,14 +12,17 @@ namespace FanucController
 {
     public partial class MainForm : Form
     {
+        const string TopDir = @"";
+
         public MainForm()
         {
             InitializeComponent();
+            var Vx = new VXelementsUtility();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OnnxClass.TestOnnx();
+            OnnxModel.Test();
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
