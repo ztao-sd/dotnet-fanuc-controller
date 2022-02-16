@@ -29,12 +29,14 @@ namespace FanucController
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.buttonRunMain = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.buttonClearSequences = new System.Windows.Forms.Button();
             this.buttonClearModels = new System.Windows.Forms.Button();
             this.buttonResetVXtrack = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // buttonRunMain
@@ -49,10 +51,10 @@ namespace FanucController
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(317, 241);
+            this.textBox1.Location = new System.Drawing.Point(270, 170);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(149, 85);
+            this.textBox1.Size = new System.Drawing.Size(224, 85);
             this.textBox1.TabIndex = 1;
             // 
             // textBox2
@@ -65,7 +67,7 @@ namespace FanucController
             // 
             // buttonClearSequences
             // 
-            this.buttonClearSequences.Location = new System.Drawing.Point(591, 180);
+            this.buttonClearSequences.Location = new System.Drawing.Point(572, 89);
             this.buttonClearSequences.Name = "buttonClearSequences";
             this.buttonClearSequences.Size = new System.Drawing.Size(118, 36);
             this.buttonClearSequences.TabIndex = 3;
@@ -74,7 +76,7 @@ namespace FanucController
             // 
             // buttonClearModels
             // 
-            this.buttonClearModels.Location = new System.Drawing.Point(591, 241);
+            this.buttonClearModels.Location = new System.Drawing.Point(572, 190);
             this.buttonClearModels.Name = "buttonClearModels";
             this.buttonClearModels.Size = new System.Drawing.Size(118, 36);
             this.buttonClearModels.TabIndex = 4;
@@ -83,12 +85,16 @@ namespace FanucController
             // 
             // buttonResetVXtrack
             // 
-            this.buttonResetVXtrack.Location = new System.Drawing.Point(591, 301);
+            this.buttonResetVXtrack.Location = new System.Drawing.Point(572, 246);
             this.buttonResetVXtrack.Name = "buttonResetVXtrack";
             this.buttonResetVXtrack.Size = new System.Drawing.Size(118, 36);
             this.buttonResetVXtrack.TabIndex = 5;
             this.buttonResetVXtrack.Text = "Reset VXtrack";
             this.buttonResetVXtrack.UseVisualStyleBackColor = true;
+            // 
+            // timer1
+            // 
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // MainForm
             // 
@@ -116,6 +122,7 @@ namespace FanucController
         private System.Windows.Forms.Button buttonClearSequences;
         private System.Windows.Forms.Button buttonClearModels;
         private System.Windows.Forms.Button buttonResetVXtrack;
+        private System.Windows.Forms.Timer timer1;
     }
 }
 

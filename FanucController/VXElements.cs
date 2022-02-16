@@ -41,8 +41,8 @@ namespace FanucController
 
         // Pose data
         public IPose3d poseCameraFrame;
-        public Point3dFloat translationCameraFrame;
-        public Point3dFloat rotationCameraFrame;
+        public Point3dDouble translationCameraFrame;
+        public Point3dDouble rotationCameraFrame;
 
         // Event
         public event EventHandler dataReady;
@@ -193,6 +193,16 @@ namespace FanucController
             this.iTrackingModelList.Add(this.iVXtrack.ImportModel(modelPath));
         }
 
+        public void SaveModel(string savePath, ITrackingModel model)
+        {
+            model.Save(savePath);
+        }
+
+        public void DetectModel()
+        {
+            this.iVXtrack.DetectModel();
+        }
+
         public void CreateSequence(ITrackingEntity[] trackingEntity=null)
         {
             this.iTrackingSequenceList.Add(this.iVXtrack.CreateSequence(trackingEntity));
@@ -208,9 +218,64 @@ namespace FanucController
             currentSequence.AddTrackingModelRelation(observedModel, referenceModel);   
         }
 
+        public void StartTracking(ITrackingSequence trackingSequence=null)
+        {
+            this.iVXtrack.StartTracking(trackingSequence);
+        }
+
+        public void StopTracking()
+        {
+            this.iVXtrack.StopTracking();
+        }
+
+        public IPose3d GetLastPose(ITrackingEntity trackingEntity)
+        {
+            var currentSequence = this.iVXtrack.CurrentTrackingSequence;
+            return currentSequence.GetLastPose(trackingEntity);
+        }
+
+        public void ShowGraphics()
+        {
+            this.iVXtrack.ShowGraphicsViewForm();
+            this.iVXtrack.ShowTableViewForm();
+            this.iVXtrack.ShowProjectionViewForm();
+        }
+
+        public void HideGraphics()
+        {
+            this.iVXtrack.HideGraphicsViewForm();
+            this.iVXtrack.HideTableViewForm();
+            this.iVXtrack.HideProjectionViewForm();
+        }
+
         public void FanucTrackingInitV1(string modelPath=null)
         {
 
+        }
+
+        private void ProcessPose3d(ITrackingEntity trackingEntity)
+        {
+            this.poseCameraFrame = GetLastPose(trackingEntity);
+            if (this.poseCameraFrame.Valid)
+            {
+                this.translationCameraFrame.X = this.poseCameraFrame.Translation.X;
+                this.translationCameraFrame.Y = this.poseCameraFrame.Translation.Y;
+                this.translationCameraFrame.Z = this.poseCameraFrame.Translation.Z;
+                this.rotationCameraFrame.X = this.poseCameraFrame.Rotation.X;
+                this.rotationCameraFrame.Y = this.poseCameraFrame.Rotation.Y;
+                this.rotationCameraFrame.Z = this.poseCameraFrame.Rotation.Z;
+
+
+            } 
+            else
+            {
+                this.translationCameraFrame.X = Double.NaN;
+                this.translationCameraFrame.Y = Double.NaN;
+                this.translationCameraFrame.Z = Double.NaN;
+                this.rotationCameraFrame.X = Double.NaN;
+                this.rotationCameraFrame.Y = Double.NaN;
+                this.rotationCameraFrame.Z = Double.NaN;
+            }
         }
 
         /*
@@ -255,7 +320,8 @@ namespace FanucController
         
         private void TrackingDataReady()
         {
-
+            var trackingModel = this.iTrackingModelList[0];
+            ProcessPose3d(trackingModel);
         }
     }
 }

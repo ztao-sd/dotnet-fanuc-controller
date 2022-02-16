@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31911.196
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FanucController", "FanucController.csproj", "{79D673BA-95C3-425F-972D-5E529284E37A}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "FanucPCDK", "..\FanucPCDK\FanucPCDK.vbproj", "{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{79D673BA-95C3-425F-972D-5E529284E37A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79D673BA-95C3-425F-972D-5E529284E37A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79D673BA-95C3-425F-972D-5E529284E37A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
