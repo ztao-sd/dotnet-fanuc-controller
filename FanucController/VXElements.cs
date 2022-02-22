@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using VXelementsApi;
 using VXelementsApi.Tracker;
 using VXelementsApi.VXtrack;
@@ -11,7 +12,7 @@ using MathNet.Numerics;
 
 namespace FanucController
 {
-    internal class VXelementsUtility
+    public class VXelementsUtility
     {
         // Api interfaces
         private IVXelements iVXelements;
@@ -21,14 +22,14 @@ namespace FanucController
         private bool vxtrackAttached;
 
         // Invokers
-        public VXeventInvoker modelDetectionStartedInvoker;
-        public DetectModelStoppedEventInvoker modelDetectionStoppedInvoker;
-        public VXeventInvoker modelChangedInvoker;
-        public VXeventInvoker trackingDataReadyInvoker;
-        public VXeventInvoker trackingStartedInvoker;
-        public VXeventInvoker trackingStoppedInvoker;
-        public VXeventInvoker trackerPoseChangedInvoker;
-        public VXeventInvoker sequenceChangedInvoker;
+        private VXeventInvoker modelDetectionStartedInvoker;
+        private DetectModelStoppedEventInvoker modelDetectionStoppedInvoker;
+        private VXeventInvoker modelChangedInvoker;
+        private VXeventInvoker trackingDataReadyInvoker;
+        private VXeventInvoker trackingStartedInvoker;
+        private VXeventInvoker trackingStoppedInvoker;
+        private VXeventInvoker trackerPoseChangedInvoker;
+        private VXeventInvoker sequenceChangedInvoker;
 
         // Tracking interfaces
         private ITrackingEntity iTrackingEntity;
@@ -45,12 +46,17 @@ namespace FanucController
         public Point3dDouble rotationCameraFrame;
 
         // Event
-        public event EventHandler dataReady;
+        public event EventHandler DataReady;
+
+        // Thread 
+        private Thread eventThread;
 
         public VXelementsUtility()
         {
+            // Flags
             this.trackerAttached = false;
             this.vxtrackAttached = false;
+            // Invoker
             this.modelDetectionStartedInvoker = new VXeventInvoker(new VXeventHandler(ModelDetectionStarted));
             this.modelDetectionStoppedInvoker = new DetectModelStoppedEventInvoker(new DetectModelStoppedEventHandler(ModelDetectionStopped));
             this.modelChangedInvoker = new VXeventInvoker(new VXeventHandler(ModelChanged));
@@ -58,6 +64,13 @@ namespace FanucController
             this.trackingStartedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStarted));
             this.trackingStoppedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStopped));
             this.trackerPoseChangedInvoker = new VXeventInvoker(new VXeventHandler(TrackerPoseChanged));
+            // Thread
+            this.eventThread = new Thread(new ThreadStart(ThreadDataReady));
+            this.eventThread.IsBackground = true;
+            // Tracking model list
+            this.iTrackingModelList = new List<ITrackingModel>();
+            // Tracking sequence list
+            this.iTrackingSequenceList = new List<ITrackingSequence>();
         }
 
         public void ConnectApi()
@@ -322,6 +335,11 @@ namespace FanucController
         {
             var trackingModel = this.iTrackingModelList[0];
             ProcessPose3d(trackingModel);
+        }
+
+        private void ThreadDataReady()
+        {
+
         }
     }
 }

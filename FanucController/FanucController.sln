@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31911.196
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FanucController", "FanucController.csproj", "{79D673BA-95C3-425F-972D-5E529284E37A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{58AF7742-AF87-4B31-B4EA-A469CDCFB27A} = {58AF7742-AF87-4B31-B4EA-A469CDCFB27A}
+	EndProjectSection
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "FanucPCDK", "..\FanucPCDK\FanucPCDK.vbproj", "{58AF7742-AF87-4B31-B4EA-A469CDCFB27A}"
 EndProject
