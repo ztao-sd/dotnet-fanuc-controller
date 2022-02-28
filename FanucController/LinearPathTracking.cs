@@ -16,23 +16,30 @@ namespace FanucController
     public class LinearPathTracking
     {
         public string TopDir;
-        public string SaveDir;
-        public string ReadDir;
+        public string OutputDir;
+        public string ReferenceDir;
+        public string ScriptsDir;
         public string ProgramName;
+        public DpmWatcher Watcher;
         public System.Timers.Timer Timer;
         public Stopwatch Stopwatch;
         public VXelementsUtility Vx;
         public LinearPath linearPath;
         public RotationIdentification rotationId;
+        public Dictionary<string, Vector<double>> poseDict;
         public Matrix<double> Kp;
         private bool started;
         private bool stopped;
 
-        public LinearPathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch)
+        public LinearPathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch, string topDir)
         {
             this.Vx = vx;
             this.Timer = timer;
             this.Stopwatch = stopwatch;
+            this.TopDir = topDir;
+            this.OutputDir = Path.Combine(topDir, "Output");
+            this.ReferenceDir = Path.Combine(topDir, "Reference");
+            this.ScriptsDir = Path.Combine(topDir, "Scripts");
         }
 
         // ------------------------------- Actions
@@ -59,21 +66,60 @@ namespace FanucController
             return true;
         }
 
+        public void RecordPose(string key, Vector<double> pose)
+        {
+            /* Rotation keys: idX1, idX2, idY1, idY2, idZ1, idZ2, testP1, testP2
+             * Linear path keys: startP, endP    
+             */
+            this.poseDict[key] = pose;
+        }
+
         public void RecordIdentificationPose(ref Vector<double> idPose, int sampleNum)
         {
             idPose = GetVxCameraPose(sampleNum);
         }
 
-        public void RotationIdentify()
+        public void RotationIdentify(string xyz)
         {
-
+            switch (xyz)
+            {
+                case "xy":
+                    this.rotationId.x[0] = this.poseDict["idX1"]; this.rotationId.x[1] = this.poseDict["idX2"];
+                    this.rotationId.y[0] = this.poseDict["idY1"]; this.rotationId.x[1] = this.poseDict["idY2"];
+                    this.rotationId.CalculateRotationMatrixXY();
+                    this.rotationId.WriteJson(this.ReferenceDir);
+                    break;
+                case "xz":
+                    this.rotationId.x[0] = this.poseDict["idX1"]; this.rotationId.x[1] = this.poseDict["idX2"];
+                    this.rotationId.z[0] = this.poseDict["idZ1"]; this.rotationId.z[1] = this.poseDict["idZ2"];
+                    this.rotationId.CalculateRotationMatrixXZ();
+                    this.rotationId.WriteJson(this.ReferenceDir);
+                    break;
+                case "yz":
+                    this.rotationId.y[0] = this.poseDict["idY1"]; this.rotationId.y[1] = this.poseDict["idY2"];
+                    this.rotationId.z[0] = this.poseDict["idZ1"]; this.rotationId.z[1] = this.poseDict["idZ2"];
+                    this.rotationId.CalculateRotationMatrixYZ();
+                    this.rotationId.WriteJson(this.ReferenceDir);
+                    break;
+            }
+            
         }
 
 
         // ------------------------------- EventHandlers
 
         private void elapsedEventHandler()
-        { 
+        {
+            Vector<double> x = GetVxUFPose();
+            Vector<double> closestP = MathLib.PointToLinePoint(linearPath.PointStart, linearPath.PointEnd, x.SubVector(0, 3));
+            Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
+            Vector<double> e = xd - x;
+            Vector<double> u = Pid(e);
+            if (this.Watcher.LimitCheck(e, u))
+            {
+                PCDK.ApplyDPM(u.AsArray());
+            }
+            // Save data to buffer
 
         }
 
@@ -88,38 +134,26 @@ namespace FanucController
 
         public Vector<double> GetFanucPose()
         {
-            return CreateVector.DenseOfArray(PCDK.GetPose());
+            return CreateVector.DenseOfArray(PCDK.GetPoseUF());
         }
 
         public Vector<double> GetVxCameraPose()
         {
-            double[] pose = new double[6];
-            pose[0] = this.Vx.translationCameraFrame.X;
-            pose[1] = this.Vx.translationCameraFrame.Y;
-            pose[2] = this.Vx.translationCameraFrame.Z;
-            pose[3] = this.Vx.rotationCameraFrame.X;
-            pose[4] = this.Vx.rotationCameraFrame.Y;
-            pose[5] = this.Vx.rotationCameraFrame.Z;
-            return CreateVector.DenseOfArray(pose);
+            return this.Vx.PoseCameraFrameRkf;
         }
 
         public Vector<double> GetVxCameraPose(int sampleNum)
         {
-            double[] poseSum = new double[6];
-            double[] pose = new double[6];
+            Vector<double> poseSum = CreateVector.Dense<double>(6);
+            Vector<double> pose;
             for (int i = 0; i < sampleNum; i++)
             {
-                pose[0] = this.Vx.translationCameraFrame.X;
-                pose[1] = this.Vx.translationCameraFrame.Y;
-                pose[2] = this.Vx.translationCameraFrame.Z;
-                pose[3] = this.Vx.rotationCameraFrame.X;
-                pose[4] = this.Vx.rotationCameraFrame.Y;
-                pose[5] = this.Vx.rotationCameraFrame.Z;
-                poseSum = poseSum.Zip(pose, (x, y) => x + y).ToArray();
+                pose = this.Vx.PoseCameraFrameRkf;
+                poseSum = CreateVector.DenseOfEnumerable(poseSum.Zip(pose, (x, y) => x + y));
                 System.Threading.Thread.Sleep(50);
             }
-            poseSum = poseSum.Select(x => x / sampleNum).ToArray();
-            return CreateVector.DenseOfArray(poseSum);
+            poseSum = CreateVector.DenseOfEnumerable(poseSum.Select(x => x / sampleNum));
+            return poseSum;
         }
 
         public Vector<double> VxCameraToUF(Vector<double> cameraPose, Matrix<double> rotationCameraUF)
@@ -132,21 +166,45 @@ namespace FanucController
             return (cameraPosition.ToColumnMatrix().Stack(orientation.ToColumnMatrix())).Column(0);
         }
 
+        public Vector<double> GetVxUFPose()
+        {
+            var cameraPose = VxCameraToUF(GetVxCameraPose(), this.rotationId.Rotation);
+            return cameraPose;
+        }
+
+        public Vector<double> GetVxUFPose(int sampleNum)
+        {
+            var cameraPose = VxCameraToUF(GetVxCameraPose(sampleNum), this.rotationId.Rotation);
+            return cameraPose;
+        }
+
     }
 
     public class DpmWatcher
     {
         public double OffsetLimit;
-        public double CumulativeOffset;
+        public Vector<double> CumulativeOffset;
         public double CumulativeOffsetLimit;
         public double ErrorLimit;
-        public double CumulativeError;
+        public Vector<double> CumulativeError;
         public double CumulativeErrorLimit;
 
-        public void Clear()
+        public void Reset()
         {
-            this.CumulativeError = 0;
-            this.CumulativeOffset = 0;
+            this.CumulativeError.Clear();
+            this.CumulativeOffset.Clear();
+        }
+
+        public bool LimitCheck(Vector<double> error, Vector<double> offset)
+        {
+            this.CumulativeError += error;
+            this.CumulativeOffset += offset;
+            if (error.L2Norm() > this.ErrorLimit || this.CumulativeError.L2Norm() > this.CumulativeErrorLimit ||
+                offset.L2Norm() > this.OffsetLimit || this.CumulativeOffset.L2Norm() > this.CumulativeOffsetLimit)
+            {
+                return false;
+            }
+            return true;
         }
     }
 
@@ -156,6 +214,7 @@ namespace FanucController
         [JsonIgnore] public Vector<double>[] y = new Vector<double>[2];
         [JsonIgnore] public Vector<double>[] z = new Vector<double>[2];
         [JsonIgnore] public Matrix<double> Rotation;
+        [JsonIgnore] public string fileName;
 
         public void CalculateRotationMatrixXY()
         {
@@ -187,13 +246,15 @@ namespace FanucController
             set { Rotation = CreateMatrix.DenseOfColumnMajor<double>(3, 3, value); }
         }
 
-        public static RotationIdentification ReadJson(string path)
+        public RotationIdentification ReadJson(string dir)
         {
+            string path = Path.Combine(dir, this.fileName);
             return JsonSerializer.Deserialize<RotationIdentification>(path);
         }
 
-        public void WriteJson(string path)
+        public void WriteJson(string dir)
         {
+            string path = Path.Combine(dir, this.fileName);
             string stringJson = JsonSerializer.Serialize(this);
             File.WriteAllText(path, stringJson);
         }
@@ -202,12 +263,10 @@ namespace FanucController
 
     public class LinearPath
     {
-        [JsonIgnore]
-        public Matrix<double> Rotation; //Rotation Camera -> UF
-        [JsonIgnore]
-        public Vector<double> PointStart;
-        [JsonIgnore]
-        public Vector<double> PointEnd;
+        [JsonIgnore] public Matrix<double> Rotation; //Rotation Camera -> UF
+        [JsonIgnore] public Vector<double> PointStart;
+        [JsonIgnore] public Vector<double> PointEnd;
+        [JsonIgnore] public string fileName;
 
         public double[] RotationArray
         {
@@ -232,8 +291,9 @@ namespace FanucController
             return JsonSerializer.Deserialize<LinearPath>(path);
         }
 
-        public void WriteJson(string path)
+        public void WriteJson(string dir)
         {
+            string path = Path.Combine(dir, this.fileName);
             string stringJson = JsonSerializer.Serialize(this);
             File.WriteAllText(path, stringJson);
         }

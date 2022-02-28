@@ -8,12 +8,12 @@ Public Module PCDK
     Public RobotName As String
 
     'DPM
-    Private objVarChannels(6) As FRRobot.FRCVar
-    Private channels(6) As String
+    Private objVarChannels(5) As FRRobot.FRCVar
+    Private channels(5) As String
 
     'IO
-    Private digIns(10) As FRCDigitalIOSignal
-    Private digOuts(10) As FRCDigitalIOSignal
+    Private digIns(9) As FRCDigitalIOSignal
+    Private digOuts(9) As FRCDigitalIOSignal
 
     'TP program
     Public Program As FRCTPProgram
@@ -22,8 +22,8 @@ Public Module PCDK
 
     'Read data
     Private objCurPos As FRCCurPosition
-    Private objCurGrpPos As FRCCurGroupPosition
-    Private objCurXYZWPR As FRCXyzWpr
+    Private objCurGrpPos(1) As FRCCurGroupPosition
+    Private objCurXYZWPR(1) As FRCXyzWpr
     Private objCurJoint As FRCJoint
 
 #Region "Connection"
@@ -64,6 +64,14 @@ Public Module PCDK
 
     End Sub
 
+    Public Sub ApplyDPM(ByVal u As Double())
+
+        For i As Integer = 0 To 5
+            objVarChannels(i).Value = u(i)
+        Next
+
+    End Sub
+
 #End Region
 
 #Region "TP Program"
@@ -95,27 +103,38 @@ Public Module PCDK
 
 #Region "Get Data"
 
-    Public Sub SetReferenceFrame(ByVal frame As Boolean)
+    Public Sub SetReferenceFrame()
 
         objCurPos = Robot.CurPosition
-        If Not frame Then
-            objCurGrpPos = objCurPos.Group(1, FRECurPositionConstants.frWorldDisplayType)
-        Else
-            objCurGrpPos = objCurPos.Group(1, FRECurPositionConstants.frUserDisplayType)
-        End If
-        objCurXYZWPR = objCurGrpPos.Formats(FRETypeCodeConstants.frXyzWpr)
+        objCurGrpPos(0) = objCurPos.Group(1, FRECurPositionConstants.frWorldDisplayType)
+        objCurGrpPos(1) = objCurPos.Group(1, FRECurPositionConstants.frUserDisplayType)
+        objCurXYZWPR(0) = objCurGrpPos(0).Formats(FRETypeCodeConstants.frXyzWpr)
+        objCurXYZWPR(1) = objCurGrpPos(1).Formats(FRETypeCodeConstants.frXyzWpr)
 
     End Sub
 
-    Public Function GetPose() As Double()
+    Public Function GetPoseWF() As Double()
 
-        Dim xyzwpr(6) As Double
-        xyzwpr(0) = objCurXYZWPR.X
-        xyzwpr(1) = objCurXYZWPR.Y
-        xyzwpr(2) = objCurXYZWPR.Z
-        xyzwpr(3) = objCurXYZWPR.W
-        xyzwpr(4) = objCurXYZWPR.P
-        xyzwpr(5) = objCurXYZWPR.R
+        Dim xyzwpr(5) As Double
+        xyzwpr(0) = objCurXYZWPR(0).X
+        xyzwpr(1) = objCurXYZWPR(0).Y
+        xyzwpr(2) = objCurXYZWPR(0).Z
+        xyzwpr(3) = objCurXYZWPR(0).W
+        xyzwpr(4) = objCurXYZWPR(0).P
+        xyzwpr(5) = objCurXYZWPR(0).R
+        Return xyzwpr
+
+    End Function
+
+    Public Function GetPoseUF() As Double()
+
+        Dim xyzwpr(5) As Double
+        xyzwpr(0) = objCurXYZWPR(1).X
+        xyzwpr(1) = objCurXYZWPR(1).Y
+        xyzwpr(2) = objCurXYZWPR(1).Z
+        xyzwpr(3) = objCurXYZWPR(1).W
+        xyzwpr(4) = objCurXYZWPR(1).P
+        xyzwpr(5) = objCurXYZWPR(1).R
         Return xyzwpr
 
     End Function

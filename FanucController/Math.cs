@@ -72,13 +72,10 @@ namespace FanucController
     public class LookUpTable
     {
         private int outDim;
+        private double[] samplesPoints;
+        private double[] tableValues;
 
-        public LookUpTable(double[] samplePoints, double[] tableValues)
-        {
-            this.outDim = outDim;
-        }
-
-        public double Interpol1D(double[] points, double[] values, double qPoint)
+        public static double Interpol1D(double[] points, double[] values, double qPoint)
         {
             var newPoints = points.Select(x => Math.Abs(x - qPoint)).ToArray();
             int index1 = Array.IndexOf(newPoints, newPoints.Min());

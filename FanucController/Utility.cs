@@ -4,13 +4,98 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
+using System.Globalization;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Configuration;
+using CsvHelper;
+using CsvHelper.Configuration;
+using CsvHelper.Configuration.Attributes;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace FanucController
 {
+
+    // ------------------------------------------- Data IO
+
+    public static class Csv
+    {
+        public static void WriteCsv<T>(string path, List<T> dataList, bool append=false)
+        {
+            using (var writer = new StreamWriter(path, append: append))
+            {
+                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csv.WriteRecord(dataList);
+                }
+            }
+        }
+
+        public static List<T> ReadCsv<T>(string path)
+        {
+            List<T> record;
+            using (var reader = new StreamReader(path))
+            {
+                using(var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    record = csv.GetRecords<T>().ToList();
+                }
+            }
+            return record;
+        }
+    }
+
+    public class PoseData
+    {
+        [Name("time")] public double Time { get; set; }
+        [Name("x")] public double X { get; set; }
+        [Name("y")] public double Y { get; set; }
+        [Name("z")] public double Z { get; set; }
+        [Name("alpha")] public double Alpha { get; set; }
+        [Name("beta")] public double Beta { get; set; }
+        [Name("gamma")] public double Gamma { get; set; }
+
+        public PoseData(Vector<double> pose, double time)
+        {
+            Time = time;
+            X = pose[0]; Y= pose[1]; Z = pose[2];
+            Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
+        }
+
+        public PoseData(double[] pose, double time)
+        {
+            Time = time;
+            X = pose[0]; Y = pose[1]; Z = pose[2];
+            Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
+        }
+    }
+
+    public class JointData
+    {
+        [Name("time")] public double Time { get; set; }
+        [Name("j1")] public double J1 { get; set; }
+        [Name("j2")] public double J2 { get; set; }
+        [Name("j3")] public double J3 { get; set; }
+        [Name("j4")] public double J4 { get; set; }
+        [Name("j5")] public double J5 { get; set; }
+        [Name("j6")] public double J6 { get; set; }
+
+        public JointData(Vector<double> pose, double time)
+        {
+            Time = time;
+            J1 = pose[0]; J2 = pose[1]; J3 = pose[2];
+            J4 = pose[3]; J5 = pose[4]; J6 = pose[5];
+        }
+
+        public JointData(double[] pose, double time)
+        {
+            Time = time;
+            J1 = pose[0]; J2 = pose[1]; J3 = pose[2];
+            J4 = pose[3]; J5 = pose[4]; J6 = pose[5];
+        }
+    }
 
     public class Buffer<T>
     {
@@ -59,8 +144,10 @@ namespace FanucController
                 this.Index = 0;
             }
         }
-
     }
+
+
+    // ------------------------------------------- Logger
 
     public class LogDisplay
     {
@@ -129,6 +216,7 @@ namespace FanucController
         public event EventHandler<LogEvent> LogEvent;
         private static MemorySink localInstance;
         private readonly List<LogEvent> logEvents;
+        public object memoryLock = new object();
        
     
         public MemorySink()
@@ -150,8 +238,11 @@ namespace FanucController
 
         public void Emit(LogEvent logEvent)
         {
-            logEvents.Add(logEvent);
-            LogDisplay.WriteLog(logEvent);
+            lock (memoryLock)
+            {
+                logEvents.Add(logEvent);
+                LogDisplay.WriteLog(logEvent);
+            }
         }
 
         // Return a object implementing IList

@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics;
 using VXelementsApi;
 using VXelementsApi.Tracker;
 using VXelementsApi.VXtrack;
 using VXelementsApi.Types;
-using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace FanucController
 {
@@ -40,38 +41,140 @@ namespace FanucController
         private List<ITrackingModel> iTrackingModelList;
         private List<ITrackingSequence> iTrackingSequenceList;
 
-        // Pose data
-        public IPose3d poseCameraFrame;
-        public Point3dDouble translationCameraFrame;
-        public Point3dDouble rotationCameraFrame;
+        // Memory & IO
+        private Buffer<PoseData>[] poseBuffers;
+        private readonly object poseLock = new object();
 
-        // Event
-        public event EventHandler DataReady;
+        // Pose data
+        private IPose3d poseRaw;
+        private Vector<double> pose;
+        private Vector<double> poseCameraFrame;
+        private Vector<double> poseCameraFrameKf;
+        private Vector<double> poseCameraFrameRkf;
+        public Vector<double> PoseCameraFrame
+        {
+            get
+            {
+                lock (poseLock) { return poseCameraFrame; }
+            }
+            set
+            {
+                lock (poseLock) { poseCameraFrame = value; }
+            }
+        }
+        public Vector<double> PoseCameraFrameKf
+        {
+            get
+            {
+                lock (poseLock) { return poseCameraFrameKf; }
+            }
+            set
+            {
+                lock (poseLock) { poseCameraFrameKf = value; }
+            }
+        }
+        public Vector<double> PoseCameraFrameRkf
+        {
+            get
+            {
+                lock (poseLock) { return poseCameraFrameRkf; }
+            }
+            set
+            {
+                lock (poseLock) { poseCameraFrameRkf = value; }
+            }
+        }
+
+        // Stopwatch
+        private Stopwatch stopWatch;
+        private double time;
 
         // Thread 
         private Thread eventThread;
 
+        // Kalman Filter
+        private KalmanFilter standardKalman;
+        private RobustKalmanFilter robustKalman;
+        private bool standardKalmanEnabled;
+        private bool robustKalmanEnabled;
+
         public VXelementsUtility()
         {
-            // Flags
-            this.trackerAttached = false;
-            this.vxtrackAttached = false;
+            // Api
+            trackerAttached = false;
+            vxtrackAttached = false;
+
             // Invoker
-            this.modelDetectionStartedInvoker = new VXeventInvoker(new VXeventHandler(ModelDetectionStarted));
-            this.modelDetectionStoppedInvoker = new DetectModelStoppedEventInvoker(new DetectModelStoppedEventHandler(ModelDetectionStopped));
-            this.modelChangedInvoker = new VXeventInvoker(new VXeventHandler(ModelChanged));
-            this.trackingDataReadyInvoker = new VXeventInvoker(new VXeventHandler(TrackingDataReady));
-            this.trackingStartedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStarted));
-            this.trackingStoppedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStopped));
-            this.trackerPoseChangedInvoker = new VXeventInvoker(new VXeventHandler(TrackerPoseChanged));
+            modelDetectionStartedInvoker = new VXeventInvoker(new VXeventHandler(ModelDetectionStarted));
+            modelDetectionStoppedInvoker = new DetectModelStoppedEventInvoker(new DetectModelStoppedEventHandler(ModelDetectionStopped));
+            modelChangedInvoker = new VXeventInvoker(new VXeventHandler(ModelChanged));
+            trackingDataReadyInvoker = new VXeventInvoker(new VXeventHandler(TrackingDataReady));
+            trackingStartedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStarted));
+            trackingStoppedInvoker = new VXeventInvoker(new VXeventHandler(TrackingStopped));
+            trackerPoseChangedInvoker = new VXeventInvoker(new VXeventHandler(TrackerPoseChanged));
+            
             // Thread
-            this.eventThread = new Thread(new ThreadStart(ThreadDataReady));
-            this.eventThread.IsBackground = true;
+            eventThread = new Thread(new ThreadStart(ThreadDataReady));
+            eventThread.IsBackground = true;
+            
             // Tracking model list
-            this.iTrackingModelList = new List<ITrackingModel>();
+            iTrackingModelList = new List<ITrackingModel>();
+            
             // Tracking sequence list
-            this.iTrackingSequenceList = new List<ITrackingSequence>();
+            iTrackingSequenceList = new List<ITrackingSequence>();
+            
+            // Kalman filter
+            standardKalman = new KalmanFilter();
+            standardKalmanEnabled = false;
+            robustKalman = new RobustKalmanFilter();
+            robustKalmanEnabled = false;
+            pose = CreateVector.Dense<double>(6);
+            poseCameraFrame = CreateVector.Dense<double>(6);
+            poseCameraFrameKf = CreateVector.Dense<double>(6);
+            poseCameraFrameRkf = CreateVector.Dense<double>(6);
+            
+
+            // Buffer
+            poseBuffers = new Buffer<PoseData>[3];
+            poseBuffers[0] = new Buffer<PoseData>(20000); // raw
+            poseBuffers[1] = new Buffer<PoseData>(20000); // kf
+            poseBuffers[2] = new Buffer<PoseData>(20000); // rkf
+
+            // Stopwatch
+            stopWatch = new Stopwatch();
+            time = 0;
         }
+
+        // ---------------------------------------------- Actions
+
+        public void QuickConnect(string targetsPath, string modelPath)
+        {
+            ConnectApi();
+            AttachToVXelementsEvents();
+            OpenPositioningTargets(targetsPath);
+            ImportModel(modelPath);
+            CreateSequence(iTrackingModelList.ToArray());
+        }
+
+        public void Reset(bool hard = false)
+        {
+            robustKalmanEnabled = false;
+            ResetVXTrack();
+            iTrackingModelList.Clear();
+            iTrackingSequenceList.Clear();
+            if (hard)
+            {
+                DetachFromVXelementsEvents();
+                ResetApi();
+            }
+        }
+
+        public void Exit()
+        {
+            ExitApi();
+        }
+
+        // ---------------------------------------------- Basic Functions
 
         public void ConnectApi()
         {
@@ -101,11 +204,11 @@ namespace FanucController
 
         public void ResetApi()
         {
-            this.iVXelements = null;
-            this.iTracker = null;
-            this.iVXtrack=null;
-            this.vxtrackAttached = false;
-            this.trackerAttached = false;
+            iVXelements = null;
+            iTracker = null;
+            iVXtrack = null;
+            vxtrackAttached = false;
+            trackerAttached = false;
         }
 
         public void ExitApi()
@@ -126,22 +229,22 @@ namespace FanucController
             try
             {
                 // Add invoker (event handlers) to event
-                if (!this.trackerAttached)
+                if (!trackerAttached)
                 {
-                    this.iTracker.TrackerPoseChangedEvent.AddEvent(trackerPoseChangedInvoker);
-                    this.trackerAttached = true;
+                    iTracker.TrackerPoseChangedEvent.AddEvent(trackerPoseChangedInvoker);
+                    trackerAttached = true;
                 }
-                if (!this.vxtrackAttached)
+                if (!vxtrackAttached)
                 {
-                    this.iVXtrack.DetectModelStartedEvent.AddEvent(modelDetectionStartedInvoker);
-                    this.iVXtrack.ModelsChangedEvent.AddEvent(modelChangedInvoker);
-                    this.iVXtrack.TrackingDataReadyEvent.AddEvent(trackingDataReadyInvoker);
-                    this.iVXtrack.TrackingStartedEvent.AddEvent(trackingStartedInvoker);
-                    this.iVXtrack.TrackingStoppedEvent.AddEvent(trackingStoppedInvoker);
-                    this.iVXtrack.SequencesChangedEvent.AddEvent(sequenceChangedInvoker);
-                    this.vxtrackAttached = true;
+                    iVXtrack.DetectModelStartedEvent.AddEvent(modelDetectionStartedInvoker);
+                    iVXtrack.ModelsChangedEvent.AddEvent(modelChangedInvoker);
+                    iVXtrack.TrackingDataReadyEvent.AddEvent(trackingDataReadyInvoker);
+                    iVXtrack.TrackingStartedEvent.AddEvent(trackingStartedInvoker);
+                    iVXtrack.TrackingStoppedEvent.AddEvent(trackingStoppedInvoker);
+                    iVXtrack.SequencesChangedEvent.AddEvent(sequenceChangedInvoker);
+                    vxtrackAttached = true;
                 }
-                
+
             }
             catch
             {
@@ -149,7 +252,7 @@ namespace FanucController
                 ConnectApi();
                 AttachToVXelementsEvents();
             }
-            
+
         }
 
         public void DetachFromVXelementsEvents()
@@ -157,37 +260,37 @@ namespace FanucController
             try
             {
                 // Remove invoker (event handlers) to event
-                if (!this.trackerAttached)
+                if (!trackerAttached)
                 {
-                    this.iTracker.TrackerPoseChangedEvent.RemoveEvent(trackerPoseChangedInvoker);
-                    this.trackerAttached = false;
+                    iTracker.TrackerPoseChangedEvent.RemoveEvent(trackerPoseChangedInvoker);
+                    trackerAttached = false;
                 }
-                if (!this.vxtrackAttached)
+                if (!vxtrackAttached)
                 {
-                    this.iVXtrack.DetectModelStartedEvent.RemoveEvent(modelDetectionStartedInvoker);
-                    this.iVXtrack.ModelsChangedEvent.RemoveEvent(modelChangedInvoker);
-                    this.iVXtrack.TrackingDataReadyEvent.RemoveEvent(trackingDataReadyInvoker);
-                    this.iVXtrack.TrackingStartedEvent.RemoveEvent(trackingStartedInvoker);
-                    this.iVXtrack.TrackingStoppedEvent.RemoveEvent(trackingStoppedInvoker);
-                    this.iVXtrack.SequencesChangedEvent.RemoveEvent(sequenceChangedInvoker);
-                    this.vxtrackAttached = false;
+                    iVXtrack.DetectModelStartedEvent.RemoveEvent(modelDetectionStartedInvoker);
+                    iVXtrack.ModelsChangedEvent.RemoveEvent(modelChangedInvoker);
+                    iVXtrack.TrackingDataReadyEvent.RemoveEvent(trackingDataReadyInvoker);
+                    iVXtrack.TrackingStartedEvent.RemoveEvent(trackingStartedInvoker);
+                    iVXtrack.TrackingStoppedEvent.RemoveEvent(trackingStoppedInvoker);
+                    iVXtrack.SequencesChangedEvent.RemoveEvent(sequenceChangedInvoker);
+                    vxtrackAttached = false;
                 }
             }
             catch
             {
                 ExitApi();
             }
-            
+
         }
 
         public void ClearSequences()
         {
-            this.iVXtrack.RemoveAllSequences();
+            iVXtrack.RemoveAllSequences();
         }
 
         public void ClearEntities()
         {
-            this.iVXtrack.RemoveAllEntities();
+            iVXtrack.RemoveAllEntities();
         }
 
         public void ResetVXTrack()
@@ -196,14 +299,14 @@ namespace FanucController
             ClearSequences();
         }
 
-        public void OpenPositioningTargets(string targetPath=null)
+        public void OpenPositioningTargets(string targetPath = null)
         {
-            this.iVXelements.OpenPositioningTargets(targetPath);
+            iVXelements.OpenPositioningTargets(targetPath);
         }
 
         public void ImportModel(string modelPath = null)
         {
-            this.iTrackingModelList.Add(this.iVXtrack.ImportModel(modelPath));
+            iTrackingModelList.Add(iVXtrack.ImportModel(modelPath));
         }
 
         public void SaveModel(string savePath, ITrackingModel model)
@@ -213,94 +316,143 @@ namespace FanucController
 
         public void DetectModel()
         {
-            this.iVXtrack.DetectModel();
+            iVXtrack.DetectModel();
         }
 
-        public void CreateSequence(ITrackingEntity[] trackingEntity=null)
+        public void CreateSequence(ITrackingEntity[] trackingEntity = null)
         {
-            this.iTrackingSequenceList.Add(this.iVXtrack.CreateSequence(trackingEntity));
+            iTrackingSequenceList.Add(iVXtrack.CreateSequence(trackingEntity));
         }
 
-        public void ExportSequence(ITrackingSequence trackingSequence, string exportPath=null)
+        public void ExportSequence(ITrackingSequence trackingSequence, string exportPath = null)
         {
             trackingSequence.ExportToCsv(exportPath);
         }
 
         public void AddModelRelation(ITrackingSequence currentSequence, ITrackingModel observedModel, ITrackingModel referenceModel)
         {
-            currentSequence.AddTrackingModelRelation(observedModel, referenceModel);   
+            currentSequence.AddTrackingModelRelation(observedModel, referenceModel);
         }
 
-        public void StartTracking(ITrackingSequence trackingSequence=null)
+        public void StartTracking(ITrackingSequence trackingSequence = null)
         {
-            this.iVXtrack.StartTracking(trackingSequence);
+            iVXtrack.StartTracking(trackingSequence);
         }
 
         public void StopTracking()
         {
-            this.iVXtrack.StopTracking();
+            iVXtrack.StopTracking();
         }
 
         public IPose3d GetLastPose(ITrackingEntity trackingEntity)
         {
-            var currentSequence = this.iVXtrack.CurrentTrackingSequence;
+            var currentSequence = iVXtrack.CurrentTrackingSequence;
             return currentSequence.GetLastPose(trackingEntity);
         }
 
         public void ShowGraphics()
         {
-            this.iVXtrack.ShowGraphicsViewForm();
-            this.iVXtrack.ShowTableViewForm();
-            this.iVXtrack.ShowProjectionViewForm();
+            iVXtrack.ShowGraphicsViewForm();
+            iVXtrack.ShowTableViewForm();
+            iVXtrack.ShowProjectionViewForm();
         }
 
         public void HideGraphics()
         {
-            this.iVXtrack.HideGraphicsViewForm();
-            this.iVXtrack.HideTableViewForm();
-            this.iVXtrack.HideProjectionViewForm();
+            iVXtrack.HideGraphicsViewForm();
+            iVXtrack.HideTableViewForm();
+            iVXtrack.HideProjectionViewForm();
         }
 
-        public void FanucTrackingInitV1(string modelPath=null)
-        {
-
-        }
+        // ---------------------------------------------- Data Processing
 
         private void ProcessPose3d(ITrackingEntity trackingEntity)
         {
-            this.poseCameraFrame = GetLastPose(trackingEntity);
-            if (this.poseCameraFrame.Valid)
+            // Lock from access to poseCameraFrame
+            lock (poseLock)
             {
-                this.translationCameraFrame.X = this.poseCameraFrame.Translation.X;
-                this.translationCameraFrame.Y = this.poseCameraFrame.Translation.Y;
-                this.translationCameraFrame.Z = this.poseCameraFrame.Translation.Z;
-                this.rotationCameraFrame.X = this.poseCameraFrame.Rotation.X;
-                this.rotationCameraFrame.Y = this.poseCameraFrame.Rotation.Y;
-                this.rotationCameraFrame.Z = this.poseCameraFrame.Rotation.Z;
+                poseRaw = GetLastPose(trackingEntity);
+                if (poseRaw.Valid)
+                {
+                    poseCameraFrame[0] = poseRaw.Translation.X;
+                    poseCameraFrame[1] = poseRaw.Translation.Y;
+                    poseCameraFrame[2] = poseRaw.Translation.Z;
+                    poseCameraFrame[3] = poseRaw.Rotation.X;
+                    poseCameraFrame[4] = poseRaw.Rotation.Y;
+                    poseCameraFrame[5] = poseRaw.Rotation.Z;
 
 
-            } 
+                }
+                else
+                {
+                    poseCameraFrame[0] = Double.NaN;
+                    poseCameraFrame[1] = Double.NaN;
+                    poseCameraFrame[2] = Double.NaN;
+                    poseCameraFrame[3] = Double.NaN;
+                    poseCameraFrame[4] = Double.NaN;
+                    poseCameraFrame[5] = Double.NaN;
+                }
+
+                standardKalmanFiltering();
+                robustKalmanFiltering();
+                addToBuffers();
+            }
+            
+        }
+
+        private void standardKalmanFiltering()
+        {
+            if (!standardKalmanEnabled)
+            {
+                standardKalman.Initialize(poseCameraFrame);
+                poseCameraFrameKf = poseCameraFrame;
+            }
             else
             {
-                this.translationCameraFrame.X = Double.NaN;
-                this.translationCameraFrame.Y = Double.NaN;
-                this.translationCameraFrame.Z = Double.NaN;
-                this.rotationCameraFrame.X = Double.NaN;
-                this.rotationCameraFrame.Y = Double.NaN;
-                this.rotationCameraFrame.Z = Double.NaN;
+                standardKalman.Estimate(poseCameraFrame);
             }
         }
 
-        /*
-         * Event Handlers
-         */
+        private void robustKalmanFiltering()
+        {
+            if (!robustKalmanEnabled)
+            {
+                robustKalman.Initialize(poseCameraFrame);
+                poseCameraFrameRkf = poseCameraFrame;
+            }
+            else
+            {
+                poseCameraFrameRkf = robustKalman.Estimate(poseCameraFrame);
+            }
+        }
+
+        // ---------------------------------------------- Memory & IO
+
+        private void addToBuffers()
+        {
+            time = stopWatch.ElapsedMilliseconds/1000;
+            poseBuffers[0].Add(new PoseData(poseCameraFrame, time));
+            poseBuffers[1].Add(new PoseData(poseCameraFrame, time));
+            poseBuffers[2].Add(new PoseData(poseCameraFrame, time));
+        }
+
+        public void ExportBuffers(string[] path)
+        {
+            for (int i = 0; i < path.Length; i++)
+            {
+                var poseDataList = poseBuffers[i].Memory.ToList();
+                Csv.WriteCsv(path[i], poseDataList);
+            }
+        }
+
+        // ---------------------------------------------- Event Handlers
 
         private void ApiDisconnected()
         {
             ResetApi();
             ApiManager.Disconnected -= ApiDisconnected;
         }
-        
+
         private void TrackerPoseChanged()
         {
 
@@ -308,7 +460,7 @@ namespace FanucController
 
         private void ModelChanged()
         {
-            
+
         }
 
         private void ModelDetectionStarted()
@@ -323,17 +475,17 @@ namespace FanucController
 
         private void TrackingStarted()
         {
-
+            stopWatch.Start();
         }
 
         private void TrackingStopped()
         {
-
+            stopWatch.Stop();
         }
-        
+
         private void TrackingDataReady()
         {
-            var trackingModel = this.iTrackingModelList[0];
+            var trackingModel = iTrackingModelList[0];
             ProcessPose3d(trackingModel);
         }
 
