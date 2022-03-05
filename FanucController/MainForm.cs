@@ -22,16 +22,24 @@ namespace FanucController
 {
     public partial class MainForm : Form
     {
-        // --------------------------------- Fields
+
+        #region Fields
+
         // Directories
-        public const string TopDir = @"D:\.NET Test";
+        public const string TopDir = @"D:\Fanuc Experiments\vx-test-0305";
         public string ReferenceDir;
         public string OutputDir;
         public string ScriptsDir;
+        public string LogDir;
 
         public string LoggerTestPath = Path.Combine(TopDir, "LoggerTest", "log_test_1.txt");
 
-        //public System.Timers.Timer Timer;
+        // Vx Path
+        public string[] VxPaths;
+        
+
+        // Timer (threadpool)
+        public System.Timers.Timer Timer;
 
         // Stopwatch
         public Stopwatch StopWatch;
@@ -50,7 +58,9 @@ namespace FanucController
         public Buffer<PoseData> poseBuffer;
         public Buffer<JointData> jointBuffer;
 
-        // --------------------------------- Constructor
+        #endregion
+
+        #region Constructor
         public MainForm()
         {
             InitializeComponent();
@@ -59,39 +69,50 @@ namespace FanucController
             ReferenceDir = Path.Combine(TopDir, "Reference");
             OutputDir = Path.Combine(TopDir, "Output");
             ScriptsDir = Path.Combine(TopDir, "Scripts");
+            LogDir = Path.Combine(TopDir, "Log");
             Directory.CreateDirectory(ReferenceDir);
             Directory.CreateDirectory(OutputDir);
             Directory.CreateDirectory(ScriptsDir);
+            Directory.CreateDirectory(LogDir);
+
+            // Vx Paths
+            VxPaths = new string[3];
+            VxPaths[0] = Path.Combine(OutputDir, "VxRaw.csv");
+            VxPaths[1] = Path.Combine(OutputDir, "VxKf.csv");
+            VxPaths[2] = Path.Combine(OutputDir, "VxRkf.csv");
 
             // Timer
-            //Timer = new System.Timers.Timer();
-            //Timer.Interval = 100;
-            //Timer.AutoReset = true;
+            Timer = new System.Timers.Timer();
+            Timer.Interval = 500; // 80 ms
+            Timer.AutoReset = true;
             //Timer.Elapsed += async (s, e) => await TestEventHandlerAsync();
             //this.Timer.Start();
 
             // Form Timer
             FormTimer = new System.Windows.Forms.Timer();
-            FormTimer.Interval = 100;
+            FormTimer.Interval = 80; // 200 ms
             FormTimer.Start();
+
+            // Form closing
+            this.FormClosing += VxFormClosed;
 
             // Stop watch
             StopWatch = new Stopwatch();
             Time = 0;
-            Stopwatch.StartNew();
 
             // Initialize VXelement API
-            Vx = new VXelementsUtility();
+            Vx = new VXelementsUtility(StopWatch);
 
             // Initialize log display
             LogDisplay.Initiate(listViewLogger, 7);
 
             // Initialize global logger
+            string logPath = Path.Combine(LogDir, $"log_{DateTime.Now}.txt");
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Memory()
                 .WriteTo.Console()
-                .WriteTo.File(LoggerTestPath, rollingInterval: RollingInterval.Day)
+                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
                 .CreateLogger();
             Log.Information("Global logger configured!");
             LogMemory = MemorySink.Instance;
@@ -112,10 +133,23 @@ namespace FanucController
         //    await Task.Delay(3000);
         //    Console.WriteLine("Hello");
         //}
+        #endregion
 
-        // --------------------------------- Fanuc Experiment
+        #region General
 
-        // --------------------------------- PCDK
+
+        #endregion
+
+        #region Fanuc Experiment
+
+        private void buttonRunMain_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        #endregion
+
+        #region PCDK
 
         private void buttonPcdkConnect_Click(object sender, EventArgs e)
         {
@@ -207,6 +241,20 @@ namespace FanucController
             Csv.WriteCsv(path, jointData);
         }
 
+        private void buttonDpmOffset_Click(object sender, EventArgs e)
+        {
+            double[] u = new double[6];
+            u[0] = Convert.ToDouble(textBoxPcdkOffsetX.Text);
+            u[1] = Convert.ToDouble(textBoxPcdkOffsetY.Text);
+            u[2] = Convert.ToDouble(textBoxPcdkOffsetZ.Text);
+            u[3] = Convert.ToDouble(textBoxPcdkOffsetW.Text);
+            u[4] = Convert.ToDouble(textBoxPcdkOffsetP.Text);
+            u[5] = Convert.ToDouble(textBoxPcdkOffsetR.Text);
+            PCDK.ApplyDPM(u);
+        }
+
+        // -------------------------- Helpers
+
         private double?[] getPcdkPose()
         {
             if (radioButtonPcdkWorldFrame.Checked)
@@ -227,7 +275,9 @@ namespace FanucController
         }
 
         private void addToPcdkBuffers(double?[] pose, double?[] joint, double time)
-        { 
+        {
+            if (!checkBoxPcdkDisplay.Checked) { return; }
+
             if (pose != null)
             {
                 double[] array = pose.Select(x => (double)x).ToArray();
@@ -240,25 +290,50 @@ namespace FanucController
             }
         }
 
-        
+        #endregion
 
-        // --------------------------------- VXelements
+        #region Vxelements
+
+        public void VxFormClosed(object sender, EventArgs e)
+        {
+            Vx.ExitApi();
+        }
+
+        private void buttonVxTest_Click(object sender, EventArgs e)
+        {
+            Vx.TestAction();
+        }
 
         private void buttonVxQuickConnect_Click(object sender, EventArgs e)
         {
-            string targetsPath = Path.Combine(ReferenceDir, "targets.txt");
-            string modelPath = Path.Combine(ReferenceDir, "model.txt");
+            string targetsPath = Path.Combine(ReferenceDir, "targets_0305.txt");
+            string modelPath = Path.Combine(ReferenceDir, "test_model_0305.txt");
             Vx.QuickConnect(targetsPath, modelPath);
+            // Activate the necessary filters
+            Vx.filterActivated[0] = checkBoxVxRaw.Checked;
+            Vx.filterActivated[1] = checkBoxVxKf.Checked;
+            Vx.filterActivated[2] = checkBoxVxRkf.Checked;
         }
 
         private void buttonVxStartTracking_Click(object sender, EventArgs e)
         {
+            
             Vx.StartTracking();
+            Vx.ExportBuffersLast(VxPaths, append: false, header: true);
+            if (checkBoxVxAppend.Checked)
+            {
+                FormTimer.Tick += trackingEventHandler;
+            }
+            FormTimer.Tick += (s, ev) => updateVxTxtBox();
         }
 
         private void buttonVxStopTracking_Click(object sender, EventArgs e)
         {
             Vx.StopTracking();
+            if (checkBoxVxAppend.Checked)
+            {
+                FormTimer.Tick -= trackingEventHandler;
+            }
         }
 
         private void buttonVxReset_Click(object sender, EventArgs e)
@@ -273,30 +348,47 @@ namespace FanucController
 
         private void buttonVxExport_Click(object sender, EventArgs e)
         {
-            string[] path = new string[3];
-            path[0] = Path.Combine(OutputDir, "VxRaw.csv");
-            path[1] = Path.Combine(OutputDir, "VxKf.csv");
-            path[2] = Path.Combine(OutputDir, "VxRkf.csv");
-            Vx.ExportBuffers(path);
+            Vx.ExportBuffers(VxPaths);
         }
 
-        // --------------------------------- Gui Update
+        private void trackingEventHandler(object s, EventArgs e)
+        {
+            Vx.ExportBuffersLast(VxPaths);
+        }
 
-        private void updateVxTxtBox(Vector<double> pose)
+        #endregion
+
+        #region Gui Update
+
+        public void updateVxTxtBox()
         {
             if (this.InvokeRequired)
             {
-                Action safeUpdate = () => updateVxTxtBox(pose);
+                Action safeUpdate = () => updateVxTxtBox();
                 this.Invoke(safeUpdate);
             }
             else
             {
-                textBoxVxX.Text = Vx.PoseCameraFrame[0].ToString("0.0000");
-                textBoxVxY.Text = Vx.PoseCameraFrame[1].ToString("0.0000");
-                textBoxVxZ.Text = Vx.PoseCameraFrame[2].ToString("0.0000");
-                textBoxVxAlpha.Text = Vx.PoseCameraFrame[3].ToString("0.0000");
-                textBoxVxBeta.Text = Vx.PoseCameraFrame[4].ToString("0.0000");
-                textBoxVxGamma.Text = Vx.PoseCameraFrame[5].ToString("0.0000");
+                Vector<double> pose;
+                pose = Vx.PoseCameraFrame;
+                switch (comboBoxVxFilter.Text)
+                {
+                    case "RAW":
+                        break;
+                    case "KF":
+                        pose = Vx.PoseCameraFrameKf;
+                        break;
+                    case "RKF":
+                        pose = Vx.PoseCameraFrameRkf;
+                        break;
+                }
+
+                textBoxVxX.Text = pose[0].ToString("0.00000");
+                textBoxVxY.Text = pose[1].ToString("0.00000");
+                textBoxVxZ.Text = pose[2].ToString("0.00000");
+                textBoxVxAlpha.Text = (pose[3]*180/Math.PI).ToString("0.00000");
+                textBoxVxBeta.Text = (pose[4]*180/Math.PI).ToString("0.00000");
+                textBoxVxGamma.Text = (pose[5]*180/Math.PI).ToString("0.00000");
             }
         }
 
@@ -332,14 +424,13 @@ namespace FanucController
 
         }
 
-        // --------------------------------- Logger
+        #endregion
 
-        // --------------------------------- Test
-        private void buttonRunMain_Click(object sender, EventArgs e)
-        {
+        #region Logger
 
-        }
+        #endregion
 
+        #region Test
         private void buttonTest_Click(object sender, EventArgs e)
         {
             //string level = "Debug";
@@ -420,13 +511,17 @@ namespace FanucController
             textBoxDebug.AppendText(str + Environment.NewLine);
         }
 
+        #endregion
 
-
+        #region Junk
 
         private void listViewLogger_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }
+
+
+        #endregion
 
 
     }

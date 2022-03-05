@@ -10,11 +10,15 @@ using VXelementsApi.Tracker;
 using VXelementsApi.VXtrack;
 using VXelementsApi.Types;
 using MathNet.Numerics.LinearAlgebra;
+using Serilog;
 
 namespace FanucController
 {
     public class VXelementsUtility
     {
+
+        #region Fields
+
         // Api interfaces
         private IVXelements iVXelements;
         private ITracker iTracker;
@@ -47,43 +51,42 @@ namespace FanucController
 
         // Pose data
         private IPose3d poseRaw;
-        private Vector<double> pose;
-        private Vector<double> poseCameraFrame;
-        private Vector<double> poseCameraFrameKf;
-        private Vector<double> poseCameraFrameRkf;
+        private Vector<double> poseTemp;
+        private Vector<double>[] poseCameraFrame;
         public Vector<double> PoseCameraFrame
         {
             get
             {
-                lock (poseLock) { return poseCameraFrame; }
+                lock (poseLock) { return poseCameraFrame[0]; }
             }
             set
             {
-                lock (poseLock) { poseCameraFrame = value; }
+                lock (poseLock) { poseCameraFrame[0] = value; }
             }
         }
         public Vector<double> PoseCameraFrameKf
         {
             get
             {
-                lock (poseLock) { return poseCameraFrameKf; }
+                lock (poseLock) { return poseCameraFrame[1]; }
             }
             set
             {
-                lock (poseLock) { poseCameraFrameKf = value; }
+                lock (poseLock) { poseCameraFrame[1] = value; }
             }
         }
         public Vector<double> PoseCameraFrameRkf
         {
             get
             {
-                lock (poseLock) { return poseCameraFrameRkf; }
+                lock (poseLock) { return poseCameraFrame[2]; }
             }
             set
             {
-                lock (poseLock) { poseCameraFrameRkf = value; }
+                lock (poseLock) { poseCameraFrame[2] = value; }
             }
         }
+        public bool[] filterActivated;
 
         // Stopwatch
         private Stopwatch stopWatch;
@@ -98,7 +101,11 @@ namespace FanucController
         private bool standardKalmanEnabled;
         private bool robustKalmanEnabled;
 
-        public VXelementsUtility()
+        #endregion
+
+        #region Constructor
+
+        public VXelementsUtility(Stopwatch stopWatch)
         {
             // Api
             trackerAttached = false;
@@ -128,24 +135,35 @@ namespace FanucController
             standardKalmanEnabled = false;
             robustKalman = new RobustKalmanFilter();
             robustKalmanEnabled = false;
-            pose = CreateVector.Dense<double>(6);
-            poseCameraFrame = CreateVector.Dense<double>(6);
-            poseCameraFrameKf = CreateVector.Dense<double>(6);
-            poseCameraFrameRkf = CreateVector.Dense<double>(6);
-            
+            poseTemp = CreateVector.Dense<double>(6);
+            poseCameraFrame = new Vector<double>[3];
+            poseCameraFrame[0] = CreateVector.Dense<double>(6); // raw
+            poseCameraFrame[1] = CreateVector.Dense<double>(6); // kf
+            poseCameraFrame[2] = CreateVector.Dense<double>(6); // rkf
+            filterActivated = new bool[3];
 
             // Buffer
+            int buffer_size = 20000;
             poseBuffers = new Buffer<PoseData>[3];
-            poseBuffers[0] = new Buffer<PoseData>(20000); // raw
-            poseBuffers[1] = new Buffer<PoseData>(20000); // kf
-            poseBuffers[2] = new Buffer<PoseData>(20000); // rkf
+            poseBuffers[0] = new Buffer<PoseData>(buffer_size); // raw
+            poseBuffers[1] = new Buffer<PoseData>(buffer_size); // kf
+            poseBuffers[2] = new Buffer<PoseData>(buffer_size); // rkf
 
             // Stopwatch
-            stopWatch = new Stopwatch();
+            this.stopWatch = stopWatch;
             time = 0;
         }
 
-        // ---------------------------------------------- Actions
+        #endregion
+
+        #region Actions
+
+        public void TestAction()
+        {
+            ConnectApi();
+            AttachToVXelementsEvents();
+            Log.Information("Connected!");
+        }
 
         public void QuickConnect(string targetsPath, string modelPath)
         {
@@ -153,7 +171,7 @@ namespace FanucController
             AttachToVXelementsEvents();
             OpenPositioningTargets(targetsPath);
             ImportModel(modelPath);
-            CreateSequence(iTrackingModelList.ToArray());
+            //CreateSequence(iTrackingModelList.ToArray());
         }
 
         public void Reset(bool hard = false)
@@ -174,7 +192,9 @@ namespace FanucController
             ExitApi();
         }
 
-        // ---------------------------------------------- Basic Functions
+        #endregion
+
+        #region Basic Functions
 
         public void ConnectApi()
         {
@@ -184,11 +204,8 @@ namespace FanucController
                 {
                     ApiManager.Connect();
                     ApiManager.Disconnected += ApiDisconnected;
-                    iVXelements = ApiManager.VXelements;
-                    iTracker = iVXelements.Tracker;
-                    iVXtrack = iVXelements.VXtrack;
                 }
-                else
+                if (iVXelements == null)
                 {
                     iVXelements = ApiManager.VXelements;
                     iTracker = iVXelements.Tracker;
@@ -199,7 +216,9 @@ namespace FanucController
             catch (VXelementsException ex)
             {
                 Console.WriteLine(ex.ToString());
+                ConnectApi();
             }
+            Log.Information("Connected Api");
         }
 
         public void ResetApi()
@@ -217,11 +236,12 @@ namespace FanucController
             {
                 if (iVXelements != null)
                 {
+                    DetachFromVXelementsEvents();
                     iVXelements.Exit();
-                    ResetApi();
                 }
             }
             catch { }
+            Log.Information("Exited Api");
         }
 
         public void AttachToVXelementsEvents()
@@ -248,11 +268,13 @@ namespace FanucController
             }
             catch
             {
+                ExitApi();
                 ResetApi();
+                System.Threading.Thread.Sleep(1000);
                 ConnectApi();
                 AttachToVXelementsEvents();
             }
-
+            Log.Information("Attached Vx events");
         }
 
         public void DetachFromVXelementsEvents()
@@ -260,12 +282,12 @@ namespace FanucController
             try
             {
                 // Remove invoker (event handlers) to event
-                if (!trackerAttached)
+                if (trackerAttached)
                 {
                     iTracker.TrackerPoseChangedEvent.RemoveEvent(trackerPoseChangedInvoker);
                     trackerAttached = false;
                 }
-                if (!vxtrackAttached)
+                if (vxtrackAttached)
                 {
                     iVXtrack.DetectModelStartedEvent.RemoveEvent(modelDetectionStartedInvoker);
                     iVXtrack.ModelsChangedEvent.RemoveEvent(modelChangedInvoker);
@@ -280,7 +302,7 @@ namespace FanucController
             {
                 ExitApi();
             }
-
+            Log.Information("Detached Vx events");
         }
 
         public void ClearSequences()
@@ -336,7 +358,14 @@ namespace FanucController
 
         public void StartTracking(ITrackingSequence trackingSequence = null)
         {
-            iVXtrack.StartTracking(trackingSequence);
+            if (trackingSequence == null) 
+            {
+                iVXtrack.StartTracking();
+            }
+            else
+            {
+                iVXtrack.StartTracking(trackingSequence);
+            }
         }
 
         public void StopTracking()
@@ -364,88 +393,129 @@ namespace FanucController
             iVXtrack.HideProjectionViewForm();
         }
 
-        // ---------------------------------------------- Data Processing
+        #endregion
+
+        #region Data Processing
 
         private void ProcessPose3d(ITrackingEntity trackingEntity)
         {
-            // Lock from access to poseCameraFrame
-            lock (poseLock)
+            poseRaw = GetLastPose(trackingEntity);
+            time = stopWatch.Elapsed.TotalSeconds;
+            if (poseRaw.Valid)
             {
-                poseRaw = GetLastPose(trackingEntity);
-                if (poseRaw.Valid)
-                {
-                    poseCameraFrame[0] = poseRaw.Translation.X;
-                    poseCameraFrame[1] = poseRaw.Translation.Y;
-                    poseCameraFrame[2] = poseRaw.Translation.Z;
-                    poseCameraFrame[3] = poseRaw.Rotation.X;
-                    poseCameraFrame[4] = poseRaw.Rotation.Y;
-                    poseCameraFrame[5] = poseRaw.Rotation.Z;
+                poseTemp[0] = poseRaw.Translation.X;
+                poseTemp[1] = poseRaw.Translation.Y;
+                poseTemp[2] = poseRaw.Translation.Z;
+                poseTemp[3] = poseRaw.Rotation.X;
+                poseTemp[4] = poseRaw.Rotation.Y;
+                poseTemp[5] = poseRaw.Rotation.Z;
 
 
-                }
-                else
-                {
-                    poseCameraFrame[0] = Double.NaN;
-                    poseCameraFrame[1] = Double.NaN;
-                    poseCameraFrame[2] = Double.NaN;
-                    poseCameraFrame[3] = Double.NaN;
-                    poseCameraFrame[4] = Double.NaN;
-                    poseCameraFrame[5] = Double.NaN;
-                }
-
-                standardKalmanFiltering();
-                robustKalmanFiltering();
-                addToBuffers();
             }
-            
+            else
+            {
+                poseTemp[0] = Double.NaN;
+                poseTemp[1] = Double.NaN;
+                poseTemp[2] = Double.NaN;
+                poseTemp[3] = Double.NaN;
+                poseTemp[4] = Double.NaN;
+                poseTemp[5] = Double.NaN;
+            }
+
+            PoseCameraFrame = poseTemp;
+            standardKalmanFiltering(poseTemp);
+            robustKalmanFiltering(poseTemp);
+            addToBuffers();
         }
 
-        private void standardKalmanFiltering()
+        private void standardKalmanFiltering(Vector<double> newPose)
         {
+            if (!filterActivated[1]) return;
+
             if (!standardKalmanEnabled)
             {
-                standardKalman.Initialize(poseCameraFrame);
-                poseCameraFrameKf = poseCameraFrame;
+                standardKalman.Initialize(newPose);
+                PoseCameraFrameKf = newPose;
+                standardKalmanEnabled = true;
             }
             else
             {
-                standardKalman.Estimate(poseCameraFrame);
+                Vector<double> _poseTemp = standardKalman.Estimate(newPose);
+                PoseCameraFrameKf = _poseTemp;
             }
         }
 
-        private void robustKalmanFiltering()
+        private void robustKalmanFiltering(Vector<double> newPose)
         {
+            if (!filterActivated[2]) return;
+
             if (!robustKalmanEnabled)
             {
-                robustKalman.Initialize(poseCameraFrame);
-                poseCameraFrameRkf = poseCameraFrame;
+                robustKalman.Initialize(newPose);
+                PoseCameraFrameRkf = newPose;
+                robustKalmanEnabled = true;
             }
             else
             {
-                poseCameraFrameRkf = robustKalman.Estimate(poseCameraFrame);
+                Vector<double> _poseTemp = robustKalman.Estimate(newPose);
+                PoseCameraFrameRkf = _poseTemp;
             }
         }
 
-        // ---------------------------------------------- Memory & IO
+        #endregion
+
+        #region Memory & IO
 
         private void addToBuffers()
         {
-            time = stopWatch.ElapsedMilliseconds/1000;
-            poseBuffers[0].Add(new PoseData(poseCameraFrame, time));
-            poseBuffers[1].Add(new PoseData(poseCameraFrame, time));
-            poseBuffers[2].Add(new PoseData(poseCameraFrame, time));
+            for (int i = 0; i < 3; i++)
+            {
+                if (filterActivated[i])
+                {
+                    lock(poseLock)
+                    {
+                        poseBuffers[i].Add(new PoseData(poseCameraFrame[i], time));
+                    }
+                }
+            }
         }
 
         public void ExportBuffers(string[] path)
         {
             for (int i = 0; i < path.Length; i++)
             {
-                var poseDataList = poseBuffers[i].Memory.ToList();
-                Csv.WriteCsv(path[i], poseDataList);
+                if (filterActivated[i])
+                {
+                    var poseDataList = poseBuffers[i].Memory.ToList();
+                    Csv.WriteCsv(path[i], poseDataList);
+                }
             }
         }
 
-        // ---------------------------------------------- Event Handlers
+        public void ExportBuffersLast(string[] path, bool append=true, bool header=false) 
+        {
+            lock (poseLock)
+            {
+                time = stopWatch.ElapsedMilliseconds / 1000;
+                for (int i = 0; i < path.Length; i++)
+                {
+                    if (filterActivated[i])
+                    {
+                        PoseData poseData;
+                        if (header)
+                        {
+                            poseData = new PoseData(new double[6], 0);
+                        }
+                        else { poseData = poseBuffers[i].Memory.Last(); }
+                        Csv.AppendCsv(path[i], poseData, append, header);
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Event Hanlders
 
         private void ApiDisconnected()
         {
@@ -493,5 +563,8 @@ namespace FanucController
         {
 
         }
+
+        #endregion
+
     }
 }

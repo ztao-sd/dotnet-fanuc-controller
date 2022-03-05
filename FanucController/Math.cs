@@ -9,7 +9,8 @@ namespace FanucController
 {
     public static class MathLib
     {
-        // ---------------------------- Kinematics
+
+        #region Kinematics
 
         public static Matrix<double> RotationMatrix(double alpha, double beta, double gamma)
         {
@@ -42,7 +43,9 @@ namespace FanucController
             return angles;
         }
 
-        // ---------------------------- Linear Algebra
+        #endregion
+
+        #region Linear Algebra
 
         public static Vector<double> PointToLinePoint(Vector<double> A, Vector<double> B, Vector<double> P)
         {
@@ -65,9 +68,10 @@ namespace FanucController
             res[3] = left[0] * right[1] - left[1] * right[0];
             return res;
         }
-    }
 
-    // ---------------------------- LookUpTable
+        #endregion
+
+    }
 
     public class LookUpTable
     {
@@ -103,4 +107,6 @@ namespace FanucController
             return qValue;
         }
     }
+
+
 }

@@ -18,17 +18,57 @@ using MathNet.Numerics.LinearAlgebra;
 namespace FanucController
 {
 
-    // ------------------------------------------- Data IO
+    #region Data IO
 
     public static class Csv
     {
+
+        private static CsvConfiguration appendConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = false,
+        };
+
         public static void WriteCsv<T>(string path, List<T> dataList, bool append=false)
         {
             using (var writer = new StreamWriter(path, append: append))
             {
-                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                if (!append)
                 {
-                    csv.WriteRecord(dataList);
+                    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                    {
+                        csv.WriteRecords(dataList);
+                    }
+                }
+                else
+                { 
+                    using (var csv = new CsvWriter(writer, appendConfig))
+                    {
+                        csv.WriteRecords(dataList);
+                    }
+                }
+                
+            }
+        }
+
+        public static void AppendCsv<T>(string path, T data, bool append=true, bool header = false)
+        {
+            using (var writer = new StreamWriter(path, append: append))
+            {
+                if (header)
+                {
+                    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                    {
+                        csv.WriteHeader<T>();
+                        csv.NextRecord();
+                    }
+                }
+                else
+                {
+                    using (var csv = new CsvWriter(writer, appendConfig))
+                    {
+                        csv.WriteRecord(data);
+                        csv.NextRecord();
+                    }
                 }
             }
         }
@@ -38,6 +78,7 @@ namespace FanucController
             List<T> record;
             using (var reader = new StreamReader(path))
             {
+               
                 using(var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
                     record = csv.GetRecords<T>().ToList();
@@ -106,24 +147,26 @@ namespace FanucController
 
         public Buffer(int size)
         {
-            this.Index = 0;
-            this.memory = new T[size];
-            this.Full = false;
+            Size = size;
+            Index = 0;
+            memory = new T[size];
+            Full = false;
+            
         }
 
         public T[] Memory
         {
             get
             {
-                if (this.Full)
+                if (Full)
                 {
-                    return this.memory;
+                    return memory;
                 }
                 else
                 {
 
-                    var subArray = new T[this.Index];
-                    Array.Copy(this.memory, 0, subArray, 0, this.Index);
+                    var subArray = new T[Index];
+                    Array.Copy(memory, 0, subArray, 0, Index);
                     return subArray;
                 }
             }
@@ -131,7 +174,7 @@ namespace FanucController
 
         public void Reset()
         {
-            Array.Clear(this.memory, 0, this.memory.Length);
+            Array.Clear(memory, 0, memory.Length);
         }
 
         public void Add(T item)
@@ -146,8 +189,9 @@ namespace FanucController
         }
     }
 
+    #endregion
 
-    // ------------------------------------------- Logger
+    #region Logger
 
     public class LogDisplay
     {
@@ -267,5 +311,7 @@ namespace FanucController
             return sinkConfiguration.Sink(MemorySink.Instance, restrictedToMinimumLevel, levelSwitch);
         }
     }
+
+    #endregion
 
 }

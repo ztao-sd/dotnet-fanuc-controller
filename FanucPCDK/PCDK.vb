@@ -2,6 +2,8 @@
 
 Public Module PCDK
 
+#Region "Declarations"
+
     ' Connection
     Public Robot As FRCRobot = New FRCRobot
     Public RobotConnected As Boolean = False
@@ -25,6 +27,8 @@ Public Module PCDK
     Private objCurGrpPos(1) As FRCCurGroupPosition
     Private objCurXYZWPR(1) As FRCXyzWpr
     Private objCurJoint As FRCJoint
+
+#End Region
 
 #Region "Connection"
     Public Sub Connect(ByVal ipText As String)

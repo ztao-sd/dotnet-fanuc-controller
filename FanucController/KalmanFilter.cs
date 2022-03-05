@@ -7,6 +7,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace FanucController
 {
+
     public class KalmanFilter
     {
         protected double CtrackInterval = 1 / 29;
@@ -33,10 +34,13 @@ namespace FanucController
         protected Matrix<double> H; // Observation matrix
 
         public KalmanFilter()
-        { 
+        {
             // State transition matrix
-            A = CreateMatrix.DenseDiagonal<double>(12, 12, CtrackInterval);
-            A.ClearRows(new int[] { 0, 1, 2, 3, 4, 5 });
+            A = CreateMatrix.DenseIdentity<double>(12);
+            for (int i = 0; i < 6; i++)
+            {
+                A[i, 6 + i] = CtrackInterval;
+            }
             // Measurment noise matrix
             R = CreateMatrix.DenseDiagonal<double>(6, 0.001);
             double[] r = new double[6] { 0.001, 0.001, 0.001, 0.001, 0.001, 0.001 };
@@ -46,16 +50,17 @@ namespace FanucController
             }
             P_ = CreateMatrix.DenseDiagonal<double>(12, 0.05);
             Q = CreateMatrix.DenseDiagonal<double>(12, 0.00001);
-            I = CreateMatrix.DenseDiagonal<double>(12, 1);
+            I = CreateMatrix.DenseIdentity<double>(12);
+            H = CreateMatrix.DenseIdentity<double>(6, 12);
         }
 
         public virtual void Initialize(Vector<double> initPose)
         {
             // Initial state
             X_ = CreateVector.Dense<double>(12);
-            initPose.CopySubVectorTo(this.X_, 0, 0, 6);
+            initPose.CopySubVectorTo(X_, 0, 0, 6);
             // Clear variables
-            X.Clear();
+            X = CreateVector.Dense<double>(12);
         }
 
         public virtual Vector<double> Estimate(Vector<double> pose)
@@ -134,4 +139,5 @@ namespace FanucController
         }
 
     }
+
 }
