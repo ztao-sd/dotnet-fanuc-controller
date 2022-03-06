@@ -35,7 +35,7 @@ Public Module PCDK
 
         Robot.Connect(ipText)
         RobotConnected = True
-        RobotName = Robot.SysVariables.Item("$SCR_GRP[1].$ROBOT_MODEL")
+        RobotName = Robot.SysVariables.Item("$SCR_GRP[1].$ROBOT_MODEL").Value
 
     End Sub
 
@@ -52,9 +52,9 @@ Public Module PCDK
     Public Sub SetupDPM(ByVal sch As Integer)
 
         Dim channel As String
-        For i As Integer = 0 To 5
-            channel = "$DPM_SCH[" + sch + "].$GRP[1].$OFS[" + Str(i) + "].$INI_OFS"
-            objVarChannels(i) = Robot.SysVariables(channel)
+        For i As Integer = 1 To 6
+            channel = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[" & i.ToString() & "].$INI_OFS"
+            objVarChannels(i - 1) = Robot.SysVariables(channel)
         Next
 
     End Sub
@@ -62,15 +62,45 @@ Public Module PCDK
     Public Sub SetupIO()
 
         For i As Integer = 1 To 10
-            digIns(i) = Robot.IOTypes.Item(1).Signals.Item(i) ' only simulated inputs
-            digOuts(i) = Robot.IOTypes.Item(2).Signals.Item(i)
+            digIns(i - 1) = Robot.IOTypes.Item(1).Signals.Item(i) ' only simulated inputs
+            digOuts(i - 1) = Robot.IOTypes.Item(2).Signals.Item(i)
         Next
 
     End Sub
 
-    Public Sub ApplyDPM(ByVal u As Double())
+    Public Sub ApplyDPM(ByVal u As Double(), ByVal sch As Integer)
+
+        Dim channel As String
+        'Dim objVar1chan As FRRobot.FRCVar
+        'Dim objVar2chan As FRRobot.FRCVar
+        'Dim objVar3chan As FRRobot.FRCVar
+        'Dim objVar4chan As FRRobot.FRCVar
+        'Dim objVar5chan As FRRobot.FRCVar
+        'Dim objVar6chan As FRRobot.FRCVar
+
+        'Dim ChannelX As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[1].$INI_OFS"
+        'Dim ChannelY As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[2].$INI_OFS"
+        'Dim ChannelZ As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[3].$INI_OFS"
+        'Dim ChannelW As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[4].$INI_OFS"
+        'Dim ChannelP As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[5].$INI_OFS"
+        'Dim ChannelR As String = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[6].$INI_OFS"
+
+        'objVar1chan = Robot.SysVariables(ChannelX)
+        'objVar1chan.Value = u(0)
+        'objVar2chan = Robot.SysVariables(ChannelY)
+        'objVar2chan.Value = u(1)
+        'objVar3chan = Robot.SysVariables(ChannelZ)
+        'objVar3chan.Value = u(2)
+        'objVar4chan = Robot.SysVariables(ChannelW)
+        'objVar4chan.Value = u(3)
+        'objVar5chan = Robot.SysVariables(ChannelP)
+        'objVar5chan.Value = u(4)
+        'objVar6chan = Robot.SysVariables(ChannelR)
+        'objVar6chan.Value = u(5)
 
         For i As Integer = 0 To 5
+            channel = "$DPM_SCH[" & sch.ToString() & "].$GRP[1].$OFS[" & (i + 1).ToString() & "].$INI_OFS"
+            objVarChannels(i) = Robot.SysVariables(channel)
             objVarChannels(i).Value = u(i)
         Next
 
@@ -151,7 +181,7 @@ Public Module PCDK
 
     Public Function GetJointPosition() As Double()
 
-        Dim jointVector(6) As Double
+        Dim jointVector(5) As Double
         jointVector(0) = objCurJoint(1)
         jointVector(1) = objCurJoint(2)
         jointVector(2) = objCurJoint(3)
@@ -166,7 +196,10 @@ Public Module PCDK
 
 #Region "Integration"
 
-    Public Sub SetupAll()
+    Public Sub SetupAll(ByVal sch As Integer)
+
+        SetReferenceFrame()
+        SetupDPM(sch)
 
     End Sub
 

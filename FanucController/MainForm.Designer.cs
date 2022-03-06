@@ -42,6 +42,7 @@ namespace FanucController
             this.textBoxVxBeta = new System.Windows.Forms.TextBox();
             this.textBoxVxGamma = new System.Windows.Forms.TextBox();
             this.groupBoxVx = new System.Windows.Forms.GroupBox();
+            this.checkBoxVxDisplay = new System.Windows.Forms.CheckBox();
             this.checkBoxVxRkf = new System.Windows.Forms.CheckBox();
             this.checkBoxVxRaw = new System.Windows.Forms.CheckBox();
             this.checkBoxVxKf = new System.Windows.Forms.CheckBox();
@@ -82,8 +83,6 @@ namespace FanucController
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.checkBoxPcdkPoseAppend = new System.Windows.Forms.CheckBox();
             this.buttonPcdkExportPose = new System.Windows.Forms.Button();
-            this.radioButtonPcdkUserFrame = new System.Windows.Forms.RadioButton();
-            this.radioButtonPcdkWorldFrame = new System.Windows.Forms.RadioButton();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -123,7 +122,7 @@ namespace FanucController
             this.comboBoxRotationXyz = new System.Windows.Forms.ComboBox();
             this.buttonTestLogger = new System.Windows.Forms.Button();
             this.buttonVxTest = new System.Windows.Forms.Button();
-            this.checkBoxVxDisplay = new System.Windows.Forms.CheckBox();
+            this.comboBoxPcdkPose = new System.Windows.Forms.ComboBox();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -264,6 +263,18 @@ namespace FanucController
             this.groupBoxVx.TabIndex = 9;
             this.groupBoxVx.TabStop = false;
             this.groupBoxVx.Text = "VXelemets";
+            // 
+            // checkBoxVxDisplay
+            // 
+            this.checkBoxVxDisplay.AutoSize = true;
+            this.checkBoxVxDisplay.Checked = true;
+            this.checkBoxVxDisplay.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxVxDisplay.Location = new System.Drawing.Point(210, 13);
+            this.checkBoxVxDisplay.Name = "checkBoxVxDisplay";
+            this.checkBoxVxDisplay.Size = new System.Drawing.Size(60, 17);
+            this.checkBoxVxDisplay.TabIndex = 14;
+            this.checkBoxVxDisplay.Text = "Display";
+            this.checkBoxVxDisplay.UseVisualStyleBackColor = true;
             // 
             // checkBoxVxRkf
             // 
@@ -442,6 +453,8 @@ namespace FanucController
             // checkBoxPcdkDisplay
             // 
             this.checkBoxPcdkDisplay.AutoSize = true;
+            this.checkBoxPcdkDisplay.Checked = true;
+            this.checkBoxPcdkDisplay.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxPcdkDisplay.Location = new System.Drawing.Point(189, 9);
             this.checkBoxPcdkDisplay.Name = "checkBoxPcdkDisplay";
             this.checkBoxPcdkDisplay.Size = new System.Drawing.Size(60, 17);
@@ -630,10 +643,9 @@ namespace FanucController
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.comboBoxPcdkPose);
             this.groupBox2.Controls.Add(this.checkBoxPcdkPoseAppend);
             this.groupBox2.Controls.Add(this.buttonPcdkExportPose);
-            this.groupBox2.Controls.Add(this.radioButtonPcdkUserFrame);
-            this.groupBox2.Controls.Add(this.radioButtonPcdkWorldFrame);
             this.groupBox2.Controls.Add(this.label9);
             this.groupBox2.Controls.Add(this.label8);
             this.groupBox2.Controls.Add(this.label4);
@@ -674,28 +686,6 @@ namespace FanucController
             this.buttonPcdkExportPose.Text = "Export";
             this.buttonPcdkExportPose.UseVisualStyleBackColor = true;
             this.buttonPcdkExportPose.Click += new System.EventHandler(this.buttonPcdkExportPose_Click);
-            // 
-            // radioButtonPcdkUserFrame
-            // 
-            this.radioButtonPcdkUserFrame.AutoSize = true;
-            this.radioButtonPcdkUserFrame.Location = new System.Drawing.Point(144, 53);
-            this.radioButtonPcdkUserFrame.Name = "radioButtonPcdkUserFrame";
-            this.radioButtonPcdkUserFrame.Size = new System.Drawing.Size(79, 17);
-            this.radioButtonPcdkUserFrame.TabIndex = 33;
-            this.radioButtonPcdkUserFrame.TabStop = true;
-            this.radioButtonPcdkUserFrame.Text = "User Frame";
-            this.radioButtonPcdkUserFrame.UseVisualStyleBackColor = true;
-            // 
-            // radioButtonPcdkWorldFrame
-            // 
-            this.radioButtonPcdkWorldFrame.AutoSize = true;
-            this.radioButtonPcdkWorldFrame.Location = new System.Drawing.Point(144, 33);
-            this.radioButtonPcdkWorldFrame.Name = "radioButtonPcdkWorldFrame";
-            this.radioButtonPcdkWorldFrame.Size = new System.Drawing.Size(85, 17);
-            this.radioButtonPcdkWorldFrame.TabIndex = 33;
-            this.radioButtonPcdkWorldFrame.TabStop = true;
-            this.radioButtonPcdkWorldFrame.Text = "World Frame";
-            this.radioButtonPcdkWorldFrame.UseVisualStyleBackColor = true;
             // 
             // label9
             // 
@@ -1052,17 +1042,17 @@ namespace FanucController
             this.buttonVxTest.UseVisualStyleBackColor = true;
             this.buttonVxTest.Click += new System.EventHandler(this.buttonVxTest_Click);
             // 
-            // checkBoxVxDisplay
+            // comboBoxPcdkPose
             // 
-            this.checkBoxVxDisplay.AutoSize = true;
-            this.checkBoxVxDisplay.Checked = true;
-            this.checkBoxVxDisplay.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxVxDisplay.Location = new System.Drawing.Point(210, 13);
-            this.checkBoxVxDisplay.Name = "checkBoxVxDisplay";
-            this.checkBoxVxDisplay.Size = new System.Drawing.Size(60, 17);
-            this.checkBoxVxDisplay.TabIndex = 14;
-            this.checkBoxVxDisplay.Text = "Display";
-            this.checkBoxVxDisplay.UseVisualStyleBackColor = true;
+            this.comboBoxPcdkPose.FormattingEnabled = true;
+            this.comboBoxPcdkPose.Items.AddRange(new object[] {
+            "World Frame",
+            "User Frame"});
+            this.comboBoxPcdkPose.Location = new System.Drawing.Point(139, 43);
+            this.comboBoxPcdkPose.Name = "comboBoxPcdkPose";
+            this.comboBoxPcdkPose.Size = new System.Drawing.Size(84, 21);
+            this.comboBoxPcdkPose.TabIndex = 36;
+            this.comboBoxPcdkPose.Text = "User Frame";
             // 
             // MainForm
             // 
@@ -1137,8 +1127,6 @@ namespace FanucController
         private System.Windows.Forms.Button buttonPcdkGetJoint;
         private System.Windows.Forms.Button buttonPcdkAttachJoint;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.RadioButton radioButtonPcdkUserFrame;
-        private System.Windows.Forms.RadioButton radioButtonPcdkWorldFrame;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label4;
@@ -1196,6 +1184,7 @@ namespace FanucController
         private System.Windows.Forms.TextBox textBoxVxBeta;
         private System.Windows.Forms.TextBox textBoxVxGamma;
         private System.Windows.Forms.ComboBox comboBoxVxFilter;
+        private System.Windows.Forms.ComboBox comboBoxPcdkPose;
     }
 }
 

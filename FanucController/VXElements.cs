@@ -545,12 +545,12 @@ namespace FanucController
 
         private void TrackingStarted()
         {
-            stopWatch.Start();
+            //stopWatch.Start();
         }
 
         private void TrackingStopped()
         {
-            stopWatch.Stop();
+            //stopWatch.Stop();
         }
 
         private void TrackingDataReady()

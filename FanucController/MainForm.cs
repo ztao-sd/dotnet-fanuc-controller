@@ -34,10 +34,6 @@ namespace FanucController
 
         public string LoggerTestPath = Path.Combine(TopDir, "LoggerTest", "log_test_1.txt");
 
-        // Vx Path
-        public string[] VxPaths;
-        
-
         // Timer (threadpool)
         public System.Timers.Timer Timer;
 
@@ -47,16 +43,29 @@ namespace FanucController
 
         // Form timer
         public System.Windows.Forms.Timer FormTimer;
-        
-        // VxApi
-        public VXelementsUtility Vx;
-        
+
         // Log Memory
         public MemorySink LogMemory;
 
+        // Vx Path
+        public string[] VxPaths;
+
+        // VxApi
+        public VXelementsUtility Vx;
+
+        // PCDK pose
+        public double[] PoseWF;
+        public double[] PoseUF;
+        public double[] Joint;
+
         // PCDK Buffers
-        public Buffer<PoseData> poseBuffer;
-        public Buffer<JointData> jointBuffer;
+        public Buffer<PoseData> PoseWFBuffer;
+        public Buffer<PoseData> PoseUFBuffer;
+        public Buffer<JointData> JointBuffer;
+
+        // PCDK Program Monitoring Bool
+        public bool IsRunning;
+        public bool IsAborterd;
 
         #endregion
 
@@ -81,6 +90,13 @@ namespace FanucController
             VxPaths[1] = Path.Combine(OutputDir, "VxKf.csv");
             VxPaths[2] = Path.Combine(OutputDir, "VxRkf.csv");
 
+            // PCDK
+            IsRunning = false;
+            IsAborterd = true;
+            PoseWFBuffer = new Buffer<PoseData>(20000);
+            PoseUFBuffer = new Buffer<PoseData>(20000);
+            JointBuffer = new Buffer<JointData>(20000);
+
             // Timer
             Timer = new System.Timers.Timer();
             Timer.Interval = 500; // 80 ms
@@ -98,6 +114,7 @@ namespace FanucController
 
             // Stop watch
             StopWatch = new Stopwatch();
+            StopWatch.Start();
             Time = 0;
 
             // Initialize VXelement API
@@ -157,7 +174,9 @@ namespace FanucController
             {
                 buttonPcdkConnect.Enabled = false;
                 PCDK.Connect(textBoxPcdkIpAddress.Text);
-                PCDK.SetReferenceFrame();
+                PCDK.SetReferenceFrame(); // Should be apart of connect
+                PCDK.SetupJoint();
+                PCDK.SetupIO();
                 textBoxPcdkRobotName.Text = PCDK.RobotName;
                 buttonPcdkConnect.Text = "Disconnect";
                 buttonPcdkConnect.Enabled = true;
@@ -176,10 +195,19 @@ namespace FanucController
 
         private void buttonPcdkGetPose_Click(object sender, EventArgs e)
         {
-            double?[] pose = getPcdkPose();
-            Time = StopWatch.ElapsedMilliseconds / 1000;
-            addToPcdkBuffers(pose, null, Time);
-            updatePCDKTxtBox(pose, null);
+            getPcdkPose();
+            if (checkBoxPcdkDisplay.Checked)
+            {
+                updatePCDKTxtBox(PoseWF, PoseUF, null);
+            }
+            if (checkBoxPcdkPoseAppend.Checked)
+            {
+                string path;
+                path = Path.Combine(OutputDir, "PcdkPoseWF.csv");
+                appendPcdkPoseCsv(path, PoseWFBuffer);
+                path = Path.Combine(OutputDir, "PcdkPoseUF.csv");
+                appendPcdkPoseCsv(path, PoseUFBuffer);
+            }
         }
 
         private void buttonAttachPose_Click(object sender, EventArgs e)
@@ -188,6 +216,14 @@ namespace FanucController
             {
                 buttonPcdkAttachPose.Enabled = false;
                 FormTimer.Tick += buttonPcdkGetPose_Click;
+                if (checkBoxPcdkPoseAppend.Checked)
+                {
+                    string path;
+                    path = Path.Combine(OutputDir, "PcdkPoseWF.csv");
+                    Csv.AppendCsv(path, new PoseData(new double[6], 0), append: false, header: true);
+                    path = Path.Combine(OutputDir, "PcdkPoseUF.csv");
+                    Csv.AppendCsv(path, new PoseData(new double[6], 0), append: false, header: true);
+                }
                 buttonPcdkAttachPose.Text = "Detach";
                 buttonPcdkAttachPose.Enabled = true;
             }
@@ -203,17 +239,29 @@ namespace FanucController
 
         private void buttonPcdkExportPose_Click(object sender, EventArgs e)
         {
-            string path = Path.Combine(OutputDir, "PcdkPose.csv");
-            List<PoseData> poseData = poseBuffer.Memory.ToList();
+            List<PoseData> poseData;
+            string path;
+            path = Path.Combine(OutputDir, "PcdkPoseWF.csv");
+            poseData = PoseWFBuffer.Memory.ToList();
+            Csv.WriteCsv(path, poseData);
+            path = Path.Combine(OutputDir, "PcdkPoseUF.csv");
+            poseData = PoseUFBuffer.Memory.ToList();
             Csv.WriteCsv(path, poseData);
         }
 
         private void buttonPcdkGetJoint_Click(object sender, EventArgs e)
         {
-            double?[] joint = getPcdkJoint();
-            Time = StopWatch.ElapsedMilliseconds / 1000;
-            addToPcdkBuffers(null, joint, Time);
-            updatePCDKTxtBox(null, joint);
+            getPcdkJoint();
+            if (checkBoxPcdkDisplay.Checked)
+            {
+                updatePCDKTxtBox(null, null, Joint);
+            }
+            if (checkBoxPcdkJointAppend.Checked)
+            {
+                string path;
+                path = Path.Combine(OutputDir, "PcdkJoint.csv");
+                appendPcdkJointCsv(path, JointBuffer);
+            }
         }
 
         private void buttonPcdkAttachJoint_Click(object sender, EventArgs e)
@@ -222,6 +270,12 @@ namespace FanucController
             {
                 buttonPcdkAttachJoint.Enabled = false;
                 FormTimer.Tick += buttonPcdkGetJoint_Click;
+                if (checkBoxPcdkJointAppend.Checked)
+                {
+                    string path;
+                    path = Path.Combine(OutputDir, "PcdkJoint.csv");
+                    Csv.AppendCsv(path, new JointData(new double[6], 0), append: false, header: true);
+                }
                 buttonPcdkAttachJoint.Text = "Detach";
                 buttonPcdkAttachJoint.Enabled = true;
             }
@@ -237,7 +291,7 @@ namespace FanucController
         private void buttonPcdkExportJoint_Click(object sender, EventArgs e)
         {
             string path = Path.Combine(OutputDir, "PcdkJoint.csv");
-            List<JointData> jointData = jointBuffer.Memory.ToList();
+            List<JointData> jointData = JointBuffer.Memory.ToList();
             Csv.WriteCsv(path, jointData);
         }
 
@@ -250,44 +304,50 @@ namespace FanucController
             u[3] = Convert.ToDouble(textBoxPcdkOffsetW.Text);
             u[4] = Convert.ToDouble(textBoxPcdkOffsetP.Text);
             u[5] = Convert.ToDouble(textBoxPcdkOffsetR.Text);
-            PCDK.ApplyDPM(u);
+            if (u.Select(x => x * x).Sum() < 5 * 5)
+            {
+                //PCDK.SetupDPM(sch: (int)numericUpDownPcdkDpmSch.Value);
+                PCDK.ApplyDPM(u, sch: (int)numericUpDownPcdkDpmSch.Value);
+            }
         }
 
         // -------------------------- Helpers
 
-        private double?[] getPcdkPose()
+        private void monitorPcdkProgram(string programName)
         {
-            if (radioButtonPcdkWorldFrame.Checked)
-            {
-                return PCDK.GetPoseWF().Select(x => (double?)x).ToArray();
-            }
-            else if (radioButtonPcdkUserFrame.Checked)
-            {
-                return PCDK.GetPoseUF().Select(x => (double?)x).ToArray();
-            }
-            return null;
+            IsRunning = PCDK.IsRunning();
+            IsAborterd = PCDK.IsAborted();
         }
 
-        private double?[] getPcdkJoint()
+        private void appendPcdkPoseCsv(string path, Buffer<PoseData> poseBuffer)
         {
-
-            return PCDK.GetJointPosition().Select(x => (double?)x).ToArray();
+            PoseData poseData;
+            poseData = poseBuffer.Memory.Last();
+            Csv.AppendCsv(path, poseData, append: true, header: false);
         }
 
-        private void addToPcdkBuffers(double?[] pose, double?[] joint, double time)
+        private void appendPcdkJointCsv(string path, Buffer<JointData> jointBuffer)
         {
-            if (!checkBoxPcdkDisplay.Checked) { return; }
+            JointData jointData;
+            jointData = jointBuffer.Memory.Last();
+            Csv.AppendCsv(path, jointData, append: true, header: false);
+        }
 
-            if (pose != null)
-            {
-                double[] array = pose.Select(x => (double)x).ToArray();
-                poseBuffer.Add(new PoseData(array, time));
-            }
-            if (joint != null)
-            {
-                double[] array = joint.Select(x => (double)x).ToArray();
-                jointBuffer.Add(new JointData(array, time));
-            }
+        private void getPcdkPose()
+        {
+            Time = StopWatch.Elapsed.TotalSeconds;
+            PCDK.SetReferenceFrame();
+            PoseWF = PCDK.GetPoseWF();
+            PoseUF = PCDK.GetPoseUF();
+            PoseWFBuffer.Add(new PoseData(PoseWF, Time));
+            PoseUFBuffer.Add(new PoseData(PoseUF, Time));
+        }
+
+        private void getPcdkJoint()
+        {
+            Time = StopWatch.Elapsed.TotalSeconds;
+            Joint = PCDK.GetJointPosition();
+            JointBuffer.Add(new JointData(Joint, Time));
         }
 
         #endregion
@@ -392,15 +452,26 @@ namespace FanucController
             }
         }
 
-        private void updatePCDKTxtBox(double?[] pose, double?[] joint)
+        private void updatePCDKTxtBox(double[] poseWF, double[] poseUF, double[] joint)
         {
             if (this.InvokeRequired)
             {
-                Action safeUpdate = () => updatePCDKTxtBox(pose, joint);
+                Action safeUpdate = () => updatePCDKTxtBox(poseWF, poseUF, joint);
                 this.Invoke(safeUpdate);
             }
             else
             {
+                double[] pose = null;
+                switch (comboBoxPcdkPose.Text)
+                {
+                    case "World Frame":
+                        pose = poseWF;
+                        break;
+                    case "User Frame":
+                        pose = poseUF;
+                        break;
+                }
+
                 if (pose != null)
                 {
                     textBoxPcdkX.Text = pose[0].ToString();

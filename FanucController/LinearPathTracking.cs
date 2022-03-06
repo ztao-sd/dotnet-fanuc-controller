@@ -117,7 +117,7 @@ namespace FanucController
             Vector<double> u = Pid(e);
             if (this.Watcher.LimitCheck(e, u))
             {
-                PCDK.ApplyDPM(u.AsArray());
+                PCDK.ApplyDPM(u.AsArray(), 1);
             }
             // Save data to buffer
 
