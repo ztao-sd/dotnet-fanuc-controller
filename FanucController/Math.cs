@@ -37,9 +37,9 @@ namespace FanucController
         public static double[] FixedAnglesIkine(Matrix<double> R)
         {
             double[] angles = new double[3];
-            angles[0] = Math.Atan2(-R[2, 0], Math.Sqrt(Math.Pow(R[0, 0], 2) + Math.Pow(R[1, 0] , 2)));
-            angles[1] = Math.Atan2(R[1, 0] / Math.Cos(angles[0]), R[0, 0] / Math.Cos(angles[0]));
-            angles[2] = Math.Atan2(R[2, 1] / Math.Cos(angles[0]), R[2, 2] / Math.Cos(angles[0]));
+            angles[1] = Math.Atan2(-R[2, 0], Math.Sqrt(Math.Pow(R[0, 0], 2) + Math.Pow(R[1, 0] , 2)));
+            angles[2] = Math.Atan2(R[1, 0] / Math.Cos(angles[1]), R[0, 0] / Math.Cos(angles[1]));
+            angles[0] = Math.Atan2(R[2, 1] / Math.Cos(angles[1]), R[2, 2] / Math.Cos(angles[1]));
             return angles;
         }
 
@@ -65,7 +65,7 @@ namespace FanucController
             var res = CreateVector.Dense<double>(3);
             res[0] = left[1] * right[2] - left[2] * right[1];
             res[1] = -left[0] * right[2] + left[2] * right[0];
-            res[3] = left[0] * right[1] - left[1] * right[0];
+            res[2] = left[0] * right[1] - left[1] * right[0];
             return res;
         }
 

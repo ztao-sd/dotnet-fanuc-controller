@@ -68,6 +68,30 @@ Public Module PCDK
 
     End Sub
 
+    Public Function GetDigitalOutput(ByVal i As Integer) As Boolean
+
+        Return digOuts(i - 1).Value
+
+    End Function
+
+    Public Function GetDigitalInput(ByVal i As Integer) As Boolean
+
+        Return digIns(i - 1).Value
+
+    End Function
+
+    Public Sub SetDigitalInput(ByVal i As Integer, ByVal switch As Boolean)
+
+        digIns(i - 1).Value = switch
+
+    End Sub
+
+    Public Sub SetDigitalOutput(ByVal i As Integer, ByVal switch As Boolean)
+
+        digOuts(i - 1).Value = switch
+
+    End Sub
+
     Public Sub ApplyDPM(ByVal u As Double(), ByVal sch As Integer)
 
         Dim channel As String

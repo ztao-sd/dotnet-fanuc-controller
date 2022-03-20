@@ -53,7 +53,6 @@ namespace FanucController
             this.label1 = new System.Windows.Forms.Label();
             this.buttonVxExit = new System.Windows.Forms.Button();
             this.buttonVxExport = new System.Windows.Forms.Button();
-            this.textBoxDebug = new System.Windows.Forms.TextBox();
             this.listViewLogger = new System.Windows.Forms.ListView();
             this.columnHeaderLevel = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeaderMessage = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -81,6 +80,7 @@ namespace FanucController
             this.buttonPcdkGetJoint = new System.Windows.Forms.Button();
             this.buttonPcdkAttachJoint = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.comboBoxPcdkPose = new System.Windows.Forms.ComboBox();
             this.checkBoxPcdkPoseAppend = new System.Windows.Forms.CheckBox();
             this.buttonPcdkExportPose = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
@@ -116,13 +116,48 @@ namespace FanucController
             this.textBoxPcdkRobotName = new System.Windows.Forms.TextBox();
             this.buttonPcdkConnect = new System.Windows.Forms.Button();
             this.groupBoxExperiment = new System.Windows.Forms.GroupBox();
-            this.buttonQuickSetup = new System.Windows.Forms.Button();
-            this.label24 = new System.Windows.Forms.Label();
-            this.checkBoxDPM = new System.Windows.Forms.CheckBox();
+            this.groupBox7 = new System.Windows.Forms.GroupBox();
+            this.buttonPoseGet = new System.Windows.Forms.Button();
+            this.buttonPoseShow = new System.Windows.Forms.Button();
+            this.textBoxLinearPathW = new System.Windows.Forms.TextBox();
+            this.textBoxLinearPathP = new System.Windows.Forms.TextBox();
+            this.textBoxLinearPathR = new System.Windows.Forms.TextBox();
+            this.textBoxLinearPathZ = new System.Windows.Forms.TextBox();
+            this.textBoxLinearPathY = new System.Windows.Forms.TextBox();
+            this.textBoxLinearPathX = new System.Windows.Forms.TextBox();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.buttonLinearPathLoadJson = new System.Windows.Forms.Button();
+            this.buttonLinearPath = new System.Windows.Forms.Button();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.buttonRotationIdLoadJson = new System.Windows.Forms.Button();
+            this.buttonRotationIdWriteJson = new System.Windows.Forms.Button();
+            this.buttonRotationId = new System.Windows.Forms.Button();
             this.comboBoxRotationXyz = new System.Windows.Forms.ComboBox();
+            this.label24 = new System.Windows.Forms.Label();
+            this.comboBoxPoseFrame = new System.Windows.Forms.ComboBox();
+            this.buttonRecordPose = new System.Windows.Forms.Button();
+            this.label25 = new System.Windows.Forms.Label();
+            this.comboBoxPoseDict = new System.Windows.Forms.ComboBox();
+            this.buttonQuickSetup = new System.Windows.Forms.Button();
+            this.checkBoxDPM = new System.Windows.Forms.CheckBox();
             this.buttonTestLogger = new System.Windows.Forms.Button();
             this.buttonVxTest = new System.Windows.Forms.Button();
-            this.comboBoxPcdkPose = new System.Windows.Forms.ComboBox();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.comboBoxFileStructure = new System.Windows.Forms.ComboBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.dataGridView = new System.Windows.Forms.DataGridView();
+            this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.buttonAddRow = new System.Windows.Forms.Button();
+            this.label26 = new System.Windows.Forms.Label();
+            this.buttonDgvDisplay = new System.Windows.Forms.Button();
+            this.buttonPcdkAttachAll = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -130,11 +165,16 @@ namespace FanucController
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPcdkDpmSch)).BeginInit();
             this.groupBoxExperiment.SuspendLayout();
+            this.groupBox7.SuspendLayout();
+            this.groupBox6.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.groupBox5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.SuspendLayout();
             // 
             // buttonRunMain
             // 
-            this.buttonRunMain.Location = new System.Drawing.Point(6, 262);
+            this.buttonRunMain.Location = new System.Drawing.Point(6, 306);
             this.buttonRunMain.Name = "buttonRunMain";
             this.buttonRunMain.Size = new System.Drawing.Size(75, 23);
             this.buttonRunMain.TabIndex = 0;
@@ -259,7 +299,7 @@ namespace FanucController
             this.groupBoxVx.Controls.Add(this.textBoxVxX);
             this.groupBoxVx.Location = new System.Drawing.Point(586, 12);
             this.groupBoxVx.Name = "groupBoxVx";
-            this.groupBoxVx.Size = new System.Drawing.Size(398, 288);
+            this.groupBoxVx.Size = new System.Drawing.Size(314, 288);
             this.groupBoxVx.TabIndex = 9;
             this.groupBoxVx.TabStop = false;
             this.groupBoxVx.Text = "VXelemets";
@@ -381,14 +421,6 @@ namespace FanucController
             this.buttonVxExport.UseVisualStyleBackColor = true;
             this.buttonVxExport.Click += new System.EventHandler(this.buttonVxExport_Click);
             // 
-            // textBoxDebug
-            // 
-            this.textBoxDebug.Location = new System.Drawing.Point(573, 416);
-            this.textBoxDebug.Multiline = true;
-            this.textBoxDebug.Name = "textBoxDebug";
-            this.textBoxDebug.Size = new System.Drawing.Size(252, 145);
-            this.textBoxDebug.TabIndex = 10;
-            // 
             // listViewLogger
             // 
             this.listViewLogger.BackColor = System.Drawing.Color.White;
@@ -426,7 +458,7 @@ namespace FanucController
             // labelDebug
             // 
             this.labelDebug.AutoSize = true;
-            this.labelDebug.Location = new System.Drawing.Point(570, 400);
+            this.labelDebug.Location = new System.Drawing.Point(604, 375);
             this.labelDebug.Name = "labelDebug";
             this.labelDebug.Size = new System.Drawing.Size(39, 13);
             this.labelDebug.TabIndex = 12;
@@ -666,6 +698,18 @@ namespace FanucController
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Pose";
+            // 
+            // comboBoxPcdkPose
+            // 
+            this.comboBoxPcdkPose.FormattingEnabled = true;
+            this.comboBoxPcdkPose.Items.AddRange(new object[] {
+            "World Frame",
+            "User Frame"});
+            this.comboBoxPcdkPose.Location = new System.Drawing.Point(139, 43);
+            this.comboBoxPcdkPose.Name = "comboBoxPcdkPose";
+            this.comboBoxPcdkPose.Size = new System.Drawing.Size(84, 21);
+            this.comboBoxPcdkPose.TabIndex = 36;
+            this.comboBoxPcdkPose.Text = "User Frame";
             // 
             // checkBoxPcdkPoseAppend
             // 
@@ -970,45 +1014,176 @@ namespace FanucController
             // 
             // groupBoxExperiment
             // 
+            this.groupBoxExperiment.Controls.Add(this.groupBox7);
+            this.groupBoxExperiment.Controls.Add(this.groupBox6);
+            this.groupBoxExperiment.Controls.Add(this.groupBox4);
+            this.groupBoxExperiment.Controls.Add(this.comboBoxPoseFrame);
+            this.groupBoxExperiment.Controls.Add(this.buttonRecordPose);
+            this.groupBoxExperiment.Controls.Add(this.label25);
+            this.groupBoxExperiment.Controls.Add(this.comboBoxPoseDict);
             this.groupBoxExperiment.Controls.Add(this.buttonQuickSetup);
-            this.groupBoxExperiment.Controls.Add(this.label24);
             this.groupBoxExperiment.Controls.Add(this.checkBoxDPM);
-            this.groupBoxExperiment.Controls.Add(this.comboBoxRotationXyz);
             this.groupBoxExperiment.Controls.Add(this.buttonRunMain);
-            this.groupBoxExperiment.Location = new System.Drawing.Point(27, 12);
+            this.groupBoxExperiment.Location = new System.Drawing.Point(12, 12);
             this.groupBoxExperiment.Name = "groupBoxExperiment";
-            this.groupBoxExperiment.Size = new System.Drawing.Size(249, 299);
+            this.groupBoxExperiment.Size = new System.Drawing.Size(271, 344);
             this.groupBoxExperiment.TabIndex = 14;
             this.groupBoxExperiment.TabStop = false;
             this.groupBoxExperiment.Text = "FANUC Experiment";
             // 
-            // buttonQuickSetup
+            // groupBox7
             // 
-            this.buttonQuickSetup.Location = new System.Drawing.Point(146, 258);
-            this.buttonQuickSetup.Name = "buttonQuickSetup";
-            this.buttonQuickSetup.Size = new System.Drawing.Size(97, 30);
-            this.buttonQuickSetup.TabIndex = 4;
-            this.buttonQuickSetup.Text = "Quick Setup";
-            this.buttonQuickSetup.UseVisualStyleBackColor = true;
+            this.groupBox7.Controls.Add(this.buttonPoseGet);
+            this.groupBox7.Controls.Add(this.buttonPoseShow);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathW);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathP);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathR);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathZ);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathY);
+            this.groupBox7.Controls.Add(this.textBoxLinearPathX);
+            this.groupBox7.Location = new System.Drawing.Point(93, 173);
+            this.groupBox7.Name = "groupBox7";
+            this.groupBox7.Size = new System.Drawing.Size(172, 115);
+            this.groupBox7.TabIndex = 23;
+            this.groupBox7.TabStop = false;
+            this.groupBox7.Text = "Pose";
             // 
-            // label24
+            // buttonPoseGet
             // 
-            this.label24.AutoSize = true;
-            this.label24.Location = new System.Drawing.Point(124, 111);
-            this.label24.Name = "label24";
-            this.label24.Size = new System.Drawing.Size(22, 13);
-            this.label24.TabIndex = 3;
-            this.label24.Text = "xyz";
+            this.buttonPoseGet.Location = new System.Drawing.Point(91, 78);
+            this.buttonPoseGet.Name = "buttonPoseGet";
+            this.buttonPoseGet.Size = new System.Drawing.Size(38, 23);
+            this.buttonPoseGet.TabIndex = 24;
+            this.buttonPoseGet.Text = "Get";
+            this.buttonPoseGet.UseVisualStyleBackColor = true;
+            this.buttonPoseGet.Click += new System.EventHandler(this.buttonPoseGet_Click);
             // 
-            // checkBoxDPM
+            // buttonPoseShow
             // 
-            this.checkBoxDPM.AutoSize = true;
-            this.checkBoxDPM.Location = new System.Drawing.Point(115, 176);
-            this.checkBoxDPM.Name = "checkBoxDPM";
-            this.checkBoxDPM.Size = new System.Drawing.Size(50, 17);
-            this.checkBoxDPM.TabIndex = 2;
-            this.checkBoxDPM.Text = "DPM";
-            this.checkBoxDPM.UseVisualStyleBackColor = true;
+            this.buttonPoseShow.Location = new System.Drawing.Point(12, 78);
+            this.buttonPoseShow.Name = "buttonPoseShow";
+            this.buttonPoseShow.Size = new System.Drawing.Size(63, 23);
+            this.buttonPoseShow.TabIndex = 23;
+            this.buttonPoseShow.Text = "Show";
+            this.buttonPoseShow.UseVisualStyleBackColor = true;
+            this.buttonPoseShow.Click += new System.EventHandler(this.buttonPoseShow_Click);
+            // 
+            // textBoxLinearPathW
+            // 
+            this.textBoxLinearPathW.Location = new System.Drawing.Point(12, 47);
+            this.textBoxLinearPathW.Name = "textBoxLinearPathW";
+            this.textBoxLinearPathW.Size = new System.Drawing.Size(48, 20);
+            this.textBoxLinearPathW.TabIndex = 17;
+            // 
+            // textBoxLinearPathP
+            // 
+            this.textBoxLinearPathP.Location = new System.Drawing.Point(66, 47);
+            this.textBoxLinearPathP.Name = "textBoxLinearPathP";
+            this.textBoxLinearPathP.Size = new System.Drawing.Size(46, 20);
+            this.textBoxLinearPathP.TabIndex = 18;
+            // 
+            // textBoxLinearPathR
+            // 
+            this.textBoxLinearPathR.Location = new System.Drawing.Point(118, 47);
+            this.textBoxLinearPathR.Name = "textBoxLinearPathR";
+            this.textBoxLinearPathR.Size = new System.Drawing.Size(46, 20);
+            this.textBoxLinearPathR.TabIndex = 19;
+            // 
+            // textBoxLinearPathZ
+            // 
+            this.textBoxLinearPathZ.Location = new System.Drawing.Point(118, 17);
+            this.textBoxLinearPathZ.Name = "textBoxLinearPathZ";
+            this.textBoxLinearPathZ.Size = new System.Drawing.Size(46, 20);
+            this.textBoxLinearPathZ.TabIndex = 20;
+            // 
+            // textBoxLinearPathY
+            // 
+            this.textBoxLinearPathY.Location = new System.Drawing.Point(66, 17);
+            this.textBoxLinearPathY.Name = "textBoxLinearPathY";
+            this.textBoxLinearPathY.Size = new System.Drawing.Size(46, 20);
+            this.textBoxLinearPathY.TabIndex = 21;
+            // 
+            // textBoxLinearPathX
+            // 
+            this.textBoxLinearPathX.Location = new System.Drawing.Point(12, 17);
+            this.textBoxLinearPathX.Name = "textBoxLinearPathX";
+            this.textBoxLinearPathX.Size = new System.Drawing.Size(48, 20);
+            this.textBoxLinearPathX.TabIndex = 22;
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.buttonLinearPathLoadJson);
+            this.groupBox6.Controls.Add(this.buttonLinearPath);
+            this.groupBox6.Location = new System.Drawing.Point(6, 173);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(81, 86);
+            this.groupBox6.TabIndex = 11;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Linear Path";
+            // 
+            // buttonLinearPathLoadJson
+            // 
+            this.buttonLinearPathLoadJson.Location = new System.Drawing.Point(5, 48);
+            this.buttonLinearPathLoadJson.Name = "buttonLinearPathLoadJson";
+            this.buttonLinearPathLoadJson.Size = new System.Drawing.Size(75, 23);
+            this.buttonLinearPathLoadJson.TabIndex = 1;
+            this.buttonLinearPathLoadJson.Text = "Load JSON";
+            this.buttonLinearPathLoadJson.UseVisualStyleBackColor = true;
+            this.buttonLinearPathLoadJson.Click += new System.EventHandler(this.buttonLinearPathLoadJson_Click);
+            // 
+            // buttonLinearPath
+            // 
+            this.buttonLinearPath.Location = new System.Drawing.Point(6, 19);
+            this.buttonLinearPath.Name = "buttonLinearPath";
+            this.buttonLinearPath.Size = new System.Drawing.Size(75, 23);
+            this.buttonLinearPath.TabIndex = 0;
+            this.buttonLinearPath.Text = "Write JSON";
+            this.buttonLinearPath.UseVisualStyleBackColor = true;
+            this.buttonLinearPath.Click += new System.EventHandler(this.buttonLinearPath_Click);
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.buttonRotationIdLoadJson);
+            this.groupBox4.Controls.Add(this.buttonRotationIdWriteJson);
+            this.groupBox4.Controls.Add(this.buttonRotationId);
+            this.groupBox4.Controls.Add(this.comboBoxRotationXyz);
+            this.groupBox4.Controls.Add(this.label24);
+            this.groupBox4.Location = new System.Drawing.Point(6, 60);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(259, 107);
+            this.groupBox4.TabIndex = 10;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Rotation ID";
+            // 
+            // buttonRotationIdLoadJson
+            // 
+            this.buttonRotationIdLoadJson.Location = new System.Drawing.Point(6, 76);
+            this.buttonRotationIdLoadJson.Name = "buttonRotationIdLoadJson";
+            this.buttonRotationIdLoadJson.Size = new System.Drawing.Size(75, 23);
+            this.buttonRotationIdLoadJson.TabIndex = 9;
+            this.buttonRotationIdLoadJson.Text = "Load JSON";
+            this.buttonRotationIdLoadJson.UseVisualStyleBackColor = true;
+            this.buttonRotationIdLoadJson.Click += new System.EventHandler(this.buttonRotationIdLoadJson_Click);
+            // 
+            // buttonRotationIdWriteJson
+            // 
+            this.buttonRotationIdWriteJson.Location = new System.Drawing.Point(6, 47);
+            this.buttonRotationIdWriteJson.Name = "buttonRotationIdWriteJson";
+            this.buttonRotationIdWriteJson.Size = new System.Drawing.Size(75, 23);
+            this.buttonRotationIdWriteJson.TabIndex = 9;
+            this.buttonRotationIdWriteJson.Text = "Write JSON";
+            this.buttonRotationIdWriteJson.UseVisualStyleBackColor = true;
+            this.buttonRotationIdWriteJson.Click += new System.EventHandler(this.buttonRotationIdWriteJson_Click);
+            // 
+            // buttonRotationId
+            // 
+            this.buttonRotationId.Location = new System.Drawing.Point(6, 19);
+            this.buttonRotationId.Name = "buttonRotationId";
+            this.buttonRotationId.Size = new System.Drawing.Size(75, 23);
+            this.buttonRotationId.TabIndex = 9;
+            this.buttonRotationId.Text = "Compute";
+            this.buttonRotationId.UseVisualStyleBackColor = true;
+            this.buttonRotationId.Click += new System.EventHandler(this.buttonRotationId_Click);
             // 
             // comboBoxRotationXyz
             // 
@@ -1017,10 +1192,90 @@ namespace FanucController
             "xy",
             "xz",
             "yz"});
-            this.comboBoxRotationXyz.Location = new System.Drawing.Point(127, 127);
+            this.comboBoxRotationXyz.Location = new System.Drawing.Point(121, 28);
             this.comboBoxRotationXyz.Name = "comboBoxRotationXyz";
             this.comboBoxRotationXyz.Size = new System.Drawing.Size(95, 21);
             this.comboBoxRotationXyz.TabIndex = 1;
+            this.comboBoxRotationXyz.Text = "xz";
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(118, 12);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(22, 13);
+            this.label24.TabIndex = 3;
+            this.label24.Text = "xyz";
+            // 
+            // comboBoxPoseFrame
+            // 
+            this.comboBoxPoseFrame.FormattingEnabled = true;
+            this.comboBoxPoseFrame.Items.AddRange(new object[] {
+            "World Frame",
+            "User Frame"});
+            this.comboBoxPoseFrame.Location = new System.Drawing.Point(157, 34);
+            this.comboBoxPoseFrame.Name = "comboBoxPoseFrame";
+            this.comboBoxPoseFrame.Size = new System.Drawing.Size(91, 21);
+            this.comboBoxPoseFrame.TabIndex = 8;
+            this.comboBoxPoseFrame.Text = "World Frame";
+            // 
+            // buttonRecordPose
+            // 
+            this.buttonRecordPose.Location = new System.Drawing.Point(11, 31);
+            this.buttonRecordPose.Name = "buttonRecordPose";
+            this.buttonRecordPose.Size = new System.Drawing.Size(59, 23);
+            this.buttonRecordPose.TabIndex = 7;
+            this.buttonRecordPose.Text = "Record";
+            this.buttonRecordPose.UseMnemonic = false;
+            this.buttonRecordPose.UseVisualStyleBackColor = true;
+            this.buttonRecordPose.Click += new System.EventHandler(this.buttonRecordPose_Click);
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(83, 19);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(79, 13);
+            this.label25.TabIndex = 6;
+            this.label25.Text = "Pose Dict Keys";
+            // 
+            // comboBoxPoseDict
+            // 
+            this.comboBoxPoseDict.FormattingEnabled = true;
+            this.comboBoxPoseDict.Items.AddRange(new object[] {
+            "startP",
+            "endP",
+            "idX1",
+            "idX2",
+            "idY1",
+            "idY2",
+            "idZ1",
+            "idZ2",
+            "testP1",
+            "testP2 "});
+            this.comboBoxPoseDict.Location = new System.Drawing.Point(86, 33);
+            this.comboBoxPoseDict.Name = "comboBoxPoseDict";
+            this.comboBoxPoseDict.Size = new System.Drawing.Size(65, 21);
+            this.comboBoxPoseDict.TabIndex = 5;
+            // 
+            // buttonQuickSetup
+            // 
+            this.buttonQuickSetup.Location = new System.Drawing.Point(146, 299);
+            this.buttonQuickSetup.Name = "buttonQuickSetup";
+            this.buttonQuickSetup.Size = new System.Drawing.Size(97, 30);
+            this.buttonQuickSetup.TabIndex = 4;
+            this.buttonQuickSetup.Text = "Quick Setup";
+            this.buttonQuickSetup.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxDPM
+            // 
+            this.checkBoxDPM.AutoSize = true;
+            this.checkBoxDPM.Location = new System.Drawing.Point(90, 305);
+            this.checkBoxDPM.Name = "checkBoxDPM";
+            this.checkBoxDPM.Size = new System.Drawing.Size(50, 17);
+            this.checkBoxDPM.TabIndex = 2;
+            this.checkBoxDPM.Text = "DPM";
+            this.checkBoxDPM.UseVisualStyleBackColor = true;
             // 
             // buttonTestLogger
             // 
@@ -1034,7 +1289,7 @@ namespace FanucController
             // 
             // buttonVxTest
             // 
-            this.buttonVxTest.Location = new System.Drawing.Point(663, 329);
+            this.buttonVxTest.Location = new System.Drawing.Point(745, 329);
             this.buttonVxTest.Name = "buttonVxTest";
             this.buttonVxTest.Size = new System.Drawing.Size(61, 19);
             this.buttonVxTest.TabIndex = 15;
@@ -1042,30 +1297,170 @@ namespace FanucController
             this.buttonVxTest.UseVisualStyleBackColor = true;
             this.buttonVxTest.Click += new System.EventHandler(this.buttonVxTest_Click);
             // 
-            // comboBoxPcdkPose
+            // groupBox5
             // 
-            this.comboBoxPcdkPose.FormattingEnabled = true;
-            this.comboBoxPcdkPose.Items.AddRange(new object[] {
-            "World Frame",
-            "User Frame"});
-            this.comboBoxPcdkPose.Location = new System.Drawing.Point(139, 43);
-            this.comboBoxPcdkPose.Name = "comboBoxPcdkPose";
-            this.comboBoxPcdkPose.Size = new System.Drawing.Size(84, 21);
-            this.comboBoxPcdkPose.TabIndex = 36;
-            this.comboBoxPcdkPose.Text = "User Frame";
+            this.groupBox5.Controls.Add(this.textBox1);
+            this.groupBox5.Controls.Add(this.comboBoxFileStructure);
+            this.groupBox5.Location = new System.Drawing.Point(577, 416);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(454, 145);
+            this.groupBox5.TabIndex = 16;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "File Structure";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(157, 31);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(188, 20);
+            this.textBox1.TabIndex = 1;
+            // 
+            // comboBoxFileStructure
+            // 
+            this.comboBoxFileStructure.FormattingEnabled = true;
+            this.comboBoxFileStructure.Items.AddRange(new object[] {
+            "Top Directory",
+            "Output Directory",
+            "Reference Directory",
+            "Scripts Directory",
+            "VXelements Raw Path",
+            "VXelements KF Path",
+            "VXelements RKF Path",
+            "PCDK PoseWF Path",
+            "PCDK PoseUF Path",
+            "PCDK Joint Path",
+            "Linear Path Tracking PoseCamera Path",
+            "Linear Path Tracking PoseUF Path"});
+            this.comboBoxFileStructure.Location = new System.Drawing.Point(19, 31);
+            this.comboBoxFileStructure.Name = "comboBoxFileStructure";
+            this.comboBoxFileStructure.Size = new System.Drawing.Size(117, 21);
+            this.comboBoxFileStructure.TabIndex = 0;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(223, 375);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 3;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // dataGridView
+            // 
+            this.dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Column7,
+            this.Column1,
+            this.Column2,
+            this.Column3,
+            this.Column4,
+            this.Column5,
+            this.Column6});
+            this.dataGridView.Location = new System.Drawing.Point(906, 67);
+            this.dataGridView.Name = "dataGridView";
+            this.dataGridView.Size = new System.Drawing.Size(443, 274);
+            this.dataGridView.TabIndex = 17;
+            this.dataGridView.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView_CellContentClick);
+            // 
+            // Column7
+            // 
+            this.Column7.HeaderText = "Header";
+            this.Column7.Name = "Column7";
+            this.Column7.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            // 
+            // Column1
+            // 
+            this.Column1.HeaderText = "1";
+            this.Column1.Name = "Column1";
+            this.Column1.Width = 50;
+            // 
+            // Column2
+            // 
+            this.Column2.HeaderText = "2";
+            this.Column2.Name = "Column2";
+            this.Column2.Width = 50;
+            // 
+            // Column3
+            // 
+            this.Column3.HeaderText = "3";
+            this.Column3.Name = "Column3";
+            this.Column3.Width = 50;
+            // 
+            // Column4
+            // 
+            this.Column4.HeaderText = "4";
+            this.Column4.Name = "Column4";
+            this.Column4.Width = 50;
+            // 
+            // Column5
+            // 
+            this.Column5.HeaderText = "5";
+            this.Column5.Name = "Column5";
+            this.Column5.Width = 50;
+            // 
+            // Column6
+            // 
+            this.Column6.HeaderText = "6";
+            this.Column6.Name = "Column6";
+            this.Column6.Width = 50;
+            // 
+            // buttonAddRow
+            // 
+            this.buttonAddRow.Location = new System.Drawing.Point(1022, 352);
+            this.buttonAddRow.Name = "buttonAddRow";
+            this.buttonAddRow.Size = new System.Drawing.Size(75, 23);
+            this.buttonAddRow.TabIndex = 18;
+            this.buttonAddRow.Text = "Add Row";
+            this.buttonAddRow.UseVisualStyleBackColor = true;
+            this.buttonAddRow.Click += new System.EventHandler(this.buttonAddRow_Click);
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Location = new System.Drawing.Point(1008, 40);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(115, 13);
+            this.label26.TabIndex = 19;
+            this.label26.Text = "Real-Time Observation";
+            // 
+            // buttonDgvDisplay
+            // 
+            this.buttonDgvDisplay.Location = new System.Drawing.Point(906, 352);
+            this.buttonDgvDisplay.Name = "buttonDgvDisplay";
+            this.buttonDgvDisplay.Size = new System.Drawing.Size(75, 23);
+            this.buttonDgvDisplay.TabIndex = 20;
+            this.buttonDgvDisplay.Text = "Show";
+            this.buttonDgvDisplay.UseVisualStyleBackColor = true;
+            this.buttonDgvDisplay.Click += new System.EventHandler(this.buttonDgvDisplay_Click);
+            // 
+            // buttonPcdkAttachAll
+            // 
+            this.buttonPcdkAttachAll.Location = new System.Drawing.Point(586, 329);
+            this.buttonPcdkAttachAll.Name = "buttonPcdkAttachAll";
+            this.buttonPcdkAttachAll.Size = new System.Drawing.Size(75, 23);
+            this.buttonPcdkAttachAll.TabIndex = 21;
+            this.buttonPcdkAttachAll.Text = "Attach";
+            this.buttonPcdkAttachAll.UseVisualStyleBackColor = true;
+            this.buttonPcdkAttachAll.Click += new System.EventHandler(this.buttonPcdkAttachAll_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1043, 565);
+            this.ClientSize = new System.Drawing.Size(1396, 565);
+            this.Controls.Add(this.buttonPcdkAttachAll);
+            this.Controls.Add(this.buttonDgvDisplay);
+            this.Controls.Add(this.label26);
+            this.Controls.Add(this.buttonAddRow);
+            this.Controls.Add(this.dataGridView);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.buttonVxTest);
             this.Controls.Add(this.groupBoxExperiment);
             this.Controls.Add(this.groupBoxPCDK);
             this.Controls.Add(this.labelDebug);
             this.Controls.Add(this.labelLog);
             this.Controls.Add(this.listViewLogger);
-            this.Controls.Add(this.textBoxDebug);
             this.Controls.Add(this.groupBoxVx);
             this.Controls.Add(this.buttonTestLogger);
             this.Controls.Add(this.buttonTest);
@@ -1084,6 +1479,14 @@ namespace FanucController
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownPcdkDpmSch)).EndInit();
             this.groupBoxExperiment.ResumeLayout(false);
             this.groupBoxExperiment.PerformLayout();
+            this.groupBox7.ResumeLayout(false);
+            this.groupBox7.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1098,7 +1501,6 @@ namespace FanucController
         private System.Windows.Forms.Button buttonVxStopTracking;
         private System.Windows.Forms.Button buttonVxQuickConnect;
         private System.Windows.Forms.GroupBox groupBoxVx;
-        private System.Windows.Forms.TextBox textBoxDebug;
         private System.Windows.Forms.ListView listViewLogger;
         private System.Windows.Forms.ColumnHeader columnHeaderLevel;
         private System.Windows.Forms.ColumnHeader columnHeaderMessage;
@@ -1185,6 +1587,42 @@ namespace FanucController
         private System.Windows.Forms.TextBox textBoxVxGamma;
         private System.Windows.Forms.ComboBox comboBoxVxFilter;
         private System.Windows.Forms.ComboBox comboBoxPcdkPose;
+        private System.Windows.Forms.Label label25;
+        private System.Windows.Forms.ComboBox comboBoxPoseDict;
+        private System.Windows.Forms.Button buttonRecordPose;
+        private System.Windows.Forms.ComboBox comboBoxPoseFrame;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Button buttonRotationIdLoadJson;
+        private System.Windows.Forms.Button buttonRotationIdWriteJson;
+        private System.Windows.Forms.Button buttonRotationId;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.ComboBox comboBoxFileStructure;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button buttonLinearPath;
+        private System.Windows.Forms.Button buttonLinearPathLoadJson;
+        private System.Windows.Forms.GroupBox groupBox7;
+        private System.Windows.Forms.Button buttonPoseShow;
+        private System.Windows.Forms.TextBox textBoxLinearPathW;
+        private System.Windows.Forms.TextBox textBoxLinearPathP;
+        private System.Windows.Forms.TextBox textBoxLinearPathR;
+        private System.Windows.Forms.TextBox textBoxLinearPathZ;
+        private System.Windows.Forms.TextBox textBoxLinearPathY;
+        private System.Windows.Forms.TextBox textBoxLinearPathX;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button buttonPoseGet;
+        private System.Windows.Forms.DataGridView dataGridView;
+        private System.Windows.Forms.Button buttonAddRow;
+        private System.Windows.Forms.Label label26;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
+        private System.Windows.Forms.Button buttonDgvDisplay;
+        private System.Windows.Forms.Button buttonPcdkAttachAll;
     }
 }
 

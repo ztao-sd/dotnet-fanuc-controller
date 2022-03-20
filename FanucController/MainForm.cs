@@ -26,7 +26,7 @@ namespace FanucController
         #region Fields
 
         // Directories
-        public const string TopDir = @"D:\Fanuc Experiments\vx-test-0305";
+        public const string TopDir = @"D:\Fanuc Experiments\pcdk-test-0315";
         public string ReferenceDir;
         public string OutputDir;
         public string ScriptsDir;
@@ -47,11 +47,16 @@ namespace FanucController
         // Log Memory
         public MemorySink LogMemory;
 
+        // VxApi
+        public VXelementsUtility Vx;
+
         // Vx Path
         public string[] VxPaths;
 
-        // VxApi
-        public VXelementsUtility Vx;
+        // Vx Pose
+        public double[] VxPoseRaw;
+        public double[] VxPoseKf;
+        public double[] VxPoseRkf;
 
         // PCDK pose
         public double[] PoseWF;
@@ -67,6 +72,16 @@ namespace FanucController
         public bool IsRunning;
         public bool IsAborterd;
 
+        // PCDK Paths
+        public string[] PcdkPaths;
+
+        // Linear Path Tracking
+        public LinearPathTracking LinearTrack;
+
+        // DataGridView Rows
+        public List<DataGridViewRow> DataGridViewRows;
+        public Dictionary<string, double[]> ObsDict;
+
         #endregion
 
         #region Constructor
@@ -75,10 +90,10 @@ namespace FanucController
             InitializeComponent();
 
             // Directories
-            ReferenceDir = Path.Combine(TopDir, "Reference");
-            OutputDir = Path.Combine(TopDir, "Output");
+            ReferenceDir = Path.Combine(TopDir, "reference");
+            OutputDir = Path.Combine(TopDir, "output");
             ScriptsDir = Path.Combine(TopDir, "Scripts");
-            LogDir = Path.Combine(TopDir, "Log");
+            LogDir = Path.Combine(TopDir, "log");
             Directory.CreateDirectory(ReferenceDir);
             Directory.CreateDirectory(OutputDir);
             Directory.CreateDirectory(ScriptsDir);
@@ -99,14 +114,15 @@ namespace FanucController
 
             // Timer
             Timer = new System.Timers.Timer();
-            Timer.Interval = 500; // 80 ms
+            Timer.Interval = 100; // 80 ms
             Timer.AutoReset = true;
+            Timer.Start();
             //Timer.Elapsed += async (s, e) => await TestEventHandlerAsync();
             //this.Timer.Start();
 
             // Form Timer
             FormTimer = new System.Windows.Forms.Timer();
-            FormTimer.Interval = 80; // 200 ms
+            FormTimer.Interval = 200; // 200 ms
             FormTimer.Start();
 
             // Form closing
@@ -134,6 +150,9 @@ namespace FanucController
             Log.Information("Global logger configured!");
             LogMemory = MemorySink.Instance;
 
+            // Initialize Linear Path Tracking
+            LinearTrack = new LinearPathTracking(Vx, Timer, StopWatch, TopDir);
+
             // Initialize form text
             buttonPcdkConnect.Text = "Connect";
             textBoxPcdkIpAddress.Text = "192.168.0.10";
@@ -143,6 +162,11 @@ namespace FanucController
             textBoxPcdkOffsetW.Text = "0.0";
             textBoxPcdkOffsetP.Text = "0.0";
             textBoxPcdkOffsetR.Text = "0.0";
+
+            // Initialize 
+            DataGridViewRows = new List<DataGridViewRow>();
+            ObsDict = new Dictionary<string, double[]>();
+
         }
 
         //public async Task TestEventHandlerAsync()
@@ -161,7 +185,77 @@ namespace FanucController
 
         private void buttonRunMain_Click(object sender, EventArgs e)
         {
+            string pathPath = Path.Combine(ReferenceDir, "LinearPath.json");
+            LinearTrack.Init(pathPath, "TEST1214", 1, dpm:false);
+            LinearTrack.Start();
+        }
 
+        private void buttonRecordPose_Click(object sender, EventArgs e)
+        {
+            string key = comboBoxPoseDict.Text;
+            int sampleNum = 20;
+            Vector<double> pose = CreateVector.Dense<double>(6);
+            switch (comboBoxPoseFrame.Text)
+            {
+                case "World Frame":
+                    pose = LinearTrack.GetVxCameraPose(sampleNum);
+                    break;
+
+                case "User Frame":
+                    pose = LinearTrack.GetVxUFPose(sampleNum);
+                    break;
+            }
+            LinearTrack.RecordPose(key, pose);
+        }
+
+        private void buttonRotationId_Click(object sender, EventArgs e)
+        {
+            LinearTrack.RotationIdentify(comboBoxRotationXyz.Text);
+        }
+
+        private void buttonRotationIdWriteJson_Click(object sender, EventArgs e)
+        {
+            LinearTrack.RotationId.ToJson(ReferenceDir);
+        }
+
+        private void buttonRotationIdLoadJson_Click(object sender, EventArgs e)
+        {
+            LinearTrack.RotationId.ReadJson(ReferenceDir);
+        }
+
+        private void buttonLinearPath_Click(object sender, EventArgs e)
+        {
+            LinearTrack.LinearPath.GetData(LinearTrack.PoseDict, LinearTrack.RotationId);
+            LinearTrack.LinearPath.fileName = "LinearPath.json";
+            LinearTrack.LinearPath.ToJson(ReferenceDir);
+        }
+
+        private void buttonLinearPathLoadJson_Click(object sender, EventArgs e)
+        {
+            LinearTrack.LinearPath.ReadJson(ReferenceDir);
+        }
+
+        private void buttonPoseShow_Click(object sender, EventArgs e)
+        {
+            if (buttonPoseShow.Text == "Show")
+            {
+                buttonPoseShow.Enabled = false;
+                Timer.Elapsed += buttonPoseGet_Click;
+                buttonPoseShow.Text = "Hide";
+                buttonPoseShow.Enabled = true;
+            }
+            else if (buttonPoseShow.Text == "Hide")
+            {
+                buttonPoseShow.Enabled = false;
+                Timer.Elapsed -= buttonPoseGet_Click;
+                buttonPoseShow.Text = "Show";
+                buttonPoseShow.Enabled = true;
+            }
+        }
+
+        private void buttonPoseGet_Click(object sender, EventArgs e)
+        {
+            updateLinearTrackTxtBox();
         }
 
         #endregion
@@ -216,6 +310,7 @@ namespace FanucController
             {
                 buttonPcdkAttachPose.Enabled = false;
                 FormTimer.Tick += buttonPcdkGetPose_Click;
+                addDataGridViewRow("Pcdk");
                 if (checkBoxPcdkPoseAppend.Checked)
                 {
                     string path;
@@ -286,6 +381,12 @@ namespace FanucController
                 buttonPcdkAttachJoint.Text = "Attach";
                 buttonPcdkAttachJoint.Enabled = true;
             }
+        }
+
+        private void buttonPcdkAttachAll_Click(object sender, EventArgs e)
+        {
+            buttonPcdkAttachJoint_Click(sender, e);
+            buttonAttachPose_Click(sender, e);
         }
 
         private void buttonPcdkExportJoint_Click(object sender, EventArgs e)
@@ -367,7 +468,7 @@ namespace FanucController
         private void buttonVxQuickConnect_Click(object sender, EventArgs e)
         {
             string targetsPath = Path.Combine(ReferenceDir, "targets_0305.txt");
-            string modelPath = Path.Combine(ReferenceDir, "test_model_0305.txt");
+            string modelPath = Path.Combine(ReferenceDir, "model_0313.txt");
             Vx.QuickConnect(targetsPath, modelPath);
             // Activate the necessary filters
             Vx.filterActivated[0] = checkBoxVxRaw.Checked;
@@ -377,7 +478,7 @@ namespace FanucController
 
         private void buttonVxStartTracking_Click(object sender, EventArgs e)
         {
-            
+
             Vx.StartTracking();
             Vx.ExportBuffersLast(VxPaths, append: false, header: true);
             if (checkBoxVxAppend.Checked)
@@ -385,6 +486,7 @@ namespace FanucController
                 FormTimer.Tick += trackingEventHandler;
             }
             FormTimer.Tick += (s, ev) => updateVxTxtBox();
+            FormTimer.Tick += updateVxPose;
         }
 
         private void buttonVxStopTracking_Click(object sender, EventArgs e)
@@ -393,6 +495,7 @@ namespace FanucController
             if (checkBoxVxAppend.Checked)
             {
                 FormTimer.Tick -= trackingEventHandler;
+                FormTimer.Tick -= updateVxPose;
             }
         }
 
@@ -416,9 +519,36 @@ namespace FanucController
             Vx.ExportBuffersLast(VxPaths);
         }
 
+        private void updateVxPose(object s, EventArgs e)
+        {
+            VxPoseRaw = Vx.PoseCameraFrame.AsArray();
+            VxPoseKf = Vx.PoseCameraFrameKf.AsArray();
+            VxPoseRkf = Vx.PoseCameraFrameRkf.AsArray();
+        }
+
         #endregion
 
         #region Gui Update
+
+        public void updateLinearTrackTxtBox()
+        {
+            if (this.InvokeRequired)
+            {
+                Action safeUpdate = () => updateLinearTrackTxtBox();
+                this.Invoke(safeUpdate);
+            }
+            else
+            {
+                Vector<double> pose;
+                pose = LinearTrack.GetVxUFPose();
+                textBoxLinearPathX.Text = pose[0].ToString();
+                textBoxLinearPathY.Text = pose[1].ToString();
+                textBoxLinearPathZ.Text = pose[2].ToString();
+                textBoxLinearPathW.Text = pose[3].ToString();
+                textBoxLinearPathP.Text = pose[4].ToString();
+                textBoxLinearPathR.Text = pose[5].ToString();
+            }
+        }
 
         public void updateVxTxtBox()
         {
@@ -446,9 +576,9 @@ namespace FanucController
                 textBoxVxX.Text = pose[0].ToString("0.00000");
                 textBoxVxY.Text = pose[1].ToString("0.00000");
                 textBoxVxZ.Text = pose[2].ToString("0.00000");
-                textBoxVxAlpha.Text = (pose[3]*180/Math.PI).ToString("0.00000");
-                textBoxVxBeta.Text = (pose[4]*180/Math.PI).ToString("0.00000");
-                textBoxVxGamma.Text = (pose[5]*180/Math.PI).ToString("0.00000");
+                textBoxVxAlpha.Text = (pose[3] * 180 / Math.PI).ToString("0.00000");
+                textBoxVxBeta.Text = (pose[4] * 180 / Math.PI).ToString("0.00000");
+                textBoxVxGamma.Text = (pose[5] * 180 / Math.PI).ToString("0.00000");
             }
         }
 
@@ -490,9 +620,141 @@ namespace FanucController
                     textBoxPcdkJ5.Text = joint[4].ToString();
                     textBoxPcdkJ6.Text = joint[5].ToString();
                 }
+            }
+        }
+
+        #endregion
+
+        #region DataGridView
+
+        private void updateObsDict(object s, EventArgs e)
+        {
+            ObsDict["PcdkPoseUF"] = PoseUF;
+            ObsDict["PcdkPoseWF"] = PoseWF;
+            ObsDict["PcdkJoint"] = Joint;
+            ObsDict["VxPoseRaw"] = PoseUF;
+            ObsDict["VxPoseKf"] = PoseUF;
+            ObsDict["VxPoseRkf"] = PoseUF;
+            ObsDict["Pose"] = PoseUF;
+            ObsDict["PathError"] = PoseUF;
+        }
+
+        private void buttonDgvDisplay_Click(object sender, EventArgs e)
+        {
+            if (buttonDgvDisplay.Text == "Show")
+            {
+                buttonDgvDisplay.Enabled = false;
+                FormTimer.Tick += updateObsDict;
+                FormTimer.Tick += (s, ev) => updateDataGridViewRows(ObsDict);
+                buttonDgvDisplay.Enabled = true;
+            }
+            else if (buttonDgvDisplay.Text == "Hide")
+            {
+                buttonDgvDisplay.Enabled = false;
+                FormTimer.Tick -= updateObsDict;
+                FormTimer.Tick -= (s, ev) => updateDataGridViewRows(ObsDict);
+                buttonDgvDisplay.Enabled = true;
+            }
+        }
+
+        private void addDataGridViewRow(string header)
+        {
+            DataGridViewComboBoxCell comboHeaderCell = new DataGridViewComboBoxCell();
+            DataGridViewRow headerRow = new DataGridViewRow();
+            DataGridViewRow row = new DataGridViewRow();
+            switch (header)
+            {
+                case "Pcdk":
+                    headerRow.CreateCells(dataGridView, header, "X", "Y", "Z", "W", "P", "R");
+                    comboHeaderCell.DataSource = new object[] { "PcdkPoseUF", "PcdkPoseWF", "PcdkJoint" };
+                    comboHeaderCell.Value = "PcdkPoseUF";
+                    row.CreateCells(dataGridView);
+                    row.Cells[0] = comboHeaderCell;
+                    break;
+                case "Vx":
+                    headerRow.HeaderCell.Value = header;
+                    comboHeaderCell.Value = new object[] { "VxPoseRaw", "VxPoseKf", "VxPoseRkf" };
+                    row.Cells[0] = comboHeaderCell;
+                    break;
+                case "LinearTrack":
+                    headerRow.HeaderCell.Value = header;
+                    comboHeaderCell.Value = new object[] { "Pose", "PathError" };
+                    row.Cells[0] = comboHeaderCell;
+                    break;
+            }
+            dataGridView.Rows.Add(headerRow);
+            dataGridView.Rows.Add(row);
+        }
+
+        private void removeDataGridViewRow(string header)
+        {
+            DataGridViewRow headerRow = new DataGridViewRow();
+            DataGridViewRow row = new DataGridViewRow();
+            foreach (DataGridViewRow tempRow in dataGridView.Rows)
+            {
+                if (tempRow.Cells[0].Value == header)
+                {
+                    int idx = tempRow.Index;
+                    headerRow = dataGridView.Rows[idx];
+                    row = dataGridView.Rows[idx + 1];
+                }
+            }
+            dataGridView.Rows.Remove(headerRow);
+            dataGridView.Rows.Remove(row);
+        }
+
+        private void updateDataGridViewRows(Dictionary<string, double[]> obsDict)
+        {
+            foreach (DataGridViewRow row in dataGridView.Rows)
+            {
+                string header;
+                switch (row.Cells[0].Value)
+                {
+                    case "PcdkPoseUF":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                    case "PcdkPoseWF":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                    case "PcdkJoint":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                    case "VxPoseRKF":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                    case "VxPoseKF":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                    case "VxPose":
+                        header = row.Cells[0].Value.ToString();
+                        for (int i = 0; i < obsDict[header].Length; i++)
+                        {
+                            row.Cells[i + 1].Value = obsDict[header][i].ToString("0.00000");
+                        }
+                        break;
+                }
 
             }
-
         }
 
         #endregion
@@ -502,6 +764,36 @@ namespace FanucController
         #endregion
 
         #region Test
+
+        private void buttonAddRow_Click(object sender, EventArgs e)
+        {
+            //dataGridView.RowHeadersWidth = 100;
+            //foreach (DataGridViewRow row in dataGridView.Rows)
+            //{
+            //    if (row.IsNewRow)
+            //    {
+            //        row.HeaderCell.Value = "PCDK Pose WF";
+            //        foreach (DataGridViewCell cell in row.Cells)
+            //        {
+            //            cell.Value = "2";
+            //        }
+            //    }
+            //}
+            //var row1 = new string[6] { "1", "2", "3", "4", "5", "6"};
+            //DataGridViewRow x = new DataGridViewRow();
+            //x.HeaderCell.Value = "s";
+            //dataGridView.Rows.Add(x);
+            //var y = dataGridView.Rows;
+            ObsDict["PcdkPoseUF"] = new double[] { 1, 1, 1, 1, 1, 1 };
+            addDataGridViewRow("Pcdk");
+            updateDataGridViewRows(ObsDict);
+            Thread.Sleep(1000);
+            //removeDataGridViewRow("Pcdk");
+
+        }
+
+
+
         private void buttonTest_Click(object sender, EventArgs e)
         {
             //string level = "Debug";
@@ -573,13 +865,13 @@ namespace FanucController
         {
             foreach (string str in strArray)
             {
-                textBoxDebug.AppendText(str + Environment.NewLine);
+                //textBoxDebug.AppendText(str + Environment.NewLine);
             }
         }
 
         private void printToDebug(string str)
         {
-            textBoxDebug.AppendText(str + Environment.NewLine);
+            //textBoxDebug.AppendText(str + Environment.NewLine);
         }
 
         #endregion
@@ -592,7 +884,19 @@ namespace FanucController
         }
 
 
+
+
+
+
+
+
+
         #endregion
+
+        private void dataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
 
 
     }

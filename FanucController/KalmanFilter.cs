@@ -91,7 +91,7 @@ namespace FanucController
         private Matrix<double> barP;
         private Vector<double> d_;
         private Vector<double> d;
-        private Matrix<double> rP;
+        //private Matrix<double> rP;
 
         public RobustKalmanFilter()
         {

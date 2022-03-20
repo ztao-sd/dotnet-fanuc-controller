@@ -15,6 +15,8 @@ namespace FanucController
 {
     public class LinearPathTracking
     {
+        #region Fields
+        
         public string TopDir;
         public string OutputDir;
         public string ReferenceDir;
@@ -24,41 +26,182 @@ namespace FanucController
         public System.Timers.Timer Timer;
         public Stopwatch Stopwatch;
         public VXelementsUtility Vx;
-        public LinearPath linearPath;
-        public RotationIdentification rotationId;
-        public Dictionary<string, Vector<double>> poseDict;
+        public LinearPath LinearPath;
+        public RotationIdentification RotationId;
+        public Dictionary<string, Vector<double>> PoseDict;
         public Matrix<double> Kp;
-        private bool started;
-        private bool stopped;
+        public Buffer<PoseData> ErrorBuffer;
+        public Buffer<PoseData> ControlBuffer;
+        public Buffer<PoseData> PoseBuffer;
+        public double Time;
 
+        protected bool digOut2;
+        protected bool digOut3;
+        protected bool progStarted;
+        protected bool progStopped;
+        protected bool iterStarted;
+        protected bool iterStopped;
+        protected bool dpm;
+        protected int iterNum;
+        protected int iterIndex;
+        #endregion
+
+        #region Constructor
         public LinearPathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch, string topDir)
         {
-            this.Vx = vx;
-            this.Timer = timer;
-            this.Stopwatch = stopwatch;
-            this.TopDir = topDir;
-            this.OutputDir = Path.Combine(topDir, "Output");
-            this.ReferenceDir = Path.Combine(topDir, "Reference");
-            this.ScriptsDir = Path.Combine(topDir, "Scripts");
+            Vx = vx;
+            Timer = timer;
+            Stopwatch = stopwatch;
+            TopDir = topDir;
+            OutputDir = Path.Combine(topDir, "output");
+            ReferenceDir = Path.Combine(topDir, "reference");
+            ScriptsDir = Path.Combine(topDir, "scripts");
+            RotationId = new RotationIdentification();
+            RotationId.fileName = "RotationID.json";
+            LinearPath = new LinearPath();
+            LinearPath.fileName = "LinearPath.json";
+            PoseDict = new Dictionary<string, Vector<double>>();
+
+            // P Control
+            Kp = CreateMatrix.Dense<double>(6, 6);
+            Kp[0,0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
+
+            // Buffers
+            ErrorBuffer = new Buffer<PoseData>(20_000);
+            ControlBuffer = new Buffer<PoseData>(20_000);
+            PoseBuffer = new Buffer<PoseData>(20_000);
         }
+        #endregion
 
-        // ------------------------------- Actions
+        #region Path Tracking Actions
 
-        public void Init(string pathPath)
+        public void Init(string pathPath, string progName, int iter=1, bool dpm=false)
         {
-            this.linearPath = LinearPath.ReadJson(pathPath);
-
+            // Program & Path Info
+            LinearPath = LinearPath.FromJson(pathPath);
+            ProgramName = progName;
+            // Flags
+            progStarted = false;
+            progStopped = false;
+            iterStarted = false;
+            iterStopped = false;
+            digOut2 = false;
+            digOut3 = false;
+            // Iterations
+            iterNum = iter;
+            iterIndex = 0;
+            // PCDK
+            PCDK.SetupDPM(1);
+            PCDK.SetDigitalOutput(2, false);
+            // P Control
+            Kp = CreateMatrix.Dense<double>(6, 6);
+            Kp[0, 0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
+            // DPM Watcher
+            Watcher = new DpmWatcher
+            {
+                OffsetLimit = 0.5,
+                CumulativeOffset = CreateVector.DenseOfArray<double>(new double[3] { 0.0, 0.0, 0.0 }),
+                CumulativeOffsetLimit = 5,
+                ErrorLimit = 5,
+                CumulativeError = CreateVector.Dense<double>(3),
+                CumulativeErrorLimit = 5
+            };
+            // Reset Buffers
+            ErrorBuffer.Reset();
+            ControlBuffer.Reset();
+            PoseBuffer.Reset();
+            // DPM
+            this.dpm = dpm;
         }
 
         public void Start()
         {
-            this.Timer.Start();
+            if (!Timer.Enabled)
+            {
+                Timer.Start();
+            }
             PCDK.Run(this.ProgramName);
+            Timer.Elapsed += Loop;
+        }
+
+        public void Loop(object s, EventArgs ev)
+        {
+            // Monitor program
+            progStarted = PCDK.IsRunning();
+            progStopped = PCDK.IsAborted();
+            digOut3 = PCDK.GetDigitalOutput(3);
+
+            // Monital Digital IO
+            if (digOut3 && progStarted && !iterStarted)
+            {
+                digOut2 = true;
+                PCDK.SetDigitalOutput(2, digOut2);
+                iterStarted = true;
+            }
+            if (!iterStopped && progStopped)
+            {
+                digOut2 = false;
+                PCDK.SetDigitalOutput(2, digOut2);
+                iterStopped = true;
+            }
+            if (iterStarted && !iterStopped)
+            {
+                // Calculate error
+                Vector<double> x = GetVxUFPose();
+                Vector<double> closestP = MathLib.PointToLinePoint(LinearPath.PointStart.SubVector(0,3), LinearPath.PointEnd.SubVector(0,3), x.SubVector(0, 3));
+                Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
+                Vector<double> e = xd - x;
+                // Control
+                Vector<double> u = Pid(e);
+                double time = Stopwatch.Elapsed.TotalSeconds;
+                if (this.Watcher.LimitCheck(e.SubVector(0,3), u.SubVector(0,3)))
+                {
+                    if (dpm)
+                    {
+                        PCDK.ApplyDPM(u.AsArray(), 1);
+                    }
+                }
+                // Save data to buffer
+                ErrorBuffer.Add(new PoseData(e.AsArray(), time));
+                ControlBuffer.Add(new PoseData(u.AsArray(), time));
+                PoseBuffer.Add(new PoseData(x.AsArray(), time));
+            }
+            // Stop program if condition is reached
+            if (iterStopped)
+            {
+                Stop();
+            }
+
         }
 
         public void Stop()
         {
-            this.Timer.Stop();
+            // Timer
+            //Timer.Stop();
+            Timer.Elapsed -= Loop;
+            // Reset flag
+            progStarted = false;
+            progStopped = false;
+            iterStarted = false;
+            iterStopped = false;
+            // Export buffer data
+            string iterDir = Path.Combine(OutputDir, $"iteration_{iterIndex}");
+            Directory.CreateDirectory(iterDir);
+            string path;
+            path = Path.Combine(iterDir, "LineTrackError.csv");
+            Csv.WriteCsv<PoseData>(path, ErrorBuffer.Memory.ToList());
+            path = Path.Combine(iterDir, "LineTrackControl.csv");
+            Csv.WriteCsv(path, ControlBuffer.Memory.ToList());
+            path = Path.Combine(iterDir, "LineTrackPose.csv");
+            Csv.WriteCsv(path, PoseBuffer.Memory.ToList());
+            // Restart 
+            iterIndex++;
+            if (iterIndex < iterNum)
+            {
+                Console.WriteLine("Continue?");
+                Console.ReadLine();
+                Start();
+            }
         }
 
         public bool Check()
@@ -66,12 +209,16 @@ namespace FanucController
             return true;
         }
 
+        #endregion
+
+        #region Rotation and Linear Path Identification
+
         public void RecordPose(string key, Vector<double> pose)
         {
             /* Rotation keys: idX1, idX2, idY1, idY2, idZ1, idZ2, testP1, testP2
              * Linear path keys: startP, endP    
              */
-            this.poseDict[key] = pose;
+            PoseDict[key] = pose;
         }
 
         public void RecordIdentificationPose(ref Vector<double> idPose, int sampleNum)
@@ -84,53 +231,39 @@ namespace FanucController
             switch (xyz)
             {
                 case "xy":
-                    this.rotationId.x[0] = this.poseDict["idX1"]; this.rotationId.x[1] = this.poseDict["idX2"];
-                    this.rotationId.y[0] = this.poseDict["idY1"]; this.rotationId.x[1] = this.poseDict["idY2"];
-                    this.rotationId.CalculateRotationMatrixXY();
-                    this.rotationId.WriteJson(this.ReferenceDir);
+                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
+                    RotationId.y[0] = PoseDict["idY1"]; RotationId.x[1] = PoseDict["idY2"];
+                    RotationId.CalculateRotationMatrixXY();
+                    RotationId.ToJson(ReferenceDir);
                     break;
                 case "xz":
-                    this.rotationId.x[0] = this.poseDict["idX1"]; this.rotationId.x[1] = this.poseDict["idX2"];
-                    this.rotationId.z[0] = this.poseDict["idZ1"]; this.rotationId.z[1] = this.poseDict["idZ2"];
-                    this.rotationId.CalculateRotationMatrixXZ();
-                    this.rotationId.WriteJson(this.ReferenceDir);
+                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
+                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
+                    RotationId.CalculateRotationMatrixXZ();
+                    RotationId.ToJson(ReferenceDir);
                     break;
                 case "yz":
-                    this.rotationId.y[0] = this.poseDict["idY1"]; this.rotationId.y[1] = this.poseDict["idY2"];
-                    this.rotationId.z[0] = this.poseDict["idZ1"]; this.rotationId.z[1] = this.poseDict["idZ2"];
-                    this.rotationId.CalculateRotationMatrixYZ();
-                    this.rotationId.WriteJson(this.ReferenceDir);
+                    RotationId.y[0] = PoseDict["idY1"]; RotationId.y[1] = PoseDict["idY2"];
+                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
+                    RotationId.CalculateRotationMatrixYZ();
+                    RotationId.ToJson(ReferenceDir);
                     break;
             }
             
         }
 
+        #endregion
 
-        // ------------------------------- EventHandlers
-
-        private void elapsedEventHandler()
-        {
-            Vector<double> x = GetVxUFPose();
-            Vector<double> closestP = MathLib.PointToLinePoint(linearPath.PointStart, linearPath.PointEnd, x.SubVector(0, 3));
-            Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
-            Vector<double> e = xd - x;
-            Vector<double> u = Pid(e);
-            if (this.Watcher.LimitCheck(e, u))
-            {
-                PCDK.ApplyDPM(u.AsArray(), 1);
-            }
-            // Save data to buffer
-
-        }
-
-        // ------------------------------- Control
+        #region Control Algorithms
 
         public Vector<double> Pid(Vector<double> error)
         {
-            return this.Kp * error;
+            return Kp * error;
         }
 
-        // ------------------------------- Data acquisition & processing
+        #endregion
+
+        #region Data Acquisition & Processing
 
         public Vector<double> GetFanucPose()
         {
@@ -139,7 +272,7 @@ namespace FanucController
 
         public Vector<double> GetVxCameraPose()
         {
-            return this.Vx.PoseCameraFrameRkf;
+            return Vx.PoseCameraFrameRkf;
         }
 
         public Vector<double> GetVxCameraPose(int sampleNum)
@@ -148,7 +281,7 @@ namespace FanucController
             Vector<double> pose;
             for (int i = 0; i < sampleNum; i++)
             {
-                pose = this.Vx.PoseCameraFrameRkf;
+                pose = Vx.PoseCameraFrameRkf;
                 poseSum = CreateVector.DenseOfEnumerable(poseSum.Zip(pose, (x, y) => x + y));
                 System.Threading.Thread.Sleep(50);
             }
@@ -156,28 +289,31 @@ namespace FanucController
             return poseSum;
         }
 
+        public Vector<double> GetVxUFPose()
+        {
+            var cameraPose = VxCameraToUF(GetVxCameraPose(), RotationId.Rotation);
+            return cameraPose;
+        }
+
+        public Vector<double> GetVxUFPose(int sampleNum)
+        {
+            var cameraPose = VxCameraToUF(GetVxCameraPose(sampleNum), RotationId.Rotation);
+            return cameraPose;
+        }
+
+        // ------------------------------------------- Helper
         public Vector<double> VxCameraToUF(Vector<double> cameraPose, Matrix<double> rotationCameraUF)
         {
-            var cameraPosition = CreateVector.DenseOfEnumerable(cameraPose.Skip(3));
-            var rotationCamera = MathLib.RotationMatrix(cameraPose[4], cameraPose[5], cameraPose[6]);
+            // Apply transformation to cameraPose.
+            var cameraPosition = cameraPose.SubVector(0, 3);
+            var rotationCamera = MathLib.RotationMatrix(cameraPose[5], cameraPose[4], cameraPose[3]);
             var rotationUF = rotationCameraUF * rotationCamera;
             cameraPosition = rotationCameraUF * cameraPosition;
             var orientation = CreateVector.DenseOfArray(MathLib.FixedAnglesIkine(rotationUF));
             return (cameraPosition.ToColumnMatrix().Stack(orientation.ToColumnMatrix())).Column(0);
         }
 
-        public Vector<double> GetVxUFPose()
-        {
-            var cameraPose = VxCameraToUF(GetVxCameraPose(), this.rotationId.Rotation);
-            return cameraPose;
-        }
-
-        public Vector<double> GetVxUFPose(int sampleNum)
-        {
-            var cameraPose = VxCameraToUF(GetVxCameraPose(sampleNum), this.rotationId.Rotation);
-            return cameraPose;
-        }
-
+        #endregion
     }
 
     public class DpmWatcher
@@ -191,16 +327,16 @@ namespace FanucController
 
         public void Reset()
         {
-            this.CumulativeError.Clear();
-            this.CumulativeOffset.Clear();
+            CumulativeError.Clear();
+            CumulativeOffset.Clear();
         }
 
         public bool LimitCheck(Vector<double> error, Vector<double> offset)
         {
-            this.CumulativeError += error;
-            this.CumulativeOffset += offset;
-            if (error.L2Norm() > this.ErrorLimit || this.CumulativeError.L2Norm() > this.CumulativeErrorLimit ||
-                offset.L2Norm() > this.OffsetLimit || this.CumulativeOffset.L2Norm() > this.CumulativeOffsetLimit)
+            CumulativeError += error;
+            CumulativeOffset += offset;
+            if (error.L2Norm() > ErrorLimit || CumulativeError.L2Norm() > CumulativeErrorLimit ||
+                offset.L2Norm() > OffsetLimit || CumulativeOffset.L2Norm() > CumulativeOffsetLimit)
             {
                 return false;
             }
@@ -218,26 +354,26 @@ namespace FanucController
 
         public void CalculateRotationMatrixXY()
         {
-            var i = (this.x[2] - this.x[1]).SubVector(0, 3);
-            var j = (this.y[2] - this.y[1]).SubVector(0, 3);
+            var i = (x[1] - x[0]).SubVector(0, 3);
+            var j = (y[1] - y[0]).SubVector(0, 3);
             var k = MathLib.CrossProduct(i, j);
-            this.Rotation = MathLib.RotationMatrix(i, j, k);
+            Rotation = MathLib.RotationMatrix(i, j, k).Transpose();
         }
 
         public void CalculateRotationMatrixXZ()
         {
-            var i = (this.x[2] - this.x[1]).SubVector(0, 3);
-            var k = (this.z[2] - this.z[1]).SubVector(0, 3);
+            var i = (this.x[1] - this.x[0]).SubVector(0, 3);
+            var k = (this.z[1] - this.z[0]).SubVector(0, 3);
             var j = MathLib.CrossProduct(k, i);
-            this.Rotation = MathLib.RotationMatrix(i, j, k);
+            Rotation = MathLib.RotationMatrix(i, j, k).Transpose();
         }
 
         public void CalculateRotationMatrixYZ()
         {
-            var j = (this.y[2] - this.y[1]).SubVector(0, 3);
-            var k = (this.z[2] - this.z[1]).SubVector(0, 3);
+            var j = (this.y[1] - this.y[0]).SubVector(0, 3);
+            var k = (this.z[1] - this.z[0]).SubVector(0, 3);
             var i = MathLib.CrossProduct(j, k);
-            this.Rotation = MathLib.RotationMatrix(i, j, k);
+            Rotation = MathLib.RotationMatrix(i, j, k).Transpose();
         }
 
         public double[] RotationArray
@@ -246,19 +382,36 @@ namespace FanucController
             set { Rotation = CreateMatrix.DenseOfColumnMajor<double>(3, 3, value); }
         }
 
-        public RotationIdentification ReadJson(string dir)
+        public void ReadJson(string dir)
         {
-            string path = Path.Combine(dir, this.fileName);
-            return JsonSerializer.Deserialize<RotationIdentification>(path);
+            string path = Path.Combine(dir, fileName);
+            string jsonString = File.ReadAllText(path);
+            double[] array = JsonSerializer.Deserialize<RotationIdentification>(jsonString).RotationArray;
+            Rotation = CreateMatrix.DenseOfColumnMajor<double>(3, 3, array);
         }
 
-        public void WriteJson(string dir)
+        public static RotationIdentification FromJson(string path)
         {
-            string path = Path.Combine(dir, this.fileName);
-            string stringJson = JsonSerializer.Serialize(this);
+            string jsonString = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<RotationIdentification>(jsonString);
+        }
+
+        public void ToJson(string dir)
+        {
+            string path = Path.Combine(dir, fileName);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string stringJson = JsonSerializer.Serialize(this, options);
             File.WriteAllText(path, stringJson);
         }
 
+        public static void WriteJson(string path, Matrix<double> rotation)
+        {
+            RotationIdentification rotationIdentification = new RotationIdentification();
+            rotationIdentification.Rotation = rotation;
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string stringJson = JsonSerializer.Serialize(rotationIdentification, options);
+            File.WriteAllText(path, stringJson);
+        }
     }
 
     public class LinearPath
@@ -286,15 +439,34 @@ namespace FanucController
             set { PointEnd = CreateVector.DenseOfArray<double>(value); }
         }
 
-        public static LinearPath ReadJson(string path)
+        public void GetData(Dictionary<string, Vector<double>> poseDict, RotationIdentification rotId)
         {
-            return JsonSerializer.Deserialize<LinearPath>(path);
+            PointStart = poseDict["startP"];
+            PointEnd = poseDict["endP"];
+            Rotation = rotId.Rotation;
         }
 
-        public void WriteJson(string dir)
+        public void ReadJson(string outDir)
         {
-            string path = Path.Combine(dir, this.fileName);
-            string stringJson = JsonSerializer.Serialize(this);
+            string path = Path.Combine(outDir, fileName);
+            string jsonString = File.ReadAllText(path);
+            LinearPath temp = JsonSerializer.Deserialize<LinearPath>(jsonString);
+            RotationArray = temp.RotationArray;
+            PointStartArray = temp.PointStartArray;
+            PointEndArray = temp.PointEndArray;
+        }
+
+        public static LinearPath FromJson(string path)
+        {
+            string jsonString = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<LinearPath>(jsonString);
+        }
+
+        public void ToJson(string outDir)
+        {
+            string path = Path.Combine(outDir, fileName);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string stringJson = JsonSerializer.Serialize(this, options);
             File.WriteAllText(path, stringJson);
         }
 
@@ -306,7 +478,8 @@ namespace FanucController
                 PointStart = pointStart,
                 PointEnd = pointEnd
             };
-            string stringJson = JsonSerializer.Serialize(arrayJson);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string stringJson = JsonSerializer.Serialize(arrayJson, options);
             File.WriteAllText(path, stringJson);
         }
 
