@@ -15,7 +15,12 @@
       "ProjectGuid": "58af7742-af87-4b31-b4ea-a469cdcfb27a",
       "DisplayName": "FanucPCDK",
       "ColorIndex": 1
+    },
+    "7b889095-47dd-408b-aa8c-44c0b2a5e687": {
+      "ProjectGuid": "7b889095-47dd-408b-aa8c-44c0b2a5e687",
+      "DisplayName": "PythonNeuralNetPControl",
+      "ColorIndex": 2
     }
   },
-  "NextColorIndex": 2
+  "NextColorIndex": 3
 }

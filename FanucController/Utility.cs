@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Globalization;
+using System.Diagnostics;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -14,6 +16,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 using MathNet.Numerics.LinearAlgebra;
+using Python.Runtime;
 
 namespace FanucController
 {
@@ -28,7 +31,7 @@ namespace FanucController
             HasHeaderRecord = false,
         };
 
-        public static void WriteCsv<T>(string path, List<T> dataList, bool append=false)
+        public static void WriteCsv<T>(string path, List<T> dataList, bool append = false)
         {
             using (var writer = new StreamWriter(path, append: append))
             {
@@ -40,17 +43,17 @@ namespace FanucController
                     }
                 }
                 else
-                { 
+                {
                     using (var csv = new CsvWriter(writer, appendConfig))
                     {
                         csv.WriteRecords(dataList);
                     }
                 }
-                
+
             }
         }
 
-        public static void AppendCsv<T>(string path, T data, bool append=true, bool header = false)
+        public static void AppendCsv<T>(string path, T data, bool append = true, bool header = false)
         {
             using (var writer = new StreamWriter(path, append: append))
             {
@@ -78,8 +81,8 @@ namespace FanucController
             List<T> record;
             using (var reader = new StreamReader(path))
             {
-               
-                using(var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
                     record = csv.GetRecords<T>().ToList();
                 }
@@ -101,7 +104,7 @@ namespace FanucController
         public PoseData(Vector<double> pose, double time)
         {
             Time = time;
-            X = pose[0]; Y= pose[1]; Z = pose[2];
+            X = pose[0]; Y = pose[1]; Z = pose[2];
             Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
         }
 
@@ -151,7 +154,7 @@ namespace FanucController
             Index = 0;
             memory = new T[size];
             Full = false;
-            
+
         }
 
         public T[] Memory
@@ -215,7 +218,7 @@ namespace FanucController
         {
             if (localInstance == null)
             {
-                localInstance= new LogDisplay(listView, bufferSize);
+                localInstance = new LogDisplay(listView, bufferSize);
             }
         }
 
@@ -233,23 +236,25 @@ namespace FanucController
 
         public IList<ListViewItem> Items => listViewItems.AsReadOnly();
 
-        private void AddItem(ListViewItem listViewItem, bool limit=false)
+        private void AddItem(ListViewItem listViewItem, bool limit = false)
         {
             this.listViewItems.Add(listViewItem);
-            if (!this.full || !limit) { 
+            if (!this.full || !limit)
+            {
                 this.listView.Items.Insert(this.index, listViewItem);
                 this.index++;
             }
-            else {
+            else
+            {
                 ListViewItem tempItem;
-                for (int i = 1; i < this.size; i++) 
+                for (int i = 1; i < this.size; i++)
                 {
                     tempItem = this.listView.Items[i];
                     this.listView.Items.RemoveAt(i);
-                    this.listView.Items.Insert(i-1,tempItem);
+                    this.listView.Items.Insert(i - 1, tempItem);
                 }
-                this.listView.Items.RemoveAt(this.size-1);
-                this.listView.Items.Insert(this.size-1, listViewItem);
+                this.listView.Items.RemoveAt(this.size - 1);
+                this.listView.Items.Insert(this.size - 1, listViewItem);
             }
             if (this.index == this.size) { this.full = true; }
         }
@@ -261,8 +266,8 @@ namespace FanucController
         private static MemorySink localInstance;
         private readonly List<LogEvent> logEvents;
         public object memoryLock = new object();
-       
-    
+
+
         public MemorySink()
         {
             logEvents = new List<LogEvent>();
@@ -314,4 +319,56 @@ namespace FanucController
 
     #endregion
 
+    #region Python
+
+    public static class PythonScripts
+    {
+        private const string scriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+        private const string pythonEnvDir = @"C:\Users\admin\anaconda3\envs\fanuc_rl";
+        private const string pythonEnvPath = @"C:\Users\admin\anaconda3\envs\fanuc_rl\python.exe";
+
+        public static void Run(string scriptName, string[] args = null)
+        {
+            string scriptPath = Path.Combine(scriptDir, scriptName);
+
+            // Process configuration
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = pythonEnvPath;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+            if (args != null)
+            {
+                startInfo.Arguments = $"\"{scriptPath}\" \"{String.Join("\" \"", args)}\"";
+            }
+            else
+            {
+                startInfo.Arguments = $"\"{scriptPath}\"";
+            }
+
+            // Executing the process
+            using (Process process = Process.Start(startInfo))
+            {
+                using (StreamReader reader = process.StandardOutput)
+                {
+                    string stderr = process.StandardError.ReadToEnd(); // 
+                    string result = reader.ReadToEnd();
+                    Console.WriteLine(result);
+                }
+            }
+        }
+
+        public static void RunParallel(string scriptName, string[] args = null)
+        {
+            //ThreadPool.QueueUserWorkItem((obj) => Run(scriptName, args));
+            ThreadStart threadDelegate = new ThreadStart(() => Run(scriptName, args));
+            Thread thread = new Thread(threadDelegate);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+    }
+
+    #endregion
 }

@@ -69,15 +69,63 @@ namespace FanucController
             return res;
         }
 
+        public static double[] LinSpace(double startVal, double endVal, int steps)
+        {
+            // Clone of MATLAB linspace
+            double interval = (endVal - startVal) / (steps-1);
+            return (from var in Enumerable.Range(0, steps)
+                    select startVal + interval * var).ToArray();
+        }
+
+
+        public static Vector<double> InterpV(Vector<double>[] sampleVectors, double[] times, double qTime)
+        {
+            double[] timeArray = times.Select(t => Math.Abs(t - qTime)).ToArray();
+            int index1 = Array.IndexOf(timeArray, timeArray.Min());
+            int index2;
+            Vector<double> qVector = sampleVectors[index1];
+            if (index1 == 0 || index1 == sampleVectors.Length)
+            {
+                return qVector;
+            }
+
+            if (times[index1] >= qTime)
+            {
+                index2 = index1 - 1;
+            }
+            else
+            {
+                index2 = index1;
+                index1 += 1;
+            }
+
+            if (index1 > 0 && index1 < sampleVectors.Length)
+            {
+                qVector = (sampleVectors[index1] - sampleVectors[index2]).Divide(times[index1] - times[index2])
+                    .Multiply(qTime - times[index2]) + sampleVectors[index2];
+            }
+            return qVector;
+        }
+
+        public static Vector<double>[] InterpV(Vector<double>[] sampleVectors, double[] times, double[] qTimes)
+        {
+            Vector<double>[] qVectors = new Vector<double>[qTimes.Length];
+            for (int i = 0; i < qTimes.Length; i++)
+            {
+                qVectors[i] = InterpV(sampleVectors, times, qTimes[i]);
+            }
+            return qVectors;
+        }
+
         #endregion
 
     }
 
     public class LookUpTable
     {
-        private int outDim;
-        private double[] samplesPoints;
-        private double[] tableValues;
+        //private int outDim;
+        //private double[] samplesPoints;
+        //private double[] tableValues;
 
         public static double Interpol1D(double[] points, double[] values, double qPoint)
         {

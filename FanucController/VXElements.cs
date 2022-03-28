@@ -482,6 +482,7 @@ namespace FanucController
 
         public void ExportBuffers(string[] path)
         {
+            // Export the enture buffer to CSV
             for (int i = 0; i < path.Length; i++)
             {
                 if (filterActivated[i])
@@ -494,6 +495,7 @@ namespace FanucController
 
         public void ExportBuffersLast(string[] path, bool append=true, bool header=false) 
         {
+            // Export the last element in buffer to CSV (if header == true, export only header)
             lock (poseLock)
             {
                 time = stopWatch.ElapsedMilliseconds / 1000;

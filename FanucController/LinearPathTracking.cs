@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
 using System.Diagnostics;
+using System.Windows.Forms;
 using MathNet.Numerics.LinearAlgebra;
 using FanucPCDK;
+using Serilog;
 
 
 namespace FanucController
@@ -16,37 +19,89 @@ namespace FanucController
     public class LinearPathTracking
     {
         #region Fields
-        
+
+        // Directories and paths
         public string TopDir;
         public string OutputDir;
         public string ReferenceDir;
         public string ScriptsDir;
-        public string ProgramName;
-        public DpmWatcher Watcher;
+        
+        // Timers
         public System.Timers.Timer Timer;
         public Stopwatch Stopwatch;
         public VXelementsUtility Vx;
-        public LinearPath LinearPath;
-        public RotationIdentification RotationId;
-        public Dictionary<string, Vector<double>> PoseDict;
-        public Matrix<double> Kp;
+
+        // Data
         public Buffer<PoseData> ErrorBuffer;
         public Buffer<PoseData> ControlBuffer;
         public Buffer<PoseData> PoseBuffer;
-        public double Time;
+        public Buffer<PoseData> IlcControlBuffer;
 
+        // Calibration
+        public RotationIdentification RotationId;
+        public Dictionary<string, Vector<double>> PoseDict;
+
+        // PCDK
+        public string ProgramName;
+        public DpmWatcher Watcher;
         protected bool digOut2;
         protected bool digOut3;
         protected bool progStarted;
         protected bool progStopped;
         protected bool iterStarted;
         protected bool iterStopped;
-        protected bool dpm;
+
+        // Linear Track
+        public LinearPath LinearPath;
+        protected readonly object errorLock = new object();
+        protected Vector<double> pathErrror;
+        public Vector<double> PathError
+        {
+            get
+            {
+                lock (errorLock) { return pathErrror; }
+            }
+            set
+            {
+                lock (errorLock) { pathErrror = value; }
+            }
+        }
+
+        // Iteration
         protected int iterNum;
         protected int iterIndex;
+        protected bool stepMode;
+        protected List<double> startTimes;
+        protected List<double> endTimes;
+
+        // Control
+        protected bool flagDpm;
+        protected bool flagPControl;
+        protected bool flagIlc;
+        protected bool flagPNN;
+        protected bool flagMBPO;
+        public double Time;
+
+        // P Control
+        protected Vector<double> uP;
+        public Matrix<double> Kp;
+
+        // ILC
+        protected Vector<double> uIlc;
+        Matrix<double> KpIlc;
+        Matrix<double> KdIlc;
+        public List<IterativeLearningControl> IlcList;
+        public IterativeLearningControl Ilc;
+        public IterativeLearningControl LastIlc;
+
+        // P Neural Network
+
+        // MBPO
+
         #endregion
 
         #region Constructor
+
         public LinearPathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch, string topDir)
         {
             Vx = vx;
@@ -62,24 +117,54 @@ namespace FanucController
             LinearPath.fileName = "LinearPath.json";
             PoseDict = new Dictionary<string, Vector<double>>();
 
-            // P Control
-            Kp = CreateMatrix.Dense<double>(6, 6);
-            Kp[0,0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
-
             // Buffers
             ErrorBuffer = new Buffer<PoseData>(20_000);
             ControlBuffer = new Buffer<PoseData>(20_000);
             PoseBuffer = new Buffer<PoseData>(20_000);
+            IlcControlBuffer = new Buffer<PoseData>(20_000);
+
+            // Path Error
+            startTimes = new List<double>();
+            endTimes = new List<double>();
+            PathError = CreateVector.Dense<double>(6);
+
+            // Flags
+            flagDpm = false;
+            flagPControl = false;
+            flagIlc = false;
+            flagPNN = false;
+            flagMBPO = false;
+
+            // P Control
+            Kp = CreateMatrix.Dense<double>(6, 6);
+            Kp[0,0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
+
+            // ILC
+            IlcList = new List<IterativeLearningControl>();
+            KpIlc = CreateMatrix.Dense<double>(6, 6);
+            KpIlc[0, 0] = 0.03; KpIlc[1, 1] = 0.03; KpIlc[2, 2] = 0.03;
+            KdIlc = CreateMatrix.Dense<double>(6, 6);
+            KdIlc[0, 0] = 0; KdIlc[1, 1] = 0; KdIlc[2, 2] = 0;
+            Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+            LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
+
+            // P Neural Network
+
+            // MBPO
+
         }
         #endregion
 
         #region Path Tracking Actions
 
-        public void Init(string pathPath, string progName, int iter=1, bool dpm=false)
+        public virtual void Init(string pathPath, string progName, int iter=1, bool step = false, bool dpm=false, 
+            bool pControl=false, bool ilc=false, bool pNN=false, bool mbpo=false)
         {
             // Program & Path Info
             LinearPath = LinearPath.FromJson(pathPath);
+            RotationId.Rotation = LinearPath.Rotation;
             ProgramName = progName;
+            
             // Flags
             progStarted = false;
             progStopped = false;
@@ -87,15 +172,15 @@ namespace FanucController
             iterStopped = false;
             digOut2 = false;
             digOut3 = false;
+            
             // Iterations
             iterNum = iter;
             iterIndex = 0;
+            
             // PCDK
             PCDK.SetupDPM(1);
             PCDK.SetDigitalOutput(2, false);
-            // P Control
-            Kp = CreateMatrix.Dense<double>(6, 6);
-            Kp[0, 0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
+            
             // DPM Watcher
             Watcher = new DpmWatcher
             {
@@ -106,25 +191,106 @@ namespace FanucController
                 CumulativeError = CreateVector.Dense<double>(3),
                 CumulativeErrorLimit = 5
             };
+            
             // Reset Buffers
             ErrorBuffer.Reset();
             ControlBuffer.Reset();
             PoseBuffer.Reset();
+
+            // Step Mode
+            stepMode = step;
+
             // DPM
-            this.dpm = dpm;
+            flagDpm = dpm;
+
+            // P Control
+            flagPControl = pControl;
+
+            // ILC
+            flagIlc = ilc;
+            if (flagIlc)
+            {
+                IlcList.Clear();
+                Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+                LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
+            }
+
+            // P Neural Network
+            flagPNN = pNN;
+            
+            // MBPO
+            flagMBPO = mbpo;
         }
 
-        public void Start()
+        public virtual void Reset()
         {
+            // Reset flags
+            progStarted = false;
+            progStopped = false;
+            iterStarted = false;
+            iterStopped = false;
+            digOut2 = false;
+            digOut3 = false;
+
+            // Iterations
+            //iterIndex = 0;
+            
+            // PCDK
+            PCDK.SetDigitalOutput(2, false);
+            
+            // DPM watcher
+            Watcher.Reset();
+            
+            // Reset Buffers
+            ErrorBuffer.Reset();
+            ControlBuffer.Reset();
+            PoseBuffer.Reset();
+            
+            // Reset times
+            //startTimes.Clear();
+            //endTimes.Clear();
+
+            // ILC
+            //if (flagIlc)
+            //{
+            //    Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+            //}
+
+            // P Neural Network
+
+            // MBPO
+        }
+
+        public virtual void Start()
+        {
+            Reset();
+
+            // ILC
+            if (flagIlc)
+            {
+                LastIlc = Ilc;
+                Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+                if (iterIndex == 0)
+                {
+                    Ilc.Init();
+                }
+                else
+                {
+                    Ilc.Init(LastIlc);
+                }
+            }
+            
+            // Base
             if (!Timer.Enabled)
             {
                 Timer.Start();
             }
             PCDK.Run(this.ProgramName);
             Timer.Elapsed += Loop;
+            //Log.Information("Line tracking started.");
         }
 
-        public void Loop(object s, EventArgs ev)
+        public virtual void Loop(object s, EventArgs ev)
         {
             // Monitor program
             progStarted = PCDK.IsRunning();
@@ -137,34 +303,59 @@ namespace FanucController
                 digOut2 = true;
                 PCDK.SetDigitalOutput(2, digOut2);
                 iterStarted = true;
+                startTimes.Add(Stopwatch.Elapsed.TotalSeconds);
             }
             if (!iterStopped && progStopped)
             {
                 digOut2 = false;
                 PCDK.SetDigitalOutput(2, digOut2);
                 iterStopped = true;
+                endTimes.Add(Stopwatch.Elapsed.TotalSeconds);
             }
+
+            // One time step action
             if (iterStarted && !iterStopped)
             {
-                // Calculate error
+                // Get data and compute path error
+                Time = Stopwatch.Elapsed.TotalSeconds;
                 Vector<double> x = GetVxUFPose();
                 Vector<double> closestP = MathLib.PointToLinePoint(LinearPath.PointStart.SubVector(0,3), LinearPath.PointEnd.SubVector(0,3), x.SubVector(0, 3));
                 Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
-                Vector<double> e = xd - x;
-                // Control
-                Vector<double> u = Pid(e);
-                double time = Stopwatch.Elapsed.TotalSeconds;
-                if (this.Watcher.LimitCheck(e.SubVector(0,3), u.SubVector(0,3)))
+                PathError = xd - x;
+                Vector<double> u = CreateVector.Dense<double>(6);
+
+                // P Control
+                if (flagPControl)
                 {
-                    if (dpm)
+                    uP = Pid(PathError);
+                    u += uP;
+                }
+                
+                // ILC
+                if (flagIlc)
+                {
+                    Ilc.Add(PathError, Time);
+                    uIlc = Ilc.Query(Time - startTimes[iterIndex]);
+                    u += uIlc;
+                }
+
+                // Dpm
+                if (Watcher.LimitCheck(PathError.SubVector(0,3), u.SubVector(0,3)))
+                {
+                    if (flagDpm)
                     {
                         PCDK.ApplyDPM(u.AsArray(), 1);
                     }
                 }
                 // Save data to buffer
-                ErrorBuffer.Add(new PoseData(e.AsArray(), time));
-                ControlBuffer.Add(new PoseData(u.AsArray(), time));
-                PoseBuffer.Add(new PoseData(x.AsArray(), time));
+                ErrorBuffer.Add(new PoseData(PathError.AsArray(), Time));
+                ControlBuffer.Add(new PoseData(u.AsArray(), Time));
+                PoseBuffer.Add(new PoseData(x.AsArray(), Time));
+                if (flagIlc)
+                {
+                    IlcControlBuffer.Add(new PoseData(uIlc.AsArray(), Time));
+                }
+                
             }
             // Stop program if condition is reached
             if (iterStopped)
@@ -174,16 +365,11 @@ namespace FanucController
 
         }
 
-        public void Stop()
+        public virtual void Stop()
         {
             // Timer
-            //Timer.Stop();
             Timer.Elapsed -= Loop;
-            // Reset flag
-            progStarted = false;
-            progStopped = false;
-            iterStarted = false;
-            iterStopped = false;
+            
             // Export buffer data
             string iterDir = Path.Combine(OutputDir, $"iteration_{iterIndex}");
             Directory.CreateDirectory(iterDir);
@@ -194,12 +380,41 @@ namespace FanucController
             Csv.WriteCsv(path, ControlBuffer.Memory.ToList());
             path = Path.Combine(iterDir, "LineTrackPose.csv");
             Csv.WriteCsv(path, PoseBuffer.Memory.ToList());
+            Thread.Sleep(1000);
+
+            // Plot iteration data in python
+            string savePath = Path.Combine(iterDir, $"iteration_fig_{iterIndex}");
+            string[] args = new string[2] { iterDir, savePath };
+            args = new string[2] { iterDir, savePath };
+            PythonScripts.RunParallel(scriptName: "ilc_plot.py", args: args);
+            
+            // ILC
+            if (flagIlc)
+            {
+                Ilc.PControl();
+                path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
+                Ilc.ToCsv(path);
+                path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
+                Csv.WriteCsv(path, IlcControlBuffer.Memory.ToList());
+                Thread.Sleep(1000);
+
+                // Plot iteration data in python
+                savePath = Path.Combine(iterDir, $"iteration_ilc_fig_{iterIndex}");
+                args = new string[2] { iterDir, savePath };
+                //PythonScripts.RunParallel(scriptName: "ilc_ilc_plot.py", args: args);
+            }
+
+            // Log
+            // Log.Information($"Iteration {iterIndex} completed.");
+            
             // Restart 
             iterIndex++;
             if (iterIndex < iterNum)
             {
-                Console.WriteLine("Continue?");
-                Console.ReadLine();
+                if (stepMode)
+                {
+                    MessageBox.Show("Continue?");
+                }
                 Start();
             }
         }
@@ -207,49 +422,6 @@ namespace FanucController
         public bool Check()
         {
             return true;
-        }
-
-        #endregion
-
-        #region Rotation and Linear Path Identification
-
-        public void RecordPose(string key, Vector<double> pose)
-        {
-            /* Rotation keys: idX1, idX2, idY1, idY2, idZ1, idZ2, testP1, testP2
-             * Linear path keys: startP, endP    
-             */
-            PoseDict[key] = pose;
-        }
-
-        public void RecordIdentificationPose(ref Vector<double> idPose, int sampleNum)
-        {
-            idPose = GetVxCameraPose(sampleNum);
-        }
-
-        public void RotationIdentify(string xyz)
-        {
-            switch (xyz)
-            {
-                case "xy":
-                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
-                    RotationId.y[0] = PoseDict["idY1"]; RotationId.x[1] = PoseDict["idY2"];
-                    RotationId.CalculateRotationMatrixXY();
-                    RotationId.ToJson(ReferenceDir);
-                    break;
-                case "xz":
-                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
-                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
-                    RotationId.CalculateRotationMatrixXZ();
-                    RotationId.ToJson(ReferenceDir);
-                    break;
-                case "yz":
-                    RotationId.y[0] = PoseDict["idY1"]; RotationId.y[1] = PoseDict["idY2"];
-                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
-                    RotationId.CalculateRotationMatrixYZ();
-                    RotationId.ToJson(ReferenceDir);
-                    break;
-            }
-            
         }
 
         #endregion
@@ -314,10 +486,55 @@ namespace FanucController
         }
 
         #endregion
+
+        #region Rotation and Linear Path Identification
+
+        public void RecordPose(string key, Vector<double> pose)
+        {
+            /* Rotation keys: idX1, idX2, idY1, idY2, idZ1, idZ2, testP1, testP2
+             * Linear path keys: startP, endP    
+             */
+            PoseDict[key] = pose;
+        }
+
+        public void RecordIdentificationPose(ref Vector<double> idPose, int sampleNum)
+        {
+            idPose = GetVxCameraPose(sampleNum);
+        }
+
+        public void RotationIdentify(string xyz)
+        {
+            switch (xyz)
+            {
+                case "xy":
+                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
+                    RotationId.y[0] = PoseDict["idY1"]; RotationId.x[1] = PoseDict["idY2"];
+                    RotationId.CalculateRotationMatrixXY();
+                    RotationId.ToJson(ReferenceDir);
+                    break;
+                case "xz":
+                    RotationId.x[0] = PoseDict["idX1"]; RotationId.x[1] = PoseDict["idX2"];
+                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
+                    RotationId.CalculateRotationMatrixXZ();
+                    RotationId.ToJson(ReferenceDir);
+                    break;
+                case "yz":
+                    RotationId.y[0] = PoseDict["idY1"]; RotationId.y[1] = PoseDict["idY2"];
+                    RotationId.z[0] = PoseDict["idZ1"]; RotationId.z[1] = PoseDict["idZ2"];
+                    RotationId.CalculateRotationMatrixYZ();
+                    RotationId.ToJson(ReferenceDir);
+                    break;
+            }
+
+        }
+
+        #endregion
     }
 
     public class DpmWatcher
     {
+        // This class watches the DPM offset values and check if they surpass a certain threshold.
+
         public double OffsetLimit;
         public Vector<double> CumulativeOffset;
         public double CumulativeOffsetLimit;
@@ -346,6 +563,8 @@ namespace FanucController
 
     public class RotationIdentification
     {
+        // This class encapsulates the identification of the rotation matrix from C-Track Sensor frame to FANUC user frame.
+
         [JsonIgnore] public Vector<double>[] x = new Vector<double>[2];
         [JsonIgnore] public Vector<double>[] y = new Vector<double>[2];
         [JsonIgnore] public Vector<double>[] z = new Vector<double>[2];
@@ -416,6 +635,8 @@ namespace FanucController
 
     public class LinearPath
     {
+        // This class represents a linear path.
+
         [JsonIgnore] public Matrix<double> Rotation; //Rotation Camera -> UF
         [JsonIgnore] public Vector<double> PointStart;
         [JsonIgnore] public Vector<double> PointEnd;

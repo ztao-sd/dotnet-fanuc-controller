@@ -93,7 +93,7 @@ namespace FanucController
         private Vector<double> d;
         //private Matrix<double> rP;
 
-        public RobustKalmanFilter()
+        public RobustKalmanFilter() : base()
         {
             alpha_ = 1.0;
             beta = 0.999;
