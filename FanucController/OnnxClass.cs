@@ -10,7 +10,7 @@ using MathNet.Numerics.Distributions;
 
 namespace FanucController
 {
-    class OnnxModel
+    public class OnnxModel
     {
         public InferenceSession ortSession;
         public string modelPath;
@@ -30,7 +30,7 @@ namespace FanucController
 
         }
 
-        public float[] Forward(double[] stateArray)
+        public double[] Forward(double[] stateArray)
         {
           
             var inputTensor = new DenseTensor<float>(new[] { this.stateDim });
@@ -39,14 +39,16 @@ namespace FanucController
                 inputTensor[i] = (float) stateArray[i];
             }
             var input = new List<NamedOnnxValue>();
-            input.Add(NamedOnnxValue.CreateFromTensor("state", inputTensor));
+            input.Add(NamedOnnxValue.CreateFromTensor(inputName, inputTensor));
             
             var output = this.ortSession.Run(input).ToArray();
             
-            float[] result = new float[output.Length];
+            double[] result = new double[output.Length];
             int idx = 0;
             foreach (var v in output)
             {
+                var testTensor = v.AsTensor<float>();
+                var x = (double)testTensor[0];
                 result[idx]=v.AsTensor<float>()[0];
                 idx++;
             }
@@ -63,7 +65,7 @@ namespace FanucController
             double[] normalArray = new double[testModel.stateDim];
             normalDistribution.Samples(normalArray);
 
-            float[] actionArray;
+            double[] actionArray;
             watch.Start();
             actionArray = testModel.Forward(normalArray);
             watch.Stop();
@@ -76,5 +78,18 @@ namespace FanucController
 
         }
 
+        public static void Test2()
+        {
+            string modelPath = @"D:\Fanuc Experiments\stuff\ML - Python\data\dec_14\run_2\mlpg_0401.onnx";
+            var model = new OnnxModel(modelPath, inputName:"input.1", stateDim:4, actionDim:3);
+
+            var normalDistribution = new Normal(0.0, 0.5);
+            double[] control = new double[model.stateDim];
+            normalDistribution.Samples(control);
+
+            var error = model.Forward(control);
+            Console.WriteLine($"Control: {control}");
+            Console.WriteLine($"Error: {error}");
+        }
     }
 }

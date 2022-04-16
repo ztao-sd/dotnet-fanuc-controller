@@ -36,6 +36,7 @@ namespace FanucController
         public Buffer<PoseData> ControlBuffer;
         public Buffer<PoseData> PoseBuffer;
         public Buffer<PoseData> IlcControlBuffer;
+        public Buffer<PoseData> PnnControlBuffer;
 
         // Calibration
         public RotationIdentification RotationId;
@@ -95,8 +96,13 @@ namespace FanucController
         public IterativeLearningControl LastIlc;
 
         // P Neural Network
+        public LinearPathTrackingPNN Pnn;
+        protected Vector<double> uPnn;
 
         // MBPO
+
+        // Python
+        public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
 
         #endregion
 
@@ -122,6 +128,7 @@ namespace FanucController
             ControlBuffer = new Buffer<PoseData>(20_000);
             PoseBuffer = new Buffer<PoseData>(20_000);
             IlcControlBuffer = new Buffer<PoseData>(20_000);
+            PnnControlBuffer = new Buffer<PoseData>(20_000);
 
             // Path Error
             startTimes = new List<double>();
@@ -149,6 +156,21 @@ namespace FanucController
             LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
 
             // P Neural Network
+            Pnn = new LinearPathTrackingPNN()
+            {
+                OutputDir = OutputDir,
+                InputDim = 4,
+                OutputDim1 = 2,
+                OutputDim2 = 3,
+                ModelPath = Path.Combine(OutputDir, "predictor.onnx"),
+                InputName = "prev_control",
+                OutputName = "error",
+                ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl",
+                WarmupIters = 0,
+                Kp = CreateMatrix.DenseDiagonal<double>(3, 0.1),
+                MinError = -0.08,
+                MaxError = 0.08
+            };
 
             // MBPO
 
@@ -196,6 +218,8 @@ namespace FanucController
             ErrorBuffer.Reset();
             ControlBuffer.Reset();
             PoseBuffer.Reset();
+            IlcControlBuffer.Reset();
+            PnnControlBuffer.Reset();
 
             // Step Mode
             stepMode = step;
@@ -245,6 +269,8 @@ namespace FanucController
             ErrorBuffer.Reset();
             ControlBuffer.Reset();
             PoseBuffer.Reset();
+            IlcControlBuffer.Reset();
+            PnnControlBuffer.Reset();
             
             // Reset times
             //startTimes.Clear();
@@ -257,6 +283,13 @@ namespace FanucController
             //}
 
             // P Neural Network
+            if (flagPNN)
+            {
+                if (Pnn.WarmpupCount >= Pnn.WarmupIters)
+                    {
+                        Pnn.NewSession();
+                    }
+            }
 
             // MBPO
         }
@@ -317,7 +350,7 @@ namespace FanucController
             if (iterStarted && !iterStopped)
             {
                 // Get data and compute path error
-                Time = Stopwatch.Elapsed.TotalSeconds;
+                Time = Stopwatch.Elapsed.TotalSeconds - startTimes[iterIndex];
                 Vector<double> x = GetVxUFPose();
                 Vector<double> closestP = MathLib.PointToLinePoint(LinearPath.PointStart.SubVector(0,3), LinearPath.PointEnd.SubVector(0,3), x.SubVector(0, 3));
                 Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
@@ -335,8 +368,32 @@ namespace FanucController
                 if (flagIlc)
                 {
                     Ilc.Add(PathError, Time);
-                    uIlc = Ilc.Query(Time - startTimes[iterIndex]);
+                    uIlc = Ilc.Query(Time);
                     u += uIlc;
+                }
+
+                // PNN
+                if (flagPNN)
+                {
+                    uPnn = CreateVector.Dense<double>(6);
+                    if (Pnn.WarmpupCount >= Pnn.WarmupIters)
+                    {
+                        double[] input = new double[Pnn.InputDim];
+                        input[0] = Time;
+                        u.SubVector(0, 3).AsArray().CopyTo(input, 1);
+                        var control = Pnn.Forward(input);
+                        var vPnn = Pnn.Kp * CreateVector.DenseOfArray<double>(control);
+                        uPnn = CreateVector.Dense<double>(6);
+                        vPnn.CopySubVectorTo(uPnn, 0, 0, 3);
+                    }
+                    else
+                    {
+                        var vPnn = Pnn.Kp * CreateVector.DenseOfArray<double>(Pnn.Sample());
+                        uPnn = CreateVector.Dense<double>(6);
+                        vPnn.CopySubVectorTo(uPnn, 0, 0, 3);
+                    }
+                    
+                    u += uPnn;
                 }
 
                 // Dpm
@@ -354,6 +411,10 @@ namespace FanucController
                 if (flagIlc)
                 {
                     IlcControlBuffer.Add(new PoseData(uIlc.AsArray(), Time));
+                }
+                if (flagPNN)
+                {
+                    PnnControlBuffer.Add(new PoseData(uPnn.AsArray(), Time));
                 }
                 
             }
@@ -386,22 +447,36 @@ namespace FanucController
             string savePath = Path.Combine(iterDir, $"iteration_fig_{iterIndex}");
             string[] args = new string[2] { iterDir, savePath };
             args = new string[2] { iterDir, savePath };
-            PythonScripts.RunParallel(scriptName: "ilc_plot.py", args: args);
+            //string scriptPath = Path.Combine(ScriptDir, "ilc_plot.py");
+            PythonScripts.RunParallel("iter_plot.py", args: args);
             
             // ILC
             if (flagIlc)
             {
                 Ilc.PControl();
-                path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
-                Ilc.ToCsv(path);
+                //path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
+                //Ilc.ToCsv(path);
                 path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
                 Csv.WriteCsv(path, IlcControlBuffer.Memory.ToList());
-                Thread.Sleep(1000);
+                Thread.Sleep(200);
 
                 // Plot iteration data in python
                 savePath = Path.Combine(iterDir, $"iteration_ilc_fig_{iterIndex}");
-                args = new string[2] { iterDir, savePath };
-                //PythonScripts.RunParallel(scriptName: "ilc_ilc_plot.py", args: args);
+                Ilc.Iteration(savePath, iterDir);
+            }
+
+            // PNN
+            if (flagPNN)
+            {
+                Pnn.WarmpupCount++;
+                path = Path.Combine(iterDir, "LineTrackPnnControl.csv");
+                Csv.WriteCsv(path, PnnControlBuffer.Memory.ToList());
+                List<string> dataDirs = new List<string>()
+                {
+                    OutputDir
+                };
+                Pnn.Iteration(nEpoch: 500, dataDirs: dataDirs);
+                Pnn.Plot(iterDir);
             }
 
             // Log

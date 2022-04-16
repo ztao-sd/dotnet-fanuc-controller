@@ -16,6 +16,7 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Configuration;
 using MathNet.Numerics.LinearAlgebra;
+using Microsoft.ML.OnnxRuntime;
 using FanucPCDK;
 
 namespace FanucController
@@ -207,9 +208,10 @@ namespace FanucController
             buttonPoseAttach_Click(sender, e);
 
             // Control
-            checkBoxLineTrackDPM.Checked = true;
+            checkBoxLineTrackDPM.Checked = false;
             checkBoxLineTrackPControl.Checked = true;
             checkBoxLineTrackIlc.Checked = false;  
+            checkBoxLineTrackPNN.Checked = true;
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -956,6 +958,68 @@ namespace FanucController
 
         #region Test
 
+        private void buttonTestTest_Click(object sender, EventArgs e)
+        {
+            var kp = CreateMatrix.Dense<double>(6, 6);
+            kp[0, 0] = 0.03; kp[1, 1] = 0.03; kp[2, 2] = 0.03;
+            var kd = CreateMatrix.Dense<double>(6, 6);
+            var ilc = new IterativeLearningControl(kp, kd);
+            var ilc_last = new IterativeLearningControl(kp, kd);
+            string controlPath = @"D:\fanuc experiments\test-0327-test\output\iteration_0\LineTrackIlcControl.csv";
+            string errorPath = @"D:\fanuc experiments\test-0327-test\output\iteration_0\LineTrackError.csv";
+            string saveIlcPath = @"D:\fanuc experiments\test-0327-test\output\iteration_0\LineTrackIlcNextControl.csv";
+            ilc.FromCsv(controlPath, errorPath);
+            ilc.PControl();
+            ilc.ToCsv(saveIlcPath);
+
+            string dataDir = @"D:\fanuc experiments\test-0327-test\output\iteration_0";
+            string savePath = @"D:\Fanuc Experiments\test-0327-test\output\iteration_0\test_fig";
+            string[] args = new string[2] { dataDir, savePath };
+            // args = new string[1] { dataDir };
+            PythonScripts.RunParallel(scriptName: "iter_plot.py", args: args);
+
+            savePath = @"D:\Fanuc Experiments\test-0327-test\output\iteration_0\test_ilc_fig";
+            args = new string[2] { dataDir, savePath };
+            PythonScripts.RunParallel(scriptName: "iter_ilc_plot.py", args: args);
+
+
+        }
+
+        private void buttonPnnTest_Click(object sender, EventArgs e)
+        {
+            //LinearPathTrackingPNN.Test();
+            var pnn = new LinearPathTrackingPNN
+            {
+                OutputDir = @"D:\Fanuc Experiments\pcontrol-test-0416\output",
+                InputDim = 4,
+                OutputDim1 = 2,
+                OutputDim2 = 3,
+                ModelPath = @"D:\Fanuc Experiments\pcontrol-test-0416\output\pnn_model\mlpg_0416.onnx",
+                InputName = "prev_control",
+                OutputName = "error",
+                ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl",
+            };
+            List<string> dataDirs = new List<string>()
+            {
+                @"D:\Fanuc Experiments\pcontrol-test-0416\output"
+            };
+            pnn.Iteration(nEpoch: 50, dataDirs: dataDirs);
+            pnn.NewSession();
+            pnn.Plot(@"D:\Fanuc Experiments\pcontrol-test-0416\output");
+
+            var error = pnn.Forward(new double[] { 0.0, 0.05, 0.05, 0.05 });
+            Console.WriteLine($"Error: {string.Join(",", error)}");
+        }
+
+        #endregion
+
+        #region Junk
+
+        private void listViewLogger_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
         private void buttonAddRow_Click(object sender, EventArgs e)
         {
             //dataGridView.RowHeadersWidth = 100;
@@ -1071,39 +1135,14 @@ namespace FanucController
             //textBoxDebug.AppendText(str + Environment.NewLine);
         }
 
-        #endregion
 
-        #region Junk
-
-        private void listViewLogger_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-
-
-
-
-
-
-
-
-        #endregion
 
         private void dataGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            string dataDir = @"D:\fanuc experiments\test-0327-pcontrol\output\iteration_1";
-            string savePath = @"D:\Fanuc Experiments\pcdk-test-0315\output\iteration_0\test_fig";
-            string[] args = new string[2] {dataDir, savePath};
-            // args = new string[1] { dataDir };
-            PythonScripts.RunParallel(scriptName:"iter_plot.py", args:args);
-        }
-
+        #endregion
 
     }
 

@@ -31,6 +31,12 @@ namespace FanucController
             HasHeaderRecord = false,
         };
 
+        private static CsvConfiguration readConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HeaderValidated = null,
+            MissingFieldFound = null,
+        };
+
         public static void WriteCsv<T>(string path, List<T> dataList, bool append = false)
         {
             using (var writer = new StreamWriter(path, append: append))
@@ -78,16 +84,42 @@ namespace FanucController
 
         public static List<T> ReadCsv<T>(string path)
         {
-            List<T> record;
+            List<T> records = new List<T>();
             using (var reader = new StreamReader(path))
             {
-
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                using (var csv = new CsvReader(reader, readConfig))
                 {
-                    record = csv.GetRecords<T>().ToList();
+                    records = csv.GetRecords<T>().ToList(); 
                 }
             }
-            return record;
+            return records;
+        }
+
+        public static List<PoseData> ReadPoseDataCsv(string path)
+        {
+            List<PoseData> records = new List<PoseData>();
+            using (var reader = new StreamReader(path))
+            {
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    csv.Context.RegisterClassMap<PoseDataMap>();
+                    records = csv.GetRecords<PoseData>().ToList();
+                }
+            }
+            return records;
+        }
+    }
+
+    public class PoseDataMap : ClassMap<PoseData>
+    {
+        public PoseDataMap()
+        {
+            Map(m => m.X).Name("x");
+            Map(m => m.Y).Name("y");
+            Map(m => m.Z).Name("z");
+            Map(m => m.Alpha).Name("alpha");
+            Map(m => m.Beta).Name("beta");
+            Map(m => m.Gamma).Name("gamma");
         }
     }
 
@@ -100,6 +132,11 @@ namespace FanucController
         [Name("alpha")] public double Alpha { get; set; }
         [Name("beta")] public double Beta { get; set; }
         [Name("gamma")] public double Gamma { get; set; }
+
+        public PoseData()
+        {
+            // Only here for CsvHelper to read file properly
+        }
 
         public PoseData(Vector<double> pose, double time)
         {
@@ -114,6 +151,15 @@ namespace FanucController
             X = pose[0]; Y = pose[1]; Z = pose[2];
             Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
         }
+
+        public Vector<double> ToVector()
+        {
+            var vector = CreateVector.Dense<double>(6);
+            vector[0] = X; vector[1] = Y; vector[2] = Z;
+            vector[3] = Alpha; vector[4] = Beta; vector[5] = Gamma;
+            return vector;
+        }
+
     }
 
     public class JointData
@@ -178,6 +224,8 @@ namespace FanucController
         public void Reset()
         {
             Array.Clear(memory, 0, memory.Length);
+            Index = 0;
+            Full = false;
         }
 
         public void Add(T item)
@@ -327,17 +375,28 @@ namespace FanucController
         private const string pythonEnvDir = @"C:\Users\admin\anaconda3\envs\fanuc_rl";
         private const string pythonEnvPath = @"C:\Users\admin\anaconda3\envs\fanuc_rl\python.exe";
 
-        public static void Run(string scriptName, string[] args = null)
+        public static void Run(string scriptName, string[] args = null, bool shell=false)
         {
             string scriptPath = Path.Combine(scriptDir, scriptName);
 
             // Process configuration
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = pythonEnvPath;
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardError = true;
+            if (shell == false)
+            {
+                startInfo.UseShellExecute = false;
+                startInfo.CreateNoWindow = true;
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+            }
+            else
+            {
+                startInfo.UseShellExecute = true;
+                startInfo.CreateNoWindow = false;
+                startInfo.RedirectStandardOutput = false;
+                startInfo.RedirectStandardError = false;
+            }
+            
             if (args != null)
             {
                 startInfo.Arguments = $"\"{scriptPath}\" \"{String.Join("\" \"", args)}\"";
@@ -350,22 +409,25 @@ namespace FanucController
             // Executing the process
             using (Process process = Process.Start(startInfo))
             {
-                using (StreamReader reader = process.StandardOutput)
+                if (shell == false)
                 {
-                    string stderr = process.StandardError.ReadToEnd(); // 
-                    string result = reader.ReadToEnd();
-                    Console.WriteLine(result);
+                    using (StreamReader reader = process.StandardOutput)
+                    {
+                        string stderr = process.StandardError.ReadToEnd(); // 
+                        string result = reader.ReadToEnd();
+                        Console.WriteLine(result);
+                    }
                 }
             }
         }
 
-        public static void RunParallel(string scriptName, string[] args = null)
+        public static void RunParallel(string scriptName, string[] args = null, bool shell=false)
         {
-            //ThreadPool.QueueUserWorkItem((obj) => Run(scriptName, args));
-            ThreadStart threadDelegate = new ThreadStart(() => Run(scriptName, args));
-            Thread thread = new Thread(threadDelegate);
-            thread.IsBackground = true;
-            thread.Start();
+            ThreadPool.QueueUserWorkItem((obj) => Run(scriptName, args, shell));
+            //ThreadStart threadDelegate = new ThreadStart(() => Run(scriptName, args, shell));
+            //Thread thread = new Thread(threadDelegate);
+            //thread.IsBackground = true;
+            //thread.Start();
         }
 
     }

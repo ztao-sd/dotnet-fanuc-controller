@@ -159,7 +159,7 @@ namespace FanucController
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.comboBoxFileStructure = new System.Windows.Forms.ComboBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.buttonTestTest = new System.Windows.Forms.Button();
             this.dataGridView = new System.Windows.Forms.DataGridView();
             this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -171,6 +171,8 @@ namespace FanucController
             this.label26 = new System.Windows.Forms.Label();
             this.buttonDgvShow = new System.Windows.Forms.Button();
             this.buttonDgvClear = new System.Windows.Forms.Button();
+            this.groupBox10 = new System.Windows.Forms.GroupBox();
+            this.buttonPnnTest = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -185,6 +187,7 @@ namespace FanucController
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
+            this.groupBox10.SuspendLayout();
             this.SuspendLayout();
             // 
             // buttonLineTrackRunMain
@@ -1062,7 +1065,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(177, 20);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "test-0327-pcontrol";
+            this.textBoxTopDir.Text = "pnn-test-0416";
             // 
             // label28
             // 
@@ -1173,7 +1176,7 @@ namespace FanucController
             this.textBoxLineTrackIter.Name = "textBoxLineTrackIter";
             this.textBoxLineTrackIter.Size = new System.Drawing.Size(40, 20);
             this.textBoxLineTrackIter.TabIndex = 36;
-            this.textBoxLineTrackIter.Text = "3";
+            this.textBoxLineTrackIter.Text = "5";
             // 
             // checkBoxLineTrackIlc
             // 
@@ -1498,15 +1501,15 @@ namespace FanucController
             this.comboBoxFileStructure.Size = new System.Drawing.Size(117, 21);
             this.comboBoxFileStructure.TabIndex = 0;
             // 
-            // button1
+            // buttonTestTest
             // 
-            this.button1.Location = new System.Drawing.Point(919, 520);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 3;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.buttonTestTest.Location = new System.Drawing.Point(31, 22);
+            this.buttonTestTest.Name = "buttonTestTest";
+            this.buttonTestTest.Size = new System.Drawing.Size(75, 23);
+            this.buttonTestTest.TabIndex = 3;
+            this.buttonTestTest.Text = "Test";
+            this.buttonTestTest.UseVisualStyleBackColor = true;
+            this.buttonTestTest.Click += new System.EventHandler(this.buttonTestTest_Click);
             // 
             // dataGridView
             // 
@@ -1596,16 +1599,37 @@ namespace FanucController
             this.buttonDgvClear.UseVisualStyleBackColor = true;
             this.buttonDgvClear.Click += new System.EventHandler(this.buttonDgvClear_Click);
             // 
+            // groupBox10
+            // 
+            this.groupBox10.Controls.Add(this.buttonPnnTest);
+            this.groupBox10.Controls.Add(this.buttonTestTest);
+            this.groupBox10.Location = new System.Drawing.Point(763, 554);
+            this.groupBox10.Name = "groupBox10";
+            this.groupBox10.Size = new System.Drawing.Size(393, 153);
+            this.groupBox10.TabIndex = 23;
+            this.groupBox10.TabStop = false;
+            this.groupBox10.Text = "Testing";
+            // 
+            // buttonPnnTest
+            // 
+            this.buttonPnnTest.Location = new System.Drawing.Point(31, 67);
+            this.buttonPnnTest.Name = "buttonPnnTest";
+            this.buttonPnnTest.Size = new System.Drawing.Size(75, 28);
+            this.buttonPnnTest.TabIndex = 4;
+            this.buttonPnnTest.Text = "PNN Test";
+            this.buttonPnnTest.UseVisualStyleBackColor = true;
+            this.buttonPnnTest.Click += new System.EventHandler(this.buttonPnnTest_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1396, 733);
+            this.Controls.Add(this.groupBox10);
             this.Controls.Add(this.buttonDgvClear);
             this.Controls.Add(this.buttonDgvShow);
             this.Controls.Add(this.label26);
             this.Controls.Add(this.dataGridView);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBoxExperiment);
             this.Controls.Add(this.groupBoxPCDK);
@@ -1641,6 +1665,7 @@ namespace FanucController
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).EndInit();
+            this.groupBox10.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1761,7 +1786,7 @@ namespace FanucController
         private System.Windows.Forms.TextBox textBoxLinearPathZ;
         private System.Windows.Forms.TextBox textBoxLinearPathY;
         private System.Windows.Forms.TextBox textBoxLinearPathX;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button buttonTestTest;
         private System.Windows.Forms.Button buttonPoseGet;
         private System.Windows.Forms.DataGridView dataGridView;
         private System.Windows.Forms.Label label26;
@@ -1790,6 +1815,8 @@ namespace FanucController
         private System.Windows.Forms.Label label28;
         private System.Windows.Forms.TextBox textBoxLineTrackIter;
         private System.Windows.Forms.Label label29;
+        private System.Windows.Forms.GroupBox groupBox10;
+        private System.Windows.Forms.Button buttonPnnTest;
     }
 }
 

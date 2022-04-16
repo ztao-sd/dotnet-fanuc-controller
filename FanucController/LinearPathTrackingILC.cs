@@ -31,7 +31,15 @@ namespace FanucController
         // ILC Parameters
         public Matrix<double> Kp;
         public Matrix<double> Kd;
-        
+
+        // Python Script
+        public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+
+        public IterativeLearningControl()
+        {
+
+        }
+
         public IterativeLearningControl(Matrix<double> kp, Matrix<double> kd, int length = 2000)
         {
             Length = length;
@@ -149,20 +157,59 @@ namespace FanucController
 
         #endregion
 
-        #region Export CSV
+        #region Import/Export CSV
 
         public void ToCsv(string path)
         {
             List<PoseData> dataList = new List<PoseData>();
-            for (int i = 0; i < ControlArray.Length; i++)
+            for (int i = 0; i < NextControlArray.Length; i++)
             {
-                dataList.Add(new PoseData(ControlArray[i].AsArray(), TimeArray[i]));
+                dataList.Add(new PoseData(NextControlArray[i].AsArray(), NextTimeArray[i]));
             }
             Csv.WriteCsv(path, dataList);
         }
 
+        public void FromCsv(string controlPath, string errorPath=null)
+        {
+            List<PoseData> dataList = Csv.ReadCsv<PoseData>(controlPath);
+            ControlArray = new Vector<double>[dataList.Count];
+            TimeArray = new double[dataList.Count];
+            for (int i = 0; i < dataList.Count; i++)
+            {
+                var poseData = dataList[i];
+                var vector = poseData.ToVector();
+                ControlArray[i] = vector;
+                TimeArray[i] = poseData.Time;
+            }
+
+            if (errorPath != null)
+            {
+                dataList = Csv.ReadCsv<PoseData>(errorPath);
+                Errors.Clear();
+                Times.Clear();
+                for (int i = 0; i < dataList.Count; i++)
+                {
+                    var poseData = dataList[i];
+                    var vector = poseData.ToVector();
+                    Errors.Add(vector);
+                    Times.Add(poseData.Time);
+                }
+            }
+        }
+
         #endregion
 
+        #region Python Scripts
+
+        public void Iteration(string savePath, string iterDir)
+        {
+            string[] args = new string[2] { iterDir, savePath };
+            string scriptPath = Path.Combine(ScriptDir, "iter_ilc_plot.py");
+            PythonScripts.RunParallel("iter_ilc_plot.py", args: args);
+        }
+        
+
+        #endregion
 
     }
 }
