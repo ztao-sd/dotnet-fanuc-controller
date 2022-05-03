@@ -17,8 +17,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='iteration plot')
     parser.add_argument('data_dir', type=str, help='data directory')
     parser.add_argument('save_path', type=str, nargs='?', help='figure save path')
-    # args = parser.parse_args()
-    args = parser.parse_args(test_args)
+    args = parser.parse_args()
+    # args = parser.parse_args(test_args)
 
     # Load control
     path = os.path.join(args.data_dir, 'LineTrackPnnControl.csv')

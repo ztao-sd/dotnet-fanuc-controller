@@ -107,8 +107,8 @@ class PNN:
     # path_error_file_name = 'E_Data.csv'
     # control_file_name = 'U_Data.csv'
     # iteration_prefix = 'Iteration_'
-    min_control = -0.10
-    max_control = 0.10
+    min_control = -0.20
+    max_control = 0.20
 
     def __init__(self, inputs, targets, lr, train_split, hidden_layers, max_error,
                  max_control, gaussian=False) -> None:

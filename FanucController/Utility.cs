@@ -375,9 +375,17 @@ namespace FanucController
         private const string pythonEnvDir = @"C:\Users\admin\anaconda3\envs\fanuc_rl";
         private const string pythonEnvPath = @"C:\Users\admin\anaconda3\envs\fanuc_rl\python.exe";
 
-        public static void Run(string scriptName, string[] args = null, bool shell=false)
+        public static void Run(string scriptName, string[] args = null, bool shell=false, string dir=null)
         {
-            string scriptPath = Path.Combine(scriptDir, scriptName);
+            string scriptPath;
+            if (dir is null)
+            {
+                scriptPath = Path.Combine(scriptDir, scriptName);
+            }
+            else
+            {
+                scriptPath = Path.Combine(dir, scriptName);
+            }
 
             // Process configuration
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -418,12 +426,13 @@ namespace FanucController
                         Console.WriteLine(result);
                     }
                 }
+                process.WaitForExit();
             }
         }
 
-        public static void RunParallel(string scriptName, string[] args = null, bool shell=false)
+        public static void RunParallel(string scriptName, string[] args = null, bool shell=false, string dir=null)
         {
-            ThreadPool.QueueUserWorkItem((obj) => Run(scriptName, args, shell));
+            ThreadPool.QueueUserWorkItem((obj) => Run(scriptName, args, shell, dir));
             //ThreadStart threadDelegate = new ThreadStart(() => Run(scriptName, args, shell));
             //Thread thread = new Thread(threadDelegate);
             //thread.IsBackground = true;

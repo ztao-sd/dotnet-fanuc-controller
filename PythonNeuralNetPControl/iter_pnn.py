@@ -76,7 +76,7 @@ if __name__ == '__main__':
     fig.savefig(save_path)
 
     plt.show(block=False)
-    plt.pause(20)
+    plt.pause(1)
     sys.exit(0)
     
 

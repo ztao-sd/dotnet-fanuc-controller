@@ -94,15 +94,16 @@ namespace FanucController
             InitializeComponent();
 
             // Directories
-            TopDir = Path.Combine(MetaTopDir, textBoxTopDir.Text);
+            // TopDir = Path.Combine(MetaTopDir, textBoxTopDir.Text);
+            TopDir = @textBoxTopDir.Text;
             ReferenceDir = Path.Combine(TopDir, "reference");
             OutputDir = Path.Combine(TopDir, "output");
-            ScriptsDir = Path.Combine(TopDir, "Scripts");
+            // ScriptsDir = Path.Combine(TopDir, "Scripts");
             LogDir = Path.Combine(TopDir, "log");
             Directory.CreateDirectory(TopDir);
             Directory.CreateDirectory(ReferenceDir);
             Directory.CreateDirectory(OutputDir);
-            Directory.CreateDirectory(ScriptsDir);
+            // Directory.CreateDirectory(ScriptsDir);
             Directory.CreateDirectory(LogDir);
 
             // Initialize log display
@@ -208,10 +209,13 @@ namespace FanucController
             buttonPoseAttach_Click(sender, e);
 
             // Control
+            checkBoxLineTrackStep.Checked = false;
             checkBoxLineTrackDPM.Checked = false;
             checkBoxLineTrackPControl.Checked = true;
             checkBoxLineTrackIlc.Checked = false;  
-            checkBoxLineTrackPNN.Checked = true;
+            checkBoxLineTrackPNN.Checked = false;
+            checkBoxLineTrackMBPO.Checked = true;
+            textBoxLineTrackIter.Text = "2";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -224,8 +228,9 @@ namespace FanucController
             bool ilc = checkBoxLineTrackIlc.Checked;
             bool pNN = checkBoxLineTrackPNN.Checked;
             bool mbpo = checkBoxLineTrackMBPO.Checked;
+            bool step = checkBoxLineTrackStep.Checked;
             LinearTrack.Init(pathPath, progName, iter, dpm:dpm, pControl:pControl,
-                ilc:ilc, pNN:pNN, mbpo:mbpo);
+                ilc:ilc, pNN:pNN, mbpo:mbpo, step:step);
             LinearTrack.Start();
         }
 
@@ -1011,6 +1016,31 @@ namespace FanucController
             Console.WriteLine($"Error: {string.Join(",", error)}");
         }
 
+        private void buttonMbpoTest_Click(object sender, EventArgs e)
+        {
+            string iterDir = @"D:\Fanuc Experiments\test-master\output\iteration_0";
+
+            var mbpo = new LinearPathTrackingMBPO
+            {
+                OutputDir = @"D:\Fanuc Experiments\test-master\output",
+                WarmupIters = 0
+            };
+            List<string> dataDirs = new List<string>()
+            {
+                @"D:\Fanuc Experiments\test-master\output"
+            };
+            mbpo.Init();
+            mbpo.Reset();
+
+            // Control
+            Vector<double> error = CreateVector.Dense<double>(6);
+            double time = 5;
+            var control = mbpo.Control(error, time);
+
+            mbpo.Iteration(nEpoch: 10, gradSteps:500, dataDirs:dataDirs);
+            mbpo.Plot(iterDir: iterDir);
+        }
+
         #endregion
 
         #region Junk
@@ -1143,6 +1173,7 @@ namespace FanucController
         }
 
         #endregion
+
 
     }
 

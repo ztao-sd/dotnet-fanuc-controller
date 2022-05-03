@@ -37,6 +37,7 @@ namespace FanucController
         public Buffer<PoseData> PoseBuffer;
         public Buffer<PoseData> IlcControlBuffer;
         public Buffer<PoseData> PnnControlBuffer;
+        public Buffer<PoseData> MbpoControlBuffer;
 
         // Calibration
         public RotationIdentification RotationId;
@@ -95,11 +96,13 @@ namespace FanucController
         public IterativeLearningControl Ilc;
         public IterativeLearningControl LastIlc;
 
-        // P Neural Network
+        // P Neural Network (PNN)
         public LinearPathTrackingPNN Pnn;
         protected Vector<double> uPnn;
 
         // MBPO
+        public LinearPathTrackingMBPO Mbpo;
+        protected Vector<double> uMbpo;
 
         // Python
         public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
@@ -129,6 +132,7 @@ namespace FanucController
             PoseBuffer = new Buffer<PoseData>(20_000);
             IlcControlBuffer = new Buffer<PoseData>(20_000);
             PnnControlBuffer = new Buffer<PoseData>(20_000);
+            MbpoControlBuffer = new Buffer<PoseData>(20_000);
 
             // Path Error
             startTimes = new List<double>();
@@ -158,21 +162,15 @@ namespace FanucController
             // P Neural Network
             Pnn = new LinearPathTrackingPNN()
             {
-                OutputDir = OutputDir,
-                InputDim = 4,
-                OutputDim1 = 2,
-                OutputDim2 = 3,
-                ModelPath = Path.Combine(OutputDir, "predictor.onnx"),
-                InputName = "prev_control",
-                OutputName = "error",
-                ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl",
-                WarmupIters = 0,
-                Kp = CreateMatrix.DenseDiagonal<double>(3, 0.1),
-                MinError = -0.08,
-                MaxError = 0.08
+                OutputDir = OutputDir
             };
 
             // MBPO
+            Mbpo = new LinearPathTrackingMBPO()
+            {
+                OutputDir = OutputDir
+            };
+
 
         }
         #endregion
@@ -200,7 +198,7 @@ namespace FanucController
             iterIndex = 0;
             
             // PCDK
-            PCDK.SetupDPM(1);
+            PCDK.SetupDPM(sch:1);
             PCDK.SetDigitalOutput(2, false);
             
             // DPM Watcher
@@ -220,6 +218,7 @@ namespace FanucController
             PoseBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
+            MbpoControlBuffer.Reset();
 
             // Step Mode
             stepMode = step;
@@ -241,9 +240,11 @@ namespace FanucController
 
             // P Neural Network
             flagPNN = pNN;
+            Pnn.Init();
             
             // MBPO
             flagMBPO = mbpo;
+            Mbpo.Init();
         }
 
         public virtual void Reset()
@@ -271,32 +272,11 @@ namespace FanucController
             PoseBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
-            
+            MbpoControlBuffer.Reset();
+
             // Reset times
             //startTimes.Clear();
             //endTimes.Clear();
-
-            // ILC
-            //if (flagIlc)
-            //{
-            //    Ilc = new IterativeLearningControl(KpIlc, KdIlc);
-            //}
-
-            // P Neural Network
-            if (flagPNN)
-            {
-                if (Pnn.WarmpupCount >= Pnn.WarmupIters)
-                    {
-                        Pnn.NewSession();
-                    }
-            }
-
-            // MBPO
-        }
-
-        public virtual void Start()
-        {
-            Reset();
 
             // ILC
             if (flagIlc)
@@ -312,6 +292,24 @@ namespace FanucController
                     Ilc.Init(LastIlc);
                 }
             }
+
+            // P Neural Network
+            if (flagPNN)
+            {
+                Pnn.Reset();
+            }
+
+            // MBPO
+            if (flagMBPO)
+            {
+                Mbpo.Reset();
+            }
+        }
+
+        public virtual void Start()
+        {
+            // Reset
+            Reset();
             
             // Base
             if (!Timer.Enabled)
@@ -375,26 +373,18 @@ namespace FanucController
                 // PNN
                 if (flagPNN)
                 {
-                    uPnn = CreateVector.Dense<double>(6);
-                    if (Pnn.WarmpupCount >= Pnn.WarmupIters)
-                    {
-                        double[] input = new double[Pnn.InputDim];
-                        input[0] = Time;
-                        u.SubVector(0, 3).AsArray().CopyTo(input, 1);
-                        var control = Pnn.Forward(input);
-                        var vPnn = Pnn.Kp * CreateVector.DenseOfArray<double>(control);
-                        uPnn = CreateVector.Dense<double>(6);
-                        vPnn.CopySubVectorTo(uPnn, 0, 0, 3);
-                    }
-                    else
-                    {
-                        var vPnn = Pnn.Kp * CreateVector.DenseOfArray<double>(Pnn.Sample());
-                        uPnn = CreateVector.Dense<double>(6);
-                        vPnn.CopySubVectorTo(uPnn, 0, 0, 3);
-                    }
                     
+                    uPnn = Pnn.Control(u, Time, rand:false);
                     u += uPnn;
                 }
+
+                // MBPO
+                if (flagMBPO)
+                {
+                    uMbpo = Mbpo.Control(PathError, Time, rand:true);
+                    // u += uMbpo;
+                }
+
 
                 // Dpm
                 if (Watcher.LimitCheck(PathError.SubVector(0,3), u.SubVector(0,3)))
@@ -415,6 +405,10 @@ namespace FanucController
                 if (flagPNN)
                 {
                     PnnControlBuffer.Add(new PoseData(uPnn.AsArray(), Time));
+                }
+                if (flagMBPO)
+                {
+                    MbpoControlBuffer.Add(new PoseData(uMbpo.AsArray(), Time));
                 }
                 
             }
@@ -468,15 +462,40 @@ namespace FanucController
             // PNN
             if (flagPNN)
             {
-                Pnn.WarmpupCount++;
+                // Write PNN control CSV file
                 path = Path.Combine(iterDir, "LineTrackPnnControl.csv");
                 Csv.WriteCsv(path, PnnControlBuffer.Memory.ToList());
+
+                // PNN Plot
+                Pnn.Plot(iterDir:iterDir);
+
+                // PNN Iteration
                 List<string> dataDirs = new List<string>()
                 {
                     OutputDir
                 };
                 Pnn.Iteration(nEpoch: 500, dataDirs: dataDirs);
-                Pnn.Plot(iterDir);
+                
+            }
+
+            // MBPO
+            if (flagMBPO)
+            {
+                // Write MBPO control CSV file
+                path = Path.Combine(iterDir, "LineTrackMbpoControl.csv");
+                Csv.WriteCsv(path, MbpoControlBuffer.Memory.ToList());
+
+                // PNN Plot
+                Mbpo.Plot(iterDir:iterDir);
+
+                // MBPO Iteration
+                List<string> dataDirs = new List<string>()
+                {
+                    OutputDir
+                };
+                Mbpo.Iteration(nEpoch: 200, gradSteps: 500, dataDirs: dataDirs);
+
+                
             }
 
             // Log

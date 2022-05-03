@@ -146,7 +146,7 @@ class TD3():
             target_param.data.copy_(
                 tau*local_param.data + (1.0-tau)*target_param.data)
 
-    def train(self, buffer, gradient_steps=None):
+    def train(self, buffer, gradient_steps=None, verbose=False):
 
         if self.time_step < self.learn_delay:
             return
@@ -157,7 +157,7 @@ class TD3():
         if gradient_steps is not None:
             self.gradient_steps = gradient_steps
 
-        for _ in range(self.gradient_steps):
+        for idx in range(self.gradient_steps):
 
             self.train_step += 1
             # Sample buffer
@@ -196,6 +196,11 @@ class TD3():
                 # Soft update target network
                 self.soft_update(self.actor, self.actor_target)
                 self.soft_update(self.critic, self.critic_target)
+
+                # Print
+                if verbose:
+                    print(f'Gradient Steps: {idx} | Critic Loss: {critic_loss.item()} | Actor Loss: {actor_loss.item()}')
+
             
         self.actor.train(False)
         self.critic.train(False)
@@ -213,7 +218,7 @@ class TD3():
         T.save(self.critic.state_dict(), critic_path)
     
     def save_actor_onnx(self, actor_path):
-        dummy_input = T.randn(self.action_dim, device=self.device)
+        dummy_input = T.randn(self.state_dim, device=self.device)
         input_names = ['state']
         output_names = ['control']
         T.onnx.export(self.actor, dummy_input, actor_path, input_names=input_names,

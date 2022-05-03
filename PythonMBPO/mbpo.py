@@ -15,8 +15,6 @@ from callback import *
 
 class LTDataset(Dataset):
 
-
-
     def __init__(self, inputs, targets, transform=None):
         self.inputs = inputs
         self.targets = targets
@@ -47,8 +45,10 @@ class DeterministicModel(nn.Module):
         self.device = T.device("cuda" if T.cuda.is_available() else "cpu")
         self.action_dim = action_space.sample().flatten().size
         self.state_dim = observation_space.sample().flatten().size
-        self.max_observation = T.from_numpy(observation_space.high).to(self.device)
-        self.min_observation = T.from_numpy(observation_space.low).to(self.device)
+        self.max_observation = T.from_numpy(
+            observation_space.high).to(self.device)
+        self.min_observation = T.from_numpy(
+            observation_space.low).to(self.device)
 
         # Q1 architecture
         self.l1 = nn.Linear(self.action_dim + self.state_dim, hidden_size[0])
@@ -61,7 +61,7 @@ class DeterministicModel(nn.Module):
         sa = F.relu(self.l2(sa))
         sa = self.l3(sa)
         return self.max_observation * T.tanh(sa)
-        
+
 
 class GaussianModel(nn.Module):
 
@@ -70,8 +70,10 @@ class GaussianModel(nn.Module):
         self.device = T.device("cuda" if T.cuda.is_available() else "cpu")
         self.action_dim = action_space.sample().flatten().size
         self.state_dim = observation_space.sample().flatten().size
-        self.max_observation = T.from_numpy(observation_space.high.flatten()).to(self.device)
-        self.min_observation = T.from_numpy(observation_space.low.flatten()).to(self.device)
+        self.max_observation = T.from_numpy(
+            observation_space.high.flatten()).to(self.device)
+        self.min_observation = T.from_numpy(
+            observation_space.low.flatten()).to(self.device)
 
         # Q1 architecture
         self.l1 = nn.Linear(self.action_dim + self.state_dim, hidden_size[0])
@@ -119,24 +121,29 @@ class MBPO:
         # Device
         self.verbose = verbose
         self.device = T.device("cuda" if T.cuda.is_available() else "cpu")
-        
+
         # Environment
         self.observation_space = observation_space
         self.action_space = action_space
         self.state_dim = observation_space.sample().flatten().size
         self.action_dim = action_space.sample().flatten().size
-        self.max_observation = T.from_numpy(observation_space.high.flatten()).to(self.device)
-        self.min_observation = T.from_numpy(observation_space.low.flatten()).to(self.device)
-        self.max_action = T.from_numpy(action_space.high.flatten()).to(self.device)
-        self.min_action = T.from_numpy(action_space.low.flatten()).to(self.device)
-        
+        self.max_observation = T.from_numpy(
+            observation_space.high.flatten()).to(self.device)
+        self.min_observation = T.from_numpy(
+            observation_space.low.flatten()).to(self.device)
+        self.max_action = T.from_numpy(
+            action_space.high.flatten()).to(self.device)
+        self.min_action = T.from_numpy(
+            action_space.low.flatten()).to(self.device)
+
         # Model
-        self.gaussian=gaussian
+        self.gaussian = gaussian
         if not self.gaussian:
             self.env_model = DeterministicModel(
                 self.observation_space, self.action_space, hidden_size).to(self.device)
         else:
-            self.env_model = GaussianModel(self.observation_space, self.action_space, hidden_size).to(self.device)
+            self.env_model = GaussianModel(
+                self.observation_space, self.action_space, hidden_size).to(self.device)
         self.optimizer = T.optim.Adam(self.env_model.parameters(), lr=lr)
         self.criterion = nn.MSELoss()
         self.stop_training_threshold = stop_training_threshold
@@ -145,7 +152,7 @@ class MBPO:
         self.train_loader = None
         self.eval_loader = None
         self.all_loss = []
-        
+
         # Buffer
         self.model_buffer = ReplayBuffer(
             observation_space, action_space, model_buffer_size)
@@ -224,22 +231,23 @@ class MBPO:
         plt.title('Learning Curve')
         print(f"Avg loss: {np.mean(all_loss):2f}")
 
-
     def get_data_from_replay_buffer(self, buffer, batch_size):
         observations, actions, _, next_observations, _ = buffer.sample(
             batch_size)
         inputs = (observations.to(self.device), actions.to(self.device))
         targets = next_observations.to(self.device)
         return inputs, targets
-    
+
     def normalize_input(self, states, actions):
         norm_states = []
         norm_actions = []
         for state, action in zip(states, actions):
-            state = T.mul(state-self.min_observation, 2/(self.max_observation-self.min_observation)) - 1
-            action = T.mul(action-self.min_action, 2/(self.max_action-self.min_action)) - 1
-            norm_states.append(state.reshape(1,-1))
-            norm_actions.append(action.reshape(1,-1))
+            state = T.mul(state-self.min_observation, 2 /
+                          (self.max_observation-self.min_observation)) - 1
+            action = T.mul(action-self.min_action, 2 /
+                           (self.max_action-self.min_action)) - 1
+            norm_states.append(state.reshape(1, -1))
+            norm_actions.append(action.reshape(1, -1))
 
         return T.concat(norm_states, dim=0), T.concat(norm_actions, dim=0)
 
@@ -283,11 +291,16 @@ class MBPO:
             if done:
                 observation, done = env.reset(), False
 
-    def normalize_error_control(self, error_array, control_array):
-        max_obs = self.max_observation.cpu().detach().numpy()
-        min_obs = self.min_observation.cpu().detach().numpy()
-        max_act = self.max_action.cpu().detach().numpy()
-        min_act = self.min_action.cpu().detach().numpy()
+    def normalize_error_control(self, error_array, control_array, obs_space, action_space):
+        # max_obs = self.max_observation.cpu().detach().numpy()
+        # min_obs = self.min_observation.cpu().detach().numpy()
+        # max_act = self.max_action.cpu().detach().numpy()
+        # min_act = self.min_action.cpu().detach().numpy()
+        max_obs = obs_space.high
+        min_obs = obs_space.low
+        max_act = action_space.high
+        min_act = action_space.low
+
         norm_errors = []
         norm_controls = []
         for error, control in zip(error_array, control_array):
@@ -304,9 +317,7 @@ class MBPO:
 
         return np.concatenate(norm_errors, axis=0, dtype=np.float32), np.concatenate(norm_controls, axis=0, dtype=np.float32)
 
-
-
-    def env_data_from_files(self, data_dirs):
+    def env_data_from_files(self, data_dirs, obs_space, action_space):
         """
         Collect state transitions from csv files
         """
@@ -317,7 +328,7 @@ class MBPO:
                 error_array = np.genfromtxt(error_path, delimiter=',',
                                             skip_header=1, dtype=np.float32)
                 control_array = np.genfromtxt(control_path, delimiter=',',
-                                            skip_header=1, dtype=np.float32)
+                                              skip_header=1, dtype=np.float32)
                 error_rows = []
                 control_rows = []
                 for error_row, control_row in zip(error_array, control_array):
@@ -327,24 +338,29 @@ class MBPO:
                         control_rows.append(control_row[1:4].reshape(1, -1))
                 error_array = np.concatenate(error_rows, axis=0)
                 control_array = np.concatenate(control_rows, axis=0)
-                error_array, control_array = self.normalize_error_control(error_array, control_array)
+                error_array, control_array = self.normalize_error_control(
+                    error_array, control_array, obs_space, action_space)
 
-        for i in range(error_array.shape[0]-1):
-            observation = error_array[i]
-            action = control_array[i]
-            reward = self.line_track_reward(observation)
-            next_observation = error_array[i+1]
-            if i == error_array.shape[0]-1:
-                done = True
-            else:
-                done = False
-            self.env_buffer.add(observation, action, reward, next_observation, done)
+                for i in range(error_array.shape[0]-1):
+                    observation = error_array[i]
+                    action = control_array[i]
+                    reward = self.line_track_reward(observation)
+                    next_observation = error_array[i+1]
+                    if i == error_array.shape[0]-1:
+                        done = True
+                    else:
+                        done = False
+                    self.env_buffer.add(observation, action, reward,
+                                        next_observation, done)
 
     #endregion
 
     #region Model Data
 
-    def generate_data_from_model(self, n_timesteps, k=1, rand=True, agent=None, env=None):
+    def generate_data_from_model(self, n_timesteps, k=1, rand=True, agent=None, env=None, reward_function=None):
+
+        if reward_function is None:
+            reward_function = self.pendulum_reward
 
         for _ in range(n_timesteps):
             # Sample data from environment buffer
@@ -364,12 +380,12 @@ class MBPO:
                 with T.no_grad():
                     if not self.gaussian:
                         next_obs = self.env_model.forward(T.from_numpy(obs).reshape(
-                        1, -1).to(self.device), T.from_numpy(action).reshape(1, -1).to(self.device))
+                            1, -1).to(self.device), T.from_numpy(action).reshape(1, -1).to(self.device))
                     else:
                         next_obs = self.env_model.broadcast(T.from_numpy(obs).reshape(
-                        1, -1).to(self.device), T.from_numpy(action).reshape(1, -1).to(self.device))
+                            1, -1).to(self.device), T.from_numpy(action).reshape(1, -1).to(self.device))
                 # Get reward
-                reward = self.pendulum_reward(obs, action)
+                reward = reward_function(obs, action)
                 # done = False
                 # Store transition
                 next_obs = next_obs.cpu().detach().numpy()
@@ -380,7 +396,7 @@ class MBPO:
     #endregion
 
     #region ONNX
-    
+
     def export_to_onnx(self, save_file):
         dummy_input = T.randn(
             self.state_dim + self.action_dim, device=self.device)
@@ -417,7 +433,7 @@ class MBPO:
 
     #region Fanuc Line Tracking
 
-    def line_track_reward(self, obs):
+    def line_track_reward(self, obs, action=None):
         reward = -np.sum(np.abs(obs))
         return reward
 
@@ -431,6 +447,7 @@ class MBPO:
         plt.title('Learning Curve')
 
     #endregion
+
 
 if __name__ == "__main__":
     """Create environment"""

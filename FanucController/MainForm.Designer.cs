@@ -125,6 +125,7 @@ namespace FanucController
             this.label25 = new System.Windows.Forms.Label();
             this.buttonRecordPose = new System.Windows.Forms.Button();
             this.groupBox8 = new System.Windows.Forms.GroupBox();
+            this.checkBoxLineTrackStep = new System.Windows.Forms.CheckBox();
             this.label29 = new System.Windows.Forms.Label();
             this.textBoxLineTrackIter = new System.Windows.Forms.TextBox();
             this.checkBoxLineTrackIlc = new System.Windows.Forms.CheckBox();
@@ -172,6 +173,7 @@ namespace FanucController
             this.buttonDgvShow = new System.Windows.Forms.Button();
             this.buttonDgvClear = new System.Windows.Forms.Button();
             this.groupBox10 = new System.Windows.Forms.GroupBox();
+            this.buttonMbpoTest = new System.Windows.Forms.Button();
             this.buttonPnnTest = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
@@ -1065,7 +1067,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(177, 20);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "pnn-test-0416";
+            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\mbpo\\test-0503\\debug";
             // 
             // label28
             // 
@@ -1142,6 +1144,7 @@ namespace FanucController
             // 
             // groupBox8
             // 
+            this.groupBox8.Controls.Add(this.checkBoxLineTrackStep);
             this.groupBox8.Controls.Add(this.label29);
             this.groupBox8.Controls.Add(this.textBoxLineTrackIter);
             this.groupBox8.Controls.Add(this.checkBoxLineTrackIlc);
@@ -1160,6 +1163,16 @@ namespace FanucController
             this.groupBox8.TabIndex = 24;
             this.groupBox8.TabStop = false;
             this.groupBox8.Text = "Line Tracking";
+            // 
+            // checkBoxLineTrackStep
+            // 
+            this.checkBoxLineTrackStep.AutoSize = true;
+            this.checkBoxLineTrackStep.Location = new System.Drawing.Point(162, 93);
+            this.checkBoxLineTrackStep.Name = "checkBoxLineTrackStep";
+            this.checkBoxLineTrackStep.Size = new System.Drawing.Size(78, 17);
+            this.checkBoxLineTrackStep.TabIndex = 37;
+            this.checkBoxLineTrackStep.Text = "Step Mode";
+            this.checkBoxLineTrackStep.UseVisualStyleBackColor = true;
             // 
             // label29
             // 
@@ -1257,7 +1270,7 @@ namespace FanucController
             // 
             // buttonLineTrackQuickSetup
             // 
-            this.buttonLineTrackQuickSetup.Location = new System.Drawing.Point(162, 68);
+            this.buttonLineTrackQuickSetup.Location = new System.Drawing.Point(162, 63);
             this.buttonLineTrackQuickSetup.Name = "buttonLineTrackQuickSetup";
             this.buttonLineTrackQuickSetup.Size = new System.Drawing.Size(97, 30);
             this.buttonLineTrackQuickSetup.TabIndex = 4;
@@ -1601,6 +1614,7 @@ namespace FanucController
             // 
             // groupBox10
             // 
+            this.groupBox10.Controls.Add(this.buttonMbpoTest);
             this.groupBox10.Controls.Add(this.buttonPnnTest);
             this.groupBox10.Controls.Add(this.buttonTestTest);
             this.groupBox10.Location = new System.Drawing.Point(763, 554);
@@ -1609,6 +1623,16 @@ namespace FanucController
             this.groupBox10.TabIndex = 23;
             this.groupBox10.TabStop = false;
             this.groupBox10.Text = "Testing";
+            // 
+            // buttonMbpoTest
+            // 
+            this.buttonMbpoTest.Location = new System.Drawing.Point(112, 22);
+            this.buttonMbpoTest.Name = "buttonMbpoTest";
+            this.buttonMbpoTest.Size = new System.Drawing.Size(75, 23);
+            this.buttonMbpoTest.TabIndex = 5;
+            this.buttonMbpoTest.Text = "Mbpo Test";
+            this.buttonMbpoTest.UseVisualStyleBackColor = true;
+            this.buttonMbpoTest.Click += new System.EventHandler(this.buttonMbpoTest_Click);
             // 
             // buttonPnnTest
             // 
@@ -1817,6 +1841,8 @@ namespace FanucController
         private System.Windows.Forms.Label label29;
         private System.Windows.Forms.GroupBox groupBox10;
         private System.Windows.Forms.Button buttonPnnTest;
+        private System.Windows.Forms.CheckBox checkBoxLineTrackStep;
+        private System.Windows.Forms.Button buttonMbpoTest;
     }
 }
 

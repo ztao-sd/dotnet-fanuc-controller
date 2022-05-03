@@ -1,15 +1,19 @@
 import gym
 import numpy as np
+import pandas as pd
 import torch as T
 import onnx
 import onnxruntime as ort
 import json
 import os
+import csv
 
 
 class ReplayBuffer():
 
     def __init__(self, observation_space, action_space, buffer_size=1_000_000) -> None:
+        self.observation_space = observation_space
+        self.action_space = action_space
         self.buffer_size = buffer_size
         self.observations_shape = observation_space.shape
         self.action_dim = action_space.shape[0]
@@ -65,7 +69,7 @@ class ReplayBuffer():
         return tuple(map(self.to_torch, data))
 
     @staticmethod
-    def combine(self, buffers):
+    def combine(buffers):
         observation_space = buffers[0].observation_space
         action_space = buffers[0].action_space
         size = sum([buffer.buffer_size for buffer in buffers])
@@ -85,20 +89,36 @@ class ReplayBuffer():
         return combined_buffer
 
     def _list_to_json(self):
-        dict = {
-            "full": self.full,
-            "pos": self.pos,
-            "buffer": [
-                {
-                    "observations": observations.tolist(),
-                    "action": action.tolist(),
-                    "reward": reward.tolist(),
-                    "next_observations": next_observations.tolist(),
-                    "done": done.tolist()
-                }
-                for (observations, action, reward, next_observations, done) in zip(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
-            ]
-        }
+        if self.full:
+            dict = {
+                "full": self.full,
+                "pos": self.pos,
+                "buffer": [
+                    {
+                        "observations": observations.tolist(),
+                        "action": action.tolist(),
+                        "reward": reward.tolist(),
+                        "next_observations": next_observations.tolist(),
+                        "done": done.tolist()
+                    }
+                    for (observations, action, reward, next_observations, done) in zip(self.observations, self.actions, self.rewards, self.next_observations, self.dones)
+                ]
+            }
+        else:
+            dict = {
+                "full": self.full,
+                "pos": self.pos,
+                "buffer": [
+                    {
+                        "observations": self.observations[i].tolist(),
+                        "action": self.actions[i].tolist(),
+                        "reward": self.rewards[i].tolist(),
+                        "next_observations": self.next_observations[i].tolist(),
+                        "done": self.dones[i].tolist()
+                    }
+                    for i in range(self.pos)
+                ]
+            }
         return dict
 
     def _json_to_numpy(self, dict):
@@ -114,7 +134,24 @@ class ReplayBuffer():
     def save_buffer(self, file_path):
         buffer_dict = self._list_to_json()
         with open(file_path, 'w') as f:
-            json.dump(buffer_dict, f)
+            json.dump(buffer_dict, f, indent=2)
+
+    def save_csv(self, file_path):
+        obs_header = [f'obs_{i}' for i in range(self.observations.shape[1])]
+        action_header = [f'action_{i}' for i in range(self.actions.shape[1])]
+        reward_header = ['reward']
+        next_obs_header = [f'next_obs_{i}' for i in range(self.next_observations.shape[1])]
+        done_header = ['done']
+        header = obs_header + action_header + reward_header + next_obs_header + done_header
+        if self.full:
+            datas = [self.observations, self.actions, self.rewards, self.next_observations, self.dones]
+            df = pd.DataFrame(data=np.concatenate(datas, axis=0), columns=header)
+        else:
+            datas = [self.observations[:self.pos], self.actions[:self.pos], self.rewards[:self.pos], 
+            self.next_observations[:self.pos], self.dones[:self.pos]]
+            df = pd.DataFrame(data=np.concatenate(datas, axis=1), columns=header)
+        df.to_csv(file_path)
+
 
     def load_buffer(self, file_path):
         with open(file_path, 'r') as f:

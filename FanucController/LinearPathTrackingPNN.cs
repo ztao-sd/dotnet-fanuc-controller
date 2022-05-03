@@ -39,20 +39,31 @@ namespace FanucController
         public Matrix<double> Kp;
         public double MinError;
         public double MaxError;
+        public Vector<double> PnnControl;
 
         // Data
         public List<string> DataDirs = new List<string>();
 
-        // Plot
+        // PlotF
         public string IterFigure = "pnn_iter_data.png";
 
         // Data normalizatin
-        private double[] minControl = new double[4] { 0, -0.10, -0.10, -0.10 };
-        private double[] maxControl = new double[4] { 35, 0.10, 0.10, 0.10 };
+        private double[] minState = new double[4] { 0, -0.20, -0.20, -0.20 };
+        private double[] maxState = new double[4] { 35, 0.20, 0.20, 0.20 };
 
         public LinearPathTrackingPNN()
         {
-
+            InputDim = 4;
+            OutputDim1 = 2;
+            OutputDim2 = 3;
+            // ModelPath = Path.Combine(OutputDir, "predictor.onnx"),
+            InputName = "prev_control";
+            OutputName = "error";
+            ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+            WarmupIters = 3;
+            Kp = CreateMatrix.DenseDiagonal<double>(3, 0.1);
+            MinError = -0.08;
+            MaxError = 0.08;
         }
 
         public LinearPathTrackingPNN(string outputDir, string modelPath, string inputName, string outputName, int inputDim, 
@@ -69,6 +80,103 @@ namespace FanucController
             OrtSesssion = new InferenceSession(modelPath);
         }
 
+        #region Actions
+
+        public void Init()
+        { 
+            ModelPath = Path.Combine(OutputDir, "pnn_model", "predictor.onnx");
+            string ModelDir = Path.GetDirectoryName(ModelPath);
+            Directory.CreateDirectory(ModelDir);
+            WarmpupCount = 0;
+        }
+
+        public void Reset()
+        {
+            if (WarmpupCount >= WarmupIters)
+            {
+                NewSession();
+            }
+            PnnControl = CreateVector.Dense<double>(6);
+        }
+
+        public Vector<double> Control(Vector<double> pControl, double time, bool rand=true)
+        {
+            PnnControl.Clear();
+            if (WarmpupCount >= WarmupIters)
+            {
+                if (time < 2.5)
+                {
+                    return PnnControl;
+                }
+                if (pControl.SubVector(0,3).L2Norm() > 0.10 * 0.3)
+                {
+                    return PnnControl;
+                }
+                double[] input = new double[InputDim];
+                input[0] = time;
+                pControl.SubVector(0, 3).AsArray().CopyTo(input, 1);
+                var control = Forward(input);
+                var vPnn = Kp * CreateVector.DenseOfArray<double>(control);
+                vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
+            }
+            else
+            {
+                if (rand)
+                {
+                    var vPnn = Kp * CreateVector.DenseOfArray<double>(Sample());
+                    //PnnControl = CreateVector.Dense<double>(6);
+                    vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
+                }
+            }
+
+            return PnnControl;
+        }
+
+        public void Iteration(int nEpoch = 1000, List<string> dataDirs = null)
+        {
+            // Increment warmup count
+            WarmpupCount++;
+
+            // Train prediction model with Python script
+            if (dataDirs is null)
+            {
+                DataDirs.Clear();
+                DataDirs.Add(OutputDir);
+            }
+            else
+            {
+                DataDirs.Clear();
+                DataDirs = dataDirs;
+            }
+            string scriptPath = Path.Combine(ScriptDir, iterScript);
+            List<string> args = DataDirs;
+            args.Insert(0, ModelPath);
+            args.Insert(0, nEpoch.ToString());
+            if (WarmpupCount < WarmupIters)
+            {
+                PythonScripts.Run(iterScript, args: args.ToArray(), shell: true);
+            }
+        }
+
+        public void Plot(string iterDir, string savePath = null)
+        {
+            if (savePath is null)
+            {
+                savePath = Path.Combine(iterDir, IterFigure);
+            }
+            // string scriptPath = Path.Combine(ScriptDir, plotScript);
+            List<string> args = new List<string>()
+            {
+                iterDir,
+                savePath
+            };
+            PythonScripts.RunParallel(plotScript, args: args.ToArray());
+        }
+
+        #endregion
+
+        #region ONNX
+
         public void NewSession()
         {
             OrtSesssion = new InferenceSession(ModelPath);
@@ -79,7 +187,7 @@ namespace FanucController
             double[] control = new double[controlArray.Length];
             for (int i = 0; i < controlArray.Length; i++)
             {
-                control[i] = 2/(maxControl[i]-minControl[i]) * (controlArray[i] - minControl[i]) - 1 ;
+                control[i] = 2 / (maxState[i] - minState[i]) * (controlArray[i] - minState[i]) - 1;
             }
             return control;
         }
@@ -113,6 +221,8 @@ namespace FanucController
             }
             return error;
         }
+
+        #endregion
 
         #region Gaussian
 
@@ -149,43 +259,7 @@ namespace FanucController
 
         #endregion
 
-        #region Python Scripts
-
-        public void Iteration(int nEpoch=1000, List<string> dataDirs=null)
-        {
-            if (dataDirs is null)
-            {
-                DataDirs.Clear();
-                DataDirs.Add(OutputDir);
-            }
-            else
-            {
-                DataDirs.Clear();
-                DataDirs = dataDirs;
-            }
-            string scriptPath = Path.Combine(ScriptDir, iterScript);
-            List<string> args = DataDirs;
-            args.Insert(0, ModelPath);
-            args.Insert(0, nEpoch.ToString());
-            PythonScripts.RunParallel(iterScript, args: args.ToArray(), shell: true);
-        }
-
-        public void Plot(string iterDir, string savePath=null)
-        {
-            if (savePath is null)
-            {
-                savePath = Path.Combine(iterDir, IterFigure);
-            }
-            // string scriptPath = Path.Combine(ScriptDir, plotScript);
-            List<string> args = new List<string>()
-            {
-                iterDir,
-                savePath
-            };
-            PythonScripts.RunParallel(plotScript, args:args.ToArray());
-        }
-
-        #endregion
+        #region Test
 
         public static void Test()
         {
@@ -210,6 +284,8 @@ namespace FanucController
             //}
             Console.WriteLine($"Error: {string.Join(",", error)}");
         }
+
+        #endregion
 
     }
 }
