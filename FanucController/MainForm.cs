@@ -215,7 +215,7 @@ namespace FanucController
             checkBoxLineTrackIlc.Checked = false;  
             checkBoxLineTrackPNN.Checked = false;
             checkBoxLineTrackMBPO.Checked = true;
-            textBoxLineTrackIter.Text = "2";
+            textBoxLineTrackIter.Text = "22";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -1037,7 +1037,7 @@ namespace FanucController
             double time = 5;
             var control = mbpo.Control(error, time);
 
-            mbpo.Iteration(nEpoch: 10, gradSteps:500, dataDirs:dataDirs);
+            mbpo.Iteration(nEpoch: 10, gradSteps:500, iterDir, dataDirs:dataDirs);
             mbpo.Plot(iterDir: iterDir);
         }
 

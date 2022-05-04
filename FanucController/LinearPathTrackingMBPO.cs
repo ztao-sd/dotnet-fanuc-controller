@@ -34,17 +34,28 @@ namespace FanucController
         // Training
         public int WarmupIters;
         public int WarmpupCount;
+        public int TrainingIters;
+        public int TrainingCount;
+        public int ExplorationIters;
+        public int ExplorationCount;
         public int GradientSteps;
+        public int NEpochs;
 
         // Normalization
         private double[] minControl;
         private double[] maxControl;
+        private double[] minState;
+        private double[] maxState;
 
         // Data
         public List<string> DataDirs = new List<string>();
 
         // Control
         public Vector<double> MbpoControl;
+
+        // Reinforcement Learning
+        public double ExplorationNoise;
+        public double WarmupNoise;
 
         // Plot
         public string IterFigure = "mbpo_iter_data.png";
@@ -54,15 +65,25 @@ namespace FanucController
         public LinearPathTrackingMBPO()
         {
             ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO";
-            minControl = new double[3] { -0.05, -0.05, -0.05 };
-            maxControl = new double[3] { 0.05, 0.05, 0.05 };
-            WarmupIters = 1;
             InputDim = 4;
             OutputDim = 3;
             InputName = "state";
             OutputName = "control";
+    
+            // Hyperparameters
+            WarmupIters = 1;
+            NEpochs = 500;
+            GradientSteps = 1000;
+            TrainingIters = 20;
+            ExplorationIters = 20;
+            ExplorationNoise = 0.002;
+            WarmupNoise = 0; // ratio of min/max control
+            minControl = new double[3] { -0.02, -0.02, -0.02 };
+            maxControl = new double[3] { 0.02, 0.02, 0.02 };
+            minState = new double[4] { 0, -0.20, -0.20, -0.20 };
+            maxState = new double[4] { 20, 0.20, 0.20, 0.20 };
         }
-
+        
         #endregion
 
         #region Actions
@@ -73,11 +94,12 @@ namespace FanucController
             MbpoDir = Path.GetDirectoryName(ActorPath);
             Directory.CreateDirectory(MbpoDir);
             WarmpupCount = 0;
+            TrainingCount = 0;
         }
 
         public void Reset()
         {
-            if (WarmpupCount >= WarmupIters)
+            if (WarmpupCount > WarmupIters)
             {
                 NewSession();
             }
@@ -87,7 +109,7 @@ namespace FanucController
         public Vector<double> Control(Vector<double> error, double time, bool rand = true)
         {
             MbpoControl.Clear();
-            if (WarmpupCount >= WarmupIters)
+            if (WarmpupCount > WarmupIters)
             {
                 double[] input = new double[InputDim];
                 input[0] = time;
@@ -95,6 +117,12 @@ namespace FanucController
                 var control = Forward(input);
                 var temp = CreateVector.DenseOfArray<double>(control);
                 temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);
+                
+                if (ExplorationCount < ExplorationIters)
+                {
+                    MbpoControl += ExplorationControl();
+
+                }
             }
             else
             {
@@ -103,7 +131,7 @@ namespace FanucController
                     var control = new double[OutputDim];
                     for (int i = 0; i < OutputDim; i++)
                     {
-                        control[i] = ContinuousUniform.Sample(0.3 * minControl[i], 0.3 * maxControl[i]);
+                        control[i] = ContinuousUniform.Sample(WarmupNoise * minControl[i], WarmupNoise * maxControl[i]);
                     }
                     var temp = CreateVector.DenseOfArray<double>(control);
                     temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);
@@ -114,13 +142,20 @@ namespace FanucController
 
         }
 
-        public void Iteration(int nEpoch = 200, int gradSteps = 500, List<string> dataDirs = null)
+        public void Iteration(int nEpoch = 200, int gradSteps = 500, string iterDir=null, List<string> dataDirs = null)
         {
 
             int warmupInt = (WarmpupCount < WarmupIters) ? 1 : 0;
 
             // Increment warmup count
             WarmpupCount++;
+            
+            // Increment training count
+            TrainingCount++;
+
+            // Increment exploration count
+            ExplorationCount++;
+            
 
             // Train prediction model with Python script
             if (dataDirs is null)
@@ -135,13 +170,18 @@ namespace FanucController
             }
             string scriptPath = Path.Combine(ScriptDir, iterScript);
             List<string> args = DataDirs;
+            args.Insert(0, iterDir);
             args.Insert(0, MbpoDir);
             args.Insert(0, MbpoDir);
             args.Insert(0, gradSteps.ToString());
             args.Insert(0, warmupInt.ToString());
             args.Insert(0, nEpoch.ToString());
 
-            PythonScripts.Run(iterScript, args: args.ToArray(), shell: true, dir: ScriptDir);
+            if (TrainingCount < TrainingIters)
+            {
+                PythonScripts.Run(iterScript, args: args.ToArray(), shell: true, dir: ScriptDir);
+            }
+
         }
 
         public void Plot(string iterDir, string savePath = null)
@@ -158,6 +198,24 @@ namespace FanucController
             };
             PythonScripts.RunParallel(plotScript, args: args.ToArray(), dir: ScriptDir);
         }
+
+        #region Helpers
+
+        public Vector<double> ExplorationControl()
+        {
+            var explorationControl = CreateVector.Dense<double>(6);
+            for (int i = 0; i < 3; i++)
+            {
+                explorationControl[i] = Normal.Sample(0, ExplorationNoise);
+                if (Math.Abs(explorationControl[i]) > ExplorationNoise * 5){
+                    explorationControl[i] = ExplorationNoise * 5;
+                } 
+            }
+
+            return explorationControl;
+        }
+
+        #endregion
 
         #endregion
 
@@ -179,8 +237,19 @@ namespace FanucController
             return control;
         }
 
+        public double[] NormalizeState(double[] stateArray)
+        {
+            double[] state = new double[stateArray.Length];
+            for (int i = 0; i < stateArray.Length; i++)
+            {
+                state[i] = 2 / (maxState[i] - minState[i]) * (stateArray[i] - minState[i]) - 1;
+            }
+            return state;
+        }
+
         public double[] Forward(double[] state)
         {
+            state = NormalizeState(state);
             var inputTensor = new DenseTensor<float>(new[] { InputDim });
             for (int i = 0; i < InputDim; i++)
             {
@@ -199,7 +268,6 @@ namespace FanucController
         }
 
         #endregion
-
 
 
     }

@@ -441,10 +441,13 @@ class MBPO:
 
     #region Plotting
 
-    def plot_learning_curve(self):
+    def plot_learning_curve(self, save_path=None):
+        fig, ax = plt.subplots()
         x = [i+1 for i in range(len(self.all_loss))]
-        plt.plot(x, self.all_loss)
-        plt.title('Learning Curve')
+        ax.plot(x, self.all_loss)
+        ax.set_title('Learning Curve')
+        if save_path is not None:
+            fig.savefig(save_path)
 
     #endregion
 

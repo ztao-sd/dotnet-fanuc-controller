@@ -382,7 +382,7 @@ namespace FanucController
                 if (flagMBPO)
                 {
                     uMbpo = Mbpo.Control(PathError, Time, rand:true);
-                    // u += uMbpo;
+                    u += uMbpo;
                 }
 
 
@@ -493,9 +493,7 @@ namespace FanucController
                 {
                     OutputDir
                 };
-                Mbpo.Iteration(nEpoch: 200, gradSteps: 500, dataDirs: dataDirs);
-
-                
+                Mbpo.Iteration(nEpoch: Mbpo.NEpochs, gradSteps: Mbpo.GradientSteps, iterDir:iterDir, dataDirs: dataDirs);
             }
 
             // Log
