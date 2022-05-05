@@ -32,6 +32,7 @@ namespace FanucController
         private string plotScript = "iter_mbpo_plot.py";
 
         // Training
+        public int IterCount;
         public int WarmupIters;
         public int WarmpupCount;
         public int TrainingIters;
@@ -40,6 +41,7 @@ namespace FanucController
         public int ExplorationCount;
         public int GradientSteps;
         public int NEpochs;
+        public int EvalInterval;
 
         // Normalization
         private double[] minControl;
@@ -54,7 +56,7 @@ namespace FanucController
         public Vector<double> MbpoControl;
 
         // Reinforcement Learning
-        public double ExplorationNoise;
+        public double[] ExplorationNoise;
         public double WarmupNoise;
 
         // Plot
@@ -69,19 +71,20 @@ namespace FanucController
             OutputDim = 3;
             InputName = "state";
             OutputName = "control";
-    
+
             // Hyperparameters
+            EvalInterval = 5000;
             WarmupIters = 1;
-            NEpochs = 500;
-            GradientSteps = 1000;
+            NEpochs = 700;
+            GradientSteps = 1500;
             TrainingIters = 20;
             ExplorationIters = 20;
-            ExplorationNoise = 0.002;
-            WarmupNoise = 0; // ratio of min/max control
+            ExplorationNoise = new double[3] { 0.003, 0.003, 0.003};
+            WarmupNoise = 0.05; // ratio of min/max control
             minControl = new double[3] { -0.02, -0.02, -0.02 };
             maxControl = new double[3] { 0.02, 0.02, 0.02 };
-            minState = new double[4] { 0, -0.20, -0.20, -0.20 };
-            maxState = new double[4] { 20, 0.20, 0.20, 0.20 };
+            minState = new double[4] { 0, -0.50, -0.50, -0.50 };
+            maxState = new double[4] { 20, 0.50, 0.50, 0.50 };
         }
         
         #endregion
@@ -95,6 +98,7 @@ namespace FanucController
             Directory.CreateDirectory(MbpoDir);
             WarmpupCount = 0;
             TrainingCount = 0;
+            IterCount = 0;
         }
 
         public void Reset()
@@ -118,7 +122,7 @@ namespace FanucController
                 var temp = CreateVector.DenseOfArray<double>(control);
                 temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);
                 
-                if (ExplorationCount < ExplorationIters)
+                if (ExplorationCount < ExplorationIters && (IterCount % EvalInterval != 0 || IterCount == 0)) 
                 {
                     MbpoControl += ExplorationControl();
 
@@ -147,6 +151,16 @@ namespace FanucController
 
             int warmupInt = (WarmpupCount < WarmupIters) ? 1 : 0;
 
+            // Increment iter count
+            if (IterCount % EvalInterval == 0)
+            {
+                IterCount++;
+                return;
+            }
+            IterCount++;
+
+            
+
             // Increment warmup count
             WarmpupCount++;
             
@@ -170,6 +184,7 @@ namespace FanucController
             }
             string scriptPath = Path.Combine(ScriptDir, iterScript);
             List<string> args = DataDirs;
+            args.Insert(0, ScriptDir);
             args.Insert(0, iterDir);
             args.Insert(0, MbpoDir);
             args.Insert(0, MbpoDir);
@@ -206,9 +221,9 @@ namespace FanucController
             var explorationControl = CreateVector.Dense<double>(6);
             for (int i = 0; i < 3; i++)
             {
-                explorationControl[i] = Normal.Sample(0, ExplorationNoise);
-                if (Math.Abs(explorationControl[i]) > ExplorationNoise * 5){
-                    explorationControl[i] = ExplorationNoise * 5;
+                explorationControl[i] = Normal.Sample(0, ExplorationNoise[i]);
+                if (Math.Abs(explorationControl[i]) > ExplorationNoise[i] * 5){
+                    explorationControl[i] = ExplorationNoise[i] * 5;
                 } 
             }
 

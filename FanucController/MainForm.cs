@@ -215,7 +215,7 @@ namespace FanucController
             checkBoxLineTrackIlc.Checked = false;  
             checkBoxLineTrackPNN.Checked = false;
             checkBoxLineTrackMBPO.Checked = true;
-            textBoxLineTrackIter.Text = "22";
+            textBoxLineTrackIter.Text = "27";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)

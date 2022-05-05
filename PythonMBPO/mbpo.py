@@ -341,12 +341,13 @@ class MBPO:
                 error_array, control_array = self.normalize_error_control(
                     error_array, control_array, obs_space, action_space)
 
+                self.prev_obs = None
                 for i in range(error_array.shape[0]-1):
                     observation = error_array[i]
                     action = control_array[i]
-                    reward = self.line_track_reward(observation)
+                    reward = self.line_track_reward_v2(observation)
                     next_observation = error_array[i+1]
-                    if i == error_array.shape[0]-1:
+                    if i == error_array.shape[0]-2:
                         done = True
                     else:
                         done = False
@@ -436,6 +437,23 @@ class MBPO:
     def line_track_reward(self, obs, action=None):
         reward = -np.sum(np.abs(obs))
         return reward
+
+    def line_track_reward_v2(self, obs, action=None):
+
+        # path error penalty
+        # r1 = np.abs(obs[1]) + np.abs(obs[2]) + np.abs(obs[3])
+        r1 = 100 * np.sqrt(np.sum(obs[1:]**2))
+
+        # path oscillation penalty
+        r2 = 0
+        # if self.prev_obs is not None:
+            # r2 = 0.5 * np.abs(obs[1]-self.prev_obs[1]) + 0.5 * np.abs(
+            #     obs[2] - self.prev_obs[2]) + 0.5 * np.abs(obs[3] - self.prev_obs[3])
+
+        reward = r1 + r2
+        self.prev_obs = obs
+
+        return -reward
 
     #endregion
 

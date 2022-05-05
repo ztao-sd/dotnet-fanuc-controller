@@ -1,5 +1,6 @@
 import argparse
 import sys
+import shutil
 from gym import Env
 from gym import spaces
 from td3 import *
@@ -36,8 +37,8 @@ if __name__ == '__main__':
     EXPLORATION_NOISE = 0.1
 
     # MBPO HYPERPARAMETERS
-    OBS_LOW = [0, -0.20, -0.20, -0.20]
-    OBS_HIGH = [20, 0.20, 0.20, 0.20]
+    OBS_LOW = [0, -0.50, -0.50, -0.50]
+    OBS_HIGH = [20, 0.50, 0.50, 0.50]
     ACTION_LOW = [-0.02, -0.02, -0.02]
     ACTION_HIGH = [0.02, 0.02, 0.02]
     MODEL_HIDDEN_SIZE = [60, 50]
@@ -48,7 +49,24 @@ if __name__ == '__main__':
     # N_EPOCH
     # MBPO_GRAD_STEPS
     HORIZON = 1
-    GEN_DATA_RATIO = 2
+    GEN_DATA_RATIO = 3
+
+    # C# HYPERPARAMETERS
+    """
+    // Hyperparameters
+    EvalInterval = 5000;
+    WarmupIters = 1;
+    NEpochs = 700;
+    GradientSteps = 1500;
+    TrainingIters = 20;
+    ExplorationIters = 20;
+    ExplorationNoise = new double[3] { 0.003, 0.003, 0.003};
+    WarmupNoise = 0.05; // ratio of min/max control
+    minControl = new double[3] { -0.02, -0.02, -0.02 };
+    maxControl = new double[3] { 0.02, 0.02, 0.02 };
+    minState = new double[4] { 0, -0.50, -0.50, -0.50 };
+    maxState = new double[4] { 20, 0.50, 0.50, 0.50 };
+    """
     
     # Test arguments
     test_args = [
@@ -58,6 +76,7 @@ if __name__ == '__main__':
         r'D:\Fanuc Experiments\test-master\output\mbpo',
         r'D:\Fanuc Experiments\test-master\output\mbpo',
         r'D:\Fanuc Experiments\test-master\output\iteration_0',
+        r'D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO',
         r'D:\Fanuc Experiments\test-master\output'
     ]
 
@@ -69,6 +88,7 @@ if __name__ == '__main__':
     parser.add_argument('model_dir', type=str, help='model save dir')
     parser.add_argument('rl_dir', type=str, help='rl save dir')
     parser.add_argument('iter_dir', type=str, help='iteration dir')
+    parser.add_argument('script_dir', type=str, help='script dir')
     parser.add_argument('data_dirs', type=str, nargs='+', help='list of data dirs')
     args = parser.parse_args()
     # args = parser.parse_args(test_args)
@@ -175,8 +195,25 @@ if __name__ == '__main__':
     actor_path = os.path.join(args.rl_dir, ACTOR_ONNX)
     td3.save_actor_onnx(actor_path)
 
+    # Save models in 'iter_dir'
+    model_path = os.path.join(args.iter_dir, MODEL)
+    mbpo.save_model(model_path)
+    actor_path = os.path.join(args.iter_dir, ACTOR)
+    critic_path = os.path.join(args.iter_dir, CRITIC)
+    td3.save_policy(actor_path, critic_path)
+    actor_path = os.path.join(args.iter_dir, ACTOR_ONNX)
+    td3.save_actor_onnx(actor_path)
+
     # Save buffers
     # To be implemented
+
+    # Copy python scripts to directory of iteration
+    src = os.path.join(args.script_dir, 'iter_mbpo.py')
+    dst = os.path.join(args.rl_dir, 'iter_mbpo.py')
+    shutil.copy2(src, dst)
+    src = os.path.join(args.script_dir, 'iter_mbpo_plot.py')
+    dst = os.path.join(args.rl_dir, 'iter_mbpo_plot.py')
+    shutil.copy2(src, dst)
 
     plt.show(block=False)
     plt.pause(1)

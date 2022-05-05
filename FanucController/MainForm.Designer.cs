@@ -1067,7 +1067,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(177, 20);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\mbpo\\test-0504\\train-2";
+            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\mbpo\\test-0505\\train-4";
             // 
             // label28
             // 

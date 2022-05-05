@@ -15,13 +15,14 @@ if __name__=='__main__':
         r'D:\Fanuc Experiments\mbpo\test-0503\debug\output\iteration_1\iter_mbpo_fig'
     ]
 
+
     # Constants
     YLIM = [-0.10, 0.10]
     CONTROL_FILE = 'LineTrackMbpoControl.csv'
-    OBS_LOW = [0, -0.20, -0.20, -0.20]
-    OBS_HIGH = [20, 0.20, 0.20, 0.20]
-    ACTION_LOW = [-0.05, -0.05, -0.05]
-    ACTION_HIGH = [0.05, 0.05, 0.05]
+    OBS_LOW = [0, -0.50, -0.50, -0.50]
+    OBS_HIGH = [20, 0.50, 0.50, 0.50]
+    ACTION_LOW = [-0.02, -0.02, -0.02]
+    ACTION_HIGH = [0.02, 0.02, 0.02]
 
     # MBPO 
     observation_space = spaces.Box(low=np.array([-1.0]*4), high=np.array([1.0]*4), shape=(4,), dtype=np.float32)
