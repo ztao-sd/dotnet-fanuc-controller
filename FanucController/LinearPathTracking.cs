@@ -38,6 +38,8 @@ namespace FanucController
         public Buffer<PoseData> IlcControlBuffer;
         public Buffer<PoseData> PnnControlBuffer;
         public Buffer<PoseData> MbpoControlBuffer;
+        public Buffer<PoseData> BpnnpidControlBuffer;
+        public Buffer<PidCoefficients> BpnnpidCoefficientsBuffer;
 
         // Calibration
         public RotationIdentification RotationId;
@@ -82,6 +84,7 @@ namespace FanucController
         protected bool flagIlc;
         protected bool flagPNN;
         protected bool flagMBPO;
+        protected bool flagBPNNPID;
         public double Time;
 
         // P Control
@@ -103,6 +106,10 @@ namespace FanucController
         // MBPO
         public LinearPathTrackingMBPO Mbpo;
         protected Vector<double> uMbpo;
+
+        //BPNNPID
+        public LinearPathTrackingBPNNPID Bpnnpid;
+        protected Vector<double> uBpnnpid;
 
         // Python
         public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
@@ -133,6 +140,8 @@ namespace FanucController
             IlcControlBuffer = new Buffer<PoseData>(20_000);
             PnnControlBuffer = new Buffer<PoseData>(20_000);
             MbpoControlBuffer = new Buffer<PoseData>(20_000);
+            BpnnpidControlBuffer = new Buffer<PoseData>(20_000);
+            BpnnpidCoefficientsBuffer = new Buffer<PidCoefficients>(20_000);
 
             // Path Error
             startTimes = new List<double>();
@@ -171,6 +180,8 @@ namespace FanucController
                 OutputDir = OutputDir
             };
 
+            // BPNNPID
+            Bpnnpid = new LinearPathTrackingBPNNPID();
 
         }
         #endregion
@@ -178,7 +189,7 @@ namespace FanucController
         #region Path Tracking Actions
 
         public virtual void Init(string pathPath, string progName, int iter=1, bool step = false, bool dpm=false, 
-            bool pControl=false, bool ilc=false, bool pNN=false, bool mbpo=false)
+            bool pControl=false, bool ilc=false, bool pNN=false, bool mbpo=false, bool bpnnpid=false)
         {
             // Program & Path Info
             LinearPath = LinearPath.FromJson(pathPath);
@@ -219,6 +230,8 @@ namespace FanucController
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
             MbpoControlBuffer.Reset();
+            BpnnpidControlBuffer.Reset();
+            BpnnpidCoefficientsBuffer.Reset();
 
             // Step Mode
             stepMode = step;
@@ -245,6 +258,10 @@ namespace FanucController
             // MBPO
             flagMBPO = mbpo;
             Mbpo.Init();
+
+            // BPNNPID
+            flagBPNNPID = bpnnpid;
+            Bpnnpid.Init();
         }
 
         public virtual void Reset()
@@ -273,6 +290,8 @@ namespace FanucController
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
             MbpoControlBuffer.Reset();
+            BpnnpidControlBuffer.Reset();
+            BpnnpidCoefficientsBuffer.Reset();
 
             // Reset times
             //startTimes.Clear();
@@ -303,6 +322,12 @@ namespace FanucController
             if (flagMBPO)
             {
                 Mbpo.Reset();
+            }
+
+            // BPNNPID
+            if (flagBPNNPID)
+            {
+                Bpnnpid.Reset();
             }
         }
 
@@ -385,6 +410,13 @@ namespace FanucController
                     u += uMbpo;
                 }
 
+                // BPNNPID
+                if (flagBPNNPID)
+                {
+                    uBpnnpid = Bpnnpid.Control(xd.SubVector(0, 3), x.SubVector(0, 3), PathError.SubVector(0, 3));
+                    u += uBpnnpid;
+                }
+
 
                 // Dpm
                 if (Watcher.LimitCheck(PathError.SubVector(0,3), u.SubVector(0,3)))
@@ -409,6 +441,11 @@ namespace FanucController
                 if (flagMBPO)
                 {
                     MbpoControlBuffer.Add(new PoseData(uMbpo.AsArray(), Time));
+                }
+                if (flagBPNNPID)
+                {
+                    BpnnpidControlBuffer.Add(new PoseData(uBpnnpid.AsArray(), Time));
+                    BpnnpidCoefficientsBuffer.Add(new PidCoefficients(Bpnnpid.kValues, Time));
                 }
                 
             }
@@ -494,6 +531,16 @@ namespace FanucController
                     OutputDir
                 };
                 Mbpo.Iteration(nEpoch: Mbpo.NEpochs, gradSteps: Mbpo.GradientSteps, iterDir:iterDir, dataDirs: dataDirs);
+            }
+
+            // BPNNPID
+            if (flagBPNNPID)
+            {
+                // Write PBNNPID control CSV file
+                path = Path.Combine(iterDir, "LineTrackBpnnpidControl.csv");
+                Csv.WriteCsv(path, BpnnpidControlBuffer.Memory.ToList());
+                path = Path.Combine(iterDir, "LineTrackBpnnpidCoefficients.csv");
+                Csv.WriteCsv(path, BpnnpidCoefficientsBuffer.Memory.ToList());
             }
 
             // Log

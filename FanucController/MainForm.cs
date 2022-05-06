@@ -215,7 +215,8 @@ namespace FanucController
             checkBoxLineTrackIlc.Checked = false;  
             checkBoxLineTrackPNN.Checked = false;
             checkBoxLineTrackMBPO.Checked = true;
-            textBoxLineTrackIter.Text = "27";
+            checkBoxLineTrackBPNNPID.Checked = false;
+            textBoxLineTrackIter.Text = "10";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -228,9 +229,10 @@ namespace FanucController
             bool ilc = checkBoxLineTrackIlc.Checked;
             bool pNN = checkBoxLineTrackPNN.Checked;
             bool mbpo = checkBoxLineTrackMBPO.Checked;
+            bool bpnnpid = checkBoxLineTrackBPNNPID.Checked;
             bool step = checkBoxLineTrackStep.Checked;
             LinearTrack.Init(pathPath, progName, iter, dpm:dpm, pControl:pControl,
-                ilc:ilc, pNN:pNN, mbpo:mbpo, step:step);
+                ilc:ilc, pNN:pNN, mbpo:mbpo, bpnnpid:bpnnpid,step:step);
             LinearTrack.Start();
         }
 
@@ -1041,6 +1043,16 @@ namespace FanucController
             mbpo.Plot(iterDir: iterDir);
         }
 
+        private void buttonBpnnpidTest_Click(object sender, EventArgs e)
+        {
+            var bpnnpid = new LinearPathTrackingBPNNPID();
+            Vector<double> reference = CreateVector.DenseOfArray(new double[] { -1953, -1080, -74 });
+            Vector<double> actual = CreateVector.DenseOfArray(new double[] { -1800, -900, -60 });
+            Vector<double> error = CreateVector.DenseOfArray(new double[] { -0.05, 0.1, 0.3 });
+            var control = bpnnpid.Control(reference, actual, error);
+            Console.WriteLine($"BPNNPID control: {string.Join(",", control.AsArray())}");
+        }
+
         #endregion
 
         #region Junk
@@ -1172,8 +1184,8 @@ namespace FanucController
 
         }
 
-        #endregion
 
+        #endregion
 
     }
 

@@ -28,7 +28,7 @@ if __name__ == '__main__':
     POLICY_DELAY = 2
     TD3_GRAD_STEPS = 1
     TD3_BATCH_SIZE = 100
-    GAMMA = 0.98
+    GAMMA = 0.99
     ACTOR_LR = 1e-3
     CRITIC_LR = 1e-3
     TAU = 5e-3
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # N_EPOCH
     # MBPO_GRAD_STEPS
     HORIZON = 1
-    GEN_DATA_RATIO = 3
+    GEN_DATA_RATIO = 1.5
 
     # C# HYPERPARAMETERS
     """
@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
     # Reinforcement learning
     if not args.warmup:
-        model_gen_data_size = GEN_DATA_RATIO * mbpo.env_buffer.pos
+        model_gen_data_size = int(GEN_DATA_RATIO * mbpo.env_buffer.pos)
         mbpo.generate_data_from_model(n_timesteps=model_gen_data_size, k=horizon, rand=False, agent=td3, reward_function=mbpo.line_track_reward)
         combined_buffer = ReplayBuffer.combine([mbpo.env_buffer, mbpo.model_buffer])
         td3.train(combined_buffer, gradient_steps, verbose=True)  

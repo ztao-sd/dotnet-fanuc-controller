@@ -175,6 +175,8 @@ namespace FanucController
             this.groupBox10 = new System.Windows.Forms.GroupBox();
             this.buttonMbpoTest = new System.Windows.Forms.Button();
             this.buttonPnnTest = new System.Windows.Forms.Button();
+            this.checkBoxLineTrackBPNNPID = new System.Windows.Forms.CheckBox();
+            this.buttonBpnnpidTest = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -1056,7 +1058,7 @@ namespace FanucController
             this.groupBoxExperiment.Controls.Add(this.groupBox4);
             this.groupBoxExperiment.Location = new System.Drawing.Point(12, 12);
             this.groupBoxExperiment.Name = "groupBoxExperiment";
-            this.groupBoxExperiment.Size = new System.Drawing.Size(290, 520);
+            this.groupBoxExperiment.Size = new System.Drawing.Size(290, 533);
             this.groupBoxExperiment.TabIndex = 14;
             this.groupBoxExperiment.TabStop = false;
             this.groupBoxExperiment.Text = "FANUC Experiment";
@@ -1067,7 +1069,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(177, 20);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\mbpo\\test-0505\\train-4";
+            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\mbpo\\test-0506\\eval";
             // 
             // label28
             // 
@@ -1144,6 +1146,7 @@ namespace FanucController
             // 
             // groupBox8
             // 
+            this.groupBox8.Controls.Add(this.checkBoxLineTrackBPNNPID);
             this.groupBox8.Controls.Add(this.checkBoxLineTrackStep);
             this.groupBox8.Controls.Add(this.label29);
             this.groupBox8.Controls.Add(this.textBoxLineTrackIter);
@@ -1159,7 +1162,7 @@ namespace FanucController
             this.groupBox8.Controls.Add(this.buttonLineTrackQuickSetup);
             this.groupBox8.Location = new System.Drawing.Point(6, 388);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(280, 116);
+            this.groupBox8.Size = new System.Drawing.Size(280, 139);
             this.groupBox8.TabIndex = 24;
             this.groupBox8.TabStop = false;
             this.groupBox8.Text = "Line Tracking";
@@ -1614,6 +1617,7 @@ namespace FanucController
             // 
             // groupBox10
             // 
+            this.groupBox10.Controls.Add(this.buttonBpnnpidTest);
             this.groupBox10.Controls.Add(this.buttonMbpoTest);
             this.groupBox10.Controls.Add(this.buttonPnnTest);
             this.groupBox10.Controls.Add(this.buttonTestTest);
@@ -1643,6 +1647,26 @@ namespace FanucController
             this.buttonPnnTest.Text = "PNN Test";
             this.buttonPnnTest.UseVisualStyleBackColor = true;
             this.buttonPnnTest.Click += new System.EventHandler(this.buttonPnnTest_Click);
+            // 
+            // checkBoxLineTrackBPNNPID
+            // 
+            this.checkBoxLineTrackBPNNPID.AutoSize = true;
+            this.checkBoxLineTrackBPNNPID.Location = new System.Drawing.Point(99, 114);
+            this.checkBoxLineTrackBPNNPID.Name = "checkBoxLineTrackBPNNPID";
+            this.checkBoxLineTrackBPNNPID.Size = new System.Drawing.Size(74, 17);
+            this.checkBoxLineTrackBPNNPID.TabIndex = 24;
+            this.checkBoxLineTrackBPNNPID.Text = "BPNNPID";
+            this.checkBoxLineTrackBPNNPID.UseVisualStyleBackColor = true;
+            // 
+            // buttonBpnnpidTest
+            // 
+            this.buttonBpnnpidTest.Location = new System.Drawing.Point(112, 67);
+            this.buttonBpnnpidTest.Name = "buttonBpnnpidTest";
+            this.buttonBpnnpidTest.Size = new System.Drawing.Size(105, 28);
+            this.buttonBpnnpidTest.TabIndex = 6;
+            this.buttonBpnnpidTest.Text = "Bpnnpid Test";
+            this.buttonBpnnpidTest.UseVisualStyleBackColor = true;
+            this.buttonBpnnpidTest.Click += new System.EventHandler(this.buttonBpnnpidTest_Click);
             // 
             // MainForm
             // 
@@ -1843,6 +1867,8 @@ namespace FanucController
         private System.Windows.Forms.Button buttonPnnTest;
         private System.Windows.Forms.CheckBox checkBoxLineTrackStep;
         private System.Windows.Forms.Button buttonMbpoTest;
+        private System.Windows.Forms.CheckBox checkBoxLineTrackBPNNPID;
+        private System.Windows.Forms.Button buttonBpnnpidTest;
     }
 }
 

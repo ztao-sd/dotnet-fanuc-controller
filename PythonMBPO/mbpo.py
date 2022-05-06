@@ -442,7 +442,7 @@ class MBPO:
 
         # path error penalty
         # r1 = np.abs(obs[1]) + np.abs(obs[2]) + np.abs(obs[3])
-        r1 = 100 * np.sqrt(np.sum(obs[1:]**2))
+        r1 = 10 * np.sqrt(np.sum(obs[1:]**2))
 
         # path oscillation penalty
         r2 = 0

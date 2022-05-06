@@ -73,13 +73,13 @@ namespace FanucController
             OutputName = "control";
 
             // Hyperparameters
-            EvalInterval = 5000;
-            WarmupIters = 1;
+            EvalInterval = 1;
+            WarmupIters = 0;
             NEpochs = 700;
-            GradientSteps = 1500;
-            TrainingIters = 20;
-            ExplorationIters = 20;
-            ExplorationNoise = new double[3] { 0.003, 0.003, 0.003};
+            GradientSteps = 1000;
+            TrainingIters = 0;
+            ExplorationIters = 0;
+            ExplorationNoise = new double[3] { 0.002, 0.002, 0.002};
             WarmupNoise = 0.05; // ratio of min/max control
             minControl = new double[3] { -0.02, -0.02, -0.02 };
             maxControl = new double[3] { 0.02, 0.02, 0.02 };
@@ -152,7 +152,7 @@ namespace FanucController
             int warmupInt = (WarmpupCount < WarmupIters) ? 1 : 0;
 
             // Increment iter count
-            if (IterCount % EvalInterval == 0)
+            if (IterCount % EvalInterval == 0 && IterCount != 0)
             {
                 IterCount++;
                 return;

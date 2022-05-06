@@ -162,6 +162,42 @@ namespace FanucController
 
     }
 
+    public class PidCoefficients
+    {
+
+        [Name("time")] public double Time { get; set; }
+        [Name("KpX")] public double KpX { get; set; }
+        [Name("KpY")] public double KpY { get; set; }
+        [Name("KpZ")] public double KpZ { get; set; }
+        [Name("KiX")] public double KiX { get; set; }
+        [Name("KiY")] public double KiY { get; set; }
+        [Name("KiZ")] public double KiZ { get; set; }
+        [Name("KdX")] public double KdX { get; set; }
+        [Name("KdY")] public double KdY { get; set; }
+        [Name("KdZ")] public double KdZ { get; set; }
+        
+
+        public PidCoefficients()
+        {
+
+        }
+
+        public PidCoefficients(double[] kValues, double time)
+        {
+            Time = time;
+            KpX = kValues[0];
+            KpY = kValues[1];
+            KpZ = kValues[2];
+            KiX = kValues[3];
+            KiY = kValues[4];
+            KiZ = kValues[5];
+            KdX = kValues[6];
+            KdY = kValues[7];
+            KdZ = kValues[8];
+        }
+
+    }
+
     public class JointData
     {
         [Name("time")] public double Time { get; set; }
