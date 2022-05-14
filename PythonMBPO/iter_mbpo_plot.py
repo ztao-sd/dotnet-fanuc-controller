@@ -19,10 +19,10 @@ if __name__=='__main__':
     # Constants
     YLIM = [-0.10, 0.10]
     CONTROL_FILE = 'LineTrackMbpoControl.csv'
-    OBS_LOW = [0, -0.50, -0.50, -0.50]
-    OBS_HIGH = [20, 0.50, 0.50, 0.50]
-    ACTION_LOW = [-0.02, -0.02, -0.02]
-    ACTION_HIGH = [0.02, 0.02, 0.02]
+    OBS_LOW = [0, -0.20, -0.20, -0.20]
+    OBS_HIGH = [20, 0.20, 0.20, 0.20]
+    ACTION_LOW = [-0.010, -0.010, -0.010]
+    ACTION_HIGH = [0.010, 0.010, 0.010]
 
     # MBPO 
     observation_space = spaces.Box(low=np.array([-1.0]*4), high=np.array([1.0]*4), shape=(4,), dtype=np.float32)
@@ -75,7 +75,7 @@ if __name__=='__main__':
     
     # Episodic cumulative rewards
     rewards = df['reward'].tolist()
-    cum_reward = sum(rewards[30:])
+    cum_reward = sum(rewards[55:])
     
     # Episodic result table
     rows = ['Cumulative Reward']

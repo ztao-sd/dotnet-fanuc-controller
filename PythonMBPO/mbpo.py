@@ -441,14 +441,21 @@ class MBPO:
     def line_track_reward_v2(self, obs, action=None):
 
         # path error penalty
-        # r1 = np.abs(obs[1]) + np.abs(obs[2]) + np.abs(obs[3])
-        r1 = 10 * np.sqrt(np.sum(obs[1:]**2))
+        # factor = 0.05 * 20
+        # if self.prev_obs is not None:
+        #     if factor < np.amax(obs[1:4]) * 20:
+        #         factor = np.amax(obs[1:4]) * 20
+        r1 = (np.abs(obs[1]) + np.abs(obs[2]) + np.abs(obs[3])) * 10
+        # r1 = 10 * np.sqrt((np.sum(obs[1:4]**2)))
+        # if np.abs(obs[3]) > 0.7:
+        #     r1 += 2
 
         # path oscillation penalty
         r2 = 0
         # if self.prev_obs is not None:
-            # r2 = 0.5 * np.abs(obs[1]-self.prev_obs[1]) + 0.5 * np.abs(
-            #     obs[2] - self.prev_obs[2]) + 0.5 * np.abs(obs[3] - self.prev_obs[3])
+        #     r2 = np.abs(obs[1]-self.prev_obs[1]) + np.abs(
+        #         obs[2] - self.prev_obs[2]) + np.abs(obs[3] - self.prev_obs[3])
+        #     r2 *= 5
 
         reward = r1 + r2
         self.prev_obs = obs

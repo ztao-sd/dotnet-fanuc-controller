@@ -216,7 +216,7 @@ namespace FanucController
             checkBoxLineTrackPNN.Checked = false;
             checkBoxLineTrackMBPO.Checked = true;
             checkBoxLineTrackBPNNPID.Checked = false;
-            textBoxLineTrackIter.Text = "10";
+            textBoxLineTrackIter.Text = "21";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -575,8 +575,8 @@ namespace FanucController
 
         private void buttonVxQuickConnect_Click(object sender, EventArgs e)
         {
-            string targetsPath = Path.Combine(ReferenceDir, "targets_0305.txt");
-            string modelPath = Path.Combine(ReferenceDir, "model_0313.txt");
+            string targetsPath = Path.Combine(ReferenceDir, "targets_0510.txt");
+            string modelPath = Path.Combine(ReferenceDir, "model_0510.txt");
             Vx.QuickConnect(targetsPath, modelPath);
             // Activate the necessary filters
             Vx.filterActivated[0] = checkBoxVxRaw.Checked;
@@ -1053,6 +1053,13 @@ namespace FanucController
             Console.WriteLine($"BPNNPID control: {string.Join(",", control.AsArray())}");
         }
 
+        private void buttonOUTest_Click(object sender, EventArgs e)
+        {
+            var ou = new OrnsteinUlhenbeckNoise(new double[3] { 0.002, 0.002, 0.002 },
+                new double[3] { 0.2, 0.2, 0.2 });
+            var x = ou.Sample();
+        }
+
         #endregion
 
         #region Junk
@@ -1186,6 +1193,7 @@ namespace FanucController
 
 
         #endregion
+
 
     }
 

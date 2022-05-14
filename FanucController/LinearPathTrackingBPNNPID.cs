@@ -15,7 +15,7 @@ namespace FanucController
         public double kLimits;
 
         // Hyperparameters of NN
-        public double xite = 0.28; // Learning rate
+        public double xite = 0.05; // Learning rate
         public double alp = 0.04; // Inertia coefficient
         public double IN = 4; // Input layer nodes
         public double H = 5; // Hidden layer nodes
@@ -285,10 +285,12 @@ namespace FanucController
             // Initialize BP modules
             Bp = new BPNNPID[3];
 
+            double[] k = new double[3] { 0.01, 0.01, 0.001 };
+
             for (int i = 0; i < 3; i++)
             {
                 Bp[i] = new BPNNPID();
-                Bp[i].kLimits = 0.02;
+                Bp[i].kLimits = k[i];
             }
 
             kValues = new double[9];

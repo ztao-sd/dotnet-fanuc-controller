@@ -116,6 +116,7 @@
     <Compile Include="LinearPathTrackingBPNNPID.cs" />
     <Compile Include="LinearPathTrackingILC.cs" />
     <Compile Include="LinearPathTrackingMBPO.cs" />
+    <Compile Include="LinearPathTrackingPID.cs" />
     <Compile Include="LinearPathTrackingPNN.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>

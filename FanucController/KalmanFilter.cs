@@ -96,8 +96,8 @@ namespace FanucController
         public RobustKalmanFilter() : base()
         {
             alpha_ = 1.0;
-            beta = 0.999;
-            omega = 0.999;
+            beta = 0.99;
+            omega = 0.99;
             d_ = CreateVector.Dense<double>(6);
         }
 

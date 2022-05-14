@@ -37,10 +37,10 @@ if __name__ == '__main__':
     EXPLORATION_NOISE = 0.1
 
     # MBPO HYPERPARAMETERS
-    OBS_LOW = [0, -0.50, -0.50, -0.50]
-    OBS_HIGH = [20, 0.50, 0.50, 0.50]
-    ACTION_LOW = [-0.02, -0.02, -0.02]
-    ACTION_HIGH = [0.02, 0.02, 0.02]
+    OBS_LOW = [0, -0.20, -0.20, -0.20]
+    OBS_HIGH = [20, 0.20, 0.20, 0.20]
+    ACTION_LOW = [-0.010, -0.010, -0.010]
+    ACTION_HIGH = [0.010, 0.010, 0.010]
     MODEL_HIDDEN_SIZE = [60, 50]
     MODEL_LR = 1e-3
     STOP_TRAINING_THRESHOLD = 2e-4
@@ -49,7 +49,8 @@ if __name__ == '__main__':
     # N_EPOCH
     # MBPO_GRAD_STEPS
     HORIZON = 1
-    GEN_DATA_RATIO = 1.5
+    GEN_DATA_RATIO = 0
+    C_REWARD_THRESHOLD = -300
 
     # C# HYPERPARAMETERS
     """
@@ -71,13 +72,14 @@ if __name__ == '__main__':
     # Test arguments
     test_args = [
         '20',
-        '0',
+        '1',
         '500',
-        r'D:\Fanuc Experiments\test-master\output\mbpo',
-        r'D:\Fanuc Experiments\test-master\output\mbpo',
-        r'D:\Fanuc Experiments\test-master\output\iteration_0',
+        '0',
+        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\iteration_0',
         r'D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO',
-        r'D:\Fanuc Experiments\test-master\output'
+        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output'
     ]
 
     # Argument parsing
@@ -85,6 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('n_epoch', type=int, help='number of epochs')
     parser.add_argument('warmup', type=int, help='warmup phase?')
     parser.add_argument('gradient_steps', type=int, help='gradient steps?')
+    parser.add_argument('model_usage', type=int, help='use model?')
     parser.add_argument('model_dir', type=str, help='model save dir')
     parser.add_argument('rl_dir', type=str, help='rl save dir')
     parser.add_argument('iter_dir', type=str, help='iteration dir')
@@ -92,6 +95,14 @@ if __name__ == '__main__':
     parser.add_argument('data_dirs', type=str, nargs='+', help='list of data dirs')
     args = parser.parse_args()
     # args = parser.parse_args(test_args)
+
+    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0513\run-3\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0512\run-0\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0511\run-1\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0511\run-2\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0510\iterations\run-1\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0510\iterations\run-2\output')
+
 
     # RL environment parameters
     observation_space = spaces.Box(low=np.array([-1.0]*4), high=np.array([1.0]*4), shape=(4,), dtype=np.float32)
@@ -161,7 +172,20 @@ if __name__ == '__main__':
     act_space = spaces.Box(low=np.array(ACTION_LOW), high=np.array(ACTION_HIGH), shape=(3,), dtype=np.float32)
     iter_dirs = []
     for dir in args.data_dirs:
-        iter_dirs += [os.path.join(dir, iter_dir) for iter_dir in os.listdir(dir)]
+        for iter_dir in os.listdir(dir):
+            # Check cumulative reward threshold
+            if MBPO.iteration_prefix in iter_dir:
+                dir_ = os.path.join(dir, iter_dir)
+                mbpo.env_data_from_files([dir_], obs_space, act_space)
+                csv_path = os.path.join(dir_, 'env_buffer.csv')
+                mbpo.env_buffer.save_csv(csv_path)
+                mbpo.env_buffer.reset(True)
+                df = pd.read_csv(csv_path)
+                rewards = df['reward'].tolist()
+                cum_reward = sum(rewards[55:])
+                if cum_reward > C_REWARD_THRESHOLD:
+                    iter_dirs.append(os.path.join(dir_))
+        #iter_dirs += [os.path.join(dir, iter_dir) for iter_dir in os.listdir(dir)]
     mbpo.env_data_from_files(iter_dirs, obs_space, act_space)
     env_path = os.path.join(args.model_dir, 'env_buffer.json')
     mbpo.env_buffer.save_buffer(env_path)
@@ -172,11 +196,13 @@ if __name__ == '__main__':
     mbpo.load_dataset(mbpo.env_buffer, mbpo.env_buffer.pos, 0.99)
     mbpo.train_model(n_epochs=n_epochs, stop_training_threshold=mbpo.stop_training_threshold, verbose=1)
     path = os.path.join(args.iter_dir, 'mbpo_learning_curve')
-    mbpo.plot_learning_curve()
+    mbpo.plot_learning_curve(path)
 
     # Reinforcement learning
     if not args.warmup:
-        model_gen_data_size = int(GEN_DATA_RATIO * mbpo.env_buffer.pos)
+        model_gen_data_size = 0
+        if args.model_usage:
+            model_gen_data_size = int(GEN_DATA_RATIO * mbpo.env_buffer.pos)
         mbpo.generate_data_from_model(n_timesteps=model_gen_data_size, k=horizon, rand=False, agent=td3, reward_function=mbpo.line_track_reward)
         combined_buffer = ReplayBuffer.combine([mbpo.env_buffer, mbpo.model_buffer])
         td3.train(combined_buffer, gradient_steps, verbose=True)  

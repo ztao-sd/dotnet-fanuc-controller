@@ -42,6 +42,7 @@ namespace FanucController
         public int GradientSteps;
         public int NEpochs;
         public int EvalInterval;
+        public int ModelUsageIters;
 
         // Normalization
         private double[] minControl;
@@ -58,6 +59,8 @@ namespace FanucController
         // Reinforcement Learning
         public double[] ExplorationNoise;
         public double WarmupNoise;
+        public OrnsteinUlhenbeckNoise OUExplorationNoise;
+        public OrnsteinUlhenbeckNoise OUWarmupNoise;
 
         // Plot
         public string IterFigure = "mbpo_iter_data.png";
@@ -72,19 +75,31 @@ namespace FanucController
             InputName = "state";
             OutputName = "control";
 
-            // Hyperparameters
             EvalInterval = 1;
             WarmupIters = 0;
             NEpochs = 700;
             GradientSteps = 1000;
             TrainingIters = 0;
             ExplorationIters = 0;
-            ExplorationNoise = new double[3] { 0.002, 0.002, 0.002};
-            WarmupNoise = 0.05; // ratio of min/max control
-            minControl = new double[3] { -0.02, -0.02, -0.02 };
-            maxControl = new double[3] { 0.02, 0.02, 0.02 };
-            minState = new double[4] { 0, -0.50, -0.50, -0.50 };
-            maxState = new double[4] { 20, 0.50, 0.50, 0.50 };
+            ModelUsageIters = 30;
+
+            // Hyperparameters
+            //EvalInterval = 1000;
+            //WarmupIters = 1;
+            //NEpochs = 5;
+            //GradientSteps = 800;
+            //TrainingIters = 20;
+            //ExplorationIters = 20;
+            //ModelUsageIters = 30;
+            ExplorationNoise = new double[3] { 0.000, 0.000, 0.000};
+            OUExplorationNoise = new OrnsteinUlhenbeckNoise(ExplorationNoise, new double[] { 0.0, 0.0, 0.0 });
+            WarmupNoise = 0.10; // ratio of min/max control
+            OUWarmupNoise = new OrnsteinUlhenbeckNoise(new double[] {0.002, 0.002, 0.002}, 
+                new double[] { 0.2, 0.2, 0.2 });
+            minControl = new double[3] { -0.010, -0.010, -0.010 };
+            maxControl = new double[3] { 0.010, 0.010, 0.010 };
+            minState = new double[4] { 0, -0.20, -0.20, -0.20 };
+            maxState = new double[4] { 20, 0.20, 0.20, 0.20 };
         }
         
         #endregion
@@ -108,6 +123,8 @@ namespace FanucController
                 NewSession();
             }
             MbpoControl = CreateVector.Dense<double>(6);
+            OUExplorationNoise.Reset();
+            OUWarmupNoise.Reset();
         }
 
         public Vector<double> Control(Vector<double> error, double time, bool rand = true)
@@ -124,21 +141,22 @@ namespace FanucController
                 
                 if (ExplorationCount < ExplorationIters && (IterCount % EvalInterval != 0 || IterCount == 0)) 
                 {
-                    MbpoControl += ExplorationControl();
-
+                    // MbpoControl += ExplorationControl();
+                    MbpoControl += OUExplorationNoise.Sample();
                 }
             }
             else
             {
                 if (rand)
                 {
-                    var control = new double[OutputDim];
-                    for (int i = 0; i < OutputDim; i++)
-                    {
-                        control[i] = ContinuousUniform.Sample(WarmupNoise * minControl[i], WarmupNoise * maxControl[i]);
-                    }
-                    var temp = CreateVector.DenseOfArray<double>(control);
-                    temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);
+                    //var control = new double[OutputDim];
+                    //for (int i = 0; i < OutputDim; i++)
+                    //{
+                    //    control[i] = ContinuousUniform.Sample(WarmupNoise * minControl[i], WarmupNoise * maxControl[i]);
+                    //}
+                    //var temp = CreateVector.DenseOfArray<double>(control);
+                    //temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);
+                    MbpoControl = OUWarmupNoise.Sample();
                 }
             }
 
@@ -150,6 +168,7 @@ namespace FanucController
         {
 
             int warmupInt = (WarmpupCount < WarmupIters) ? 1 : 0;
+            int modelUsageInt = (IterCount >= ModelUsageIters) ? 1 : 0;
 
             // Increment iter count
             if (IterCount % EvalInterval == 0 && IterCount != 0)
@@ -188,6 +207,7 @@ namespace FanucController
             args.Insert(0, iterDir);
             args.Insert(0, MbpoDir);
             args.Insert(0, MbpoDir);
+            args.Insert(0, modelUsageInt.ToString());
             args.Insert(0, gradSteps.ToString());
             args.Insert(0, warmupInt.ToString());
             args.Insert(0, nEpoch.ToString());
@@ -233,7 +253,6 @@ namespace FanucController
         #endregion
 
         #endregion
-
 
         #region ONNX
 
@@ -285,5 +304,50 @@ namespace FanucController
         #endregion
 
 
+    }
+
+    public class OrnsteinUlhenbeckNoise
+    {
+        private Vector<double> x0;
+        private Vector<double> xPrev;
+
+        private Vector<double> mu;
+        private Vector<double> sigma;
+        private Vector<double> theta;
+        private double dt;
+
+        public OrnsteinUlhenbeckNoise(double[] explorationNoise, double[] friction)
+        {
+            const int dim = 3;
+            mu = CreateVector.Dense<double>(dim);
+            sigma = CreateVector.DenseOfArray(explorationNoise);
+            theta = CreateVector.DenseOfArray(friction);
+            dt = 0.08;
+
+            xPrev = mu;
+        }
+
+        public void Reset()
+        {
+            xPrev = mu;
+        }
+
+        public Vector<double> Sample()
+        {
+            Vector<double> x = CreateVector.Dense<double>(6);
+            Vector<double> normalRand = CreateVector.Dense<double>(3);
+            for (int i = 0; i < 3; i++)
+            {
+                normalRand[i] = Normal.Sample(0, 1);
+                if (Math.Abs(normalRand[i]) >  5)
+                {
+                    normalRand[i] = Math.Sign(normalRand[i]) * 5;
+                }
+            }
+            Vector<double> temp = xPrev + theta.PointwiseMultiply(mu - xPrev) * dt + Math.Sqrt(dt) * sigma.PointwiseMultiply(normalRand);
+            temp.CopySubVectorTo(x, 0, 0, 3);
+
+            return x;
+        }
     }
 }

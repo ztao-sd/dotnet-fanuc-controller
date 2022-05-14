@@ -32,9 +32,12 @@ namespace FanucController
         public VXelementsUtility Vx;
 
         // Data
+        public Buffer<PoseData> ErrorRawBuffer;
+        public Buffer<PoseData> ErrorKfBuffer;
         public Buffer<PoseData> ErrorBuffer;
         public Buffer<PoseData> ControlBuffer;
         public Buffer<PoseData> PoseBuffer;
+        public Buffer<PoseData> PidControlBuffer;
         public Buffer<PoseData> IlcControlBuffer;
         public Buffer<PoseData> PnnControlBuffer;
         public Buffer<PoseData> MbpoControlBuffer;
@@ -91,6 +94,10 @@ namespace FanucController
         protected Vector<double> uP;
         public Matrix<double> Kp;
 
+        // PID
+        protected Vector<double> uPID;
+        public LinearPathTrackingPID PidControl;
+
         // ILC
         protected Vector<double> uIlc;
         Matrix<double> KpIlc;
@@ -134,9 +141,12 @@ namespace FanucController
             PoseDict = new Dictionary<string, Vector<double>>();
 
             // Buffers
+            ErrorRawBuffer = new Buffer<PoseData>(20_000);
+            ErrorKfBuffer = new Buffer<PoseData>(20_000);
             ErrorBuffer = new Buffer<PoseData>(20_000);
             ControlBuffer = new Buffer<PoseData>(20_000);
             PoseBuffer = new Buffer<PoseData>(20_000);
+            PidControlBuffer = new Buffer<PoseData>(20_000);
             IlcControlBuffer = new Buffer<PoseData>(20_000);
             PnnControlBuffer = new Buffer<PoseData>(20_000);
             MbpoControlBuffer = new Buffer<PoseData>(20_000);
@@ -158,6 +168,9 @@ namespace FanucController
             // P Control
             Kp = CreateMatrix.Dense<double>(6, 6);
             Kp[0,0] = 0.3; Kp[1, 1] = 0.3; Kp[2, 2] = 0.3;
+
+            // PID Control
+            PidControl = new LinearPathTrackingPID();
 
             // ILC
             IlcList = new List<IterativeLearningControl>();
@@ -222,11 +235,14 @@ namespace FanucController
                 CumulativeError = CreateVector.Dense<double>(3),
                 CumulativeErrorLimit = 5
             };
-            
+
             // Reset Buffers
+            ErrorRawBuffer.Reset();
+            ErrorKfBuffer.Reset();
             ErrorBuffer.Reset();
             ControlBuffer.Reset();
             PoseBuffer.Reset();
+            PidControlBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
             MbpoControlBuffer.Reset();
@@ -241,6 +257,12 @@ namespace FanucController
 
             // P Control
             flagPControl = pControl;
+
+            // PID
+            if (flagPControl)
+            {
+                PidControl.Init();
+            }
 
             // ILC
             flagIlc = ilc;
@@ -284,6 +306,8 @@ namespace FanucController
             Watcher.Reset();
             
             // Reset Buffers
+            ErrorRawBuffer.Reset();
+            ErrorKfBuffer.Reset();
             ErrorBuffer.Reset();
             ControlBuffer.Reset();
             PoseBuffer.Reset();
@@ -296,6 +320,12 @@ namespace FanucController
             // Reset times
             //startTimes.Clear();
             //endTimes.Clear();
+
+            // PID
+            if (flagPControl)
+            {
+                PidControl.Reset();
+            }
 
             // ILC
             if (flagIlc)
@@ -380,11 +410,16 @@ namespace FanucController
                 PathError = xd - x;
                 Vector<double> u = CreateVector.Dense<double>(6);
 
+                // KF & Raw Data
+                Vector<double> xKf = GetVxUFPose("kf");
+                Vector<double> xRaw = GetVxUFPose("raw"); 
+
                 // P Control
                 if (flagPControl)
                 {
-                    uP = Pid(PathError);
-                    u += uP;
+                    //uP = Pid(PathError);
+                    uPID = PidControl.Control(PathError.SubVector(0, 3));
+                    u += uPID;
                 }
                 
                 // ILC
@@ -427,9 +462,15 @@ namespace FanucController
                     }
                 }
                 // Save data to buffer
+                ErrorRawBuffer.Add(new PoseData((xd - xRaw).AsArray(), Time));
+                ErrorKfBuffer.Add(new PoseData((xd - xKf).AsArray(), Time));
                 ErrorBuffer.Add(new PoseData(PathError.AsArray(), Time));
                 ControlBuffer.Add(new PoseData(u.AsArray(), Time));
                 PoseBuffer.Add(new PoseData(x.AsArray(), Time));
+                if (flagPControl)
+                {
+                    PidControlBuffer.Add(new PoseData(uPID.AsArray(), Time)); 
+                }
                 if (flagIlc)
                 {
                     IlcControlBuffer.Add(new PoseData(uIlc.AsArray(), Time));
@@ -466,6 +507,10 @@ namespace FanucController
             string iterDir = Path.Combine(OutputDir, $"iteration_{iterIndex}");
             Directory.CreateDirectory(iterDir);
             string path;
+            path = Path.Combine(iterDir, "LineTrackRawError.csv");
+            Csv.WriteCsv<PoseData>(path, ErrorRawBuffer.Memory.ToList());
+            path = Path.Combine(iterDir, "LineTrackKfError.csv");
+            Csv.WriteCsv<PoseData>(path, ErrorKfBuffer.Memory.ToList());
             path = Path.Combine(iterDir, "LineTrackError.csv");
             Csv.WriteCsv<PoseData>(path, ErrorBuffer.Memory.ToList());
             path = Path.Combine(iterDir, "LineTrackControl.csv");
@@ -481,6 +526,13 @@ namespace FanucController
             //string scriptPath = Path.Combine(ScriptDir, "ilc_plot.py");
             PythonScripts.RunParallel("iter_plot.py", args: args);
             
+            // Pid
+            if (flagPControl)
+            {
+                path = Path.Combine(iterDir, "LineTrackPidControl.csv");
+                Csv.WriteCsv(path, PidControlBuffer.Memory.ToList());
+            }
+
             // ILC
             if (flagIlc)
             {
@@ -581,8 +633,21 @@ namespace FanucController
             return CreateVector.DenseOfArray(PCDK.GetPoseUF());
         }
 
-        public Vector<double> GetVxCameraPose()
+        public Vector<double> GetVxCameraPose(string mode="rkf")
         {
+            switch (mode)
+            {
+                case "rkf":
+                    // RKF Pose
+                    return Vx.PoseCameraFrameRkf;
+                case "kf":
+                    // KF Pose
+                    return Vx.PoseCameraFrameKf;
+                case "raw":
+                    // KF Pose
+                    return Vx.PoseCameraFrame;
+            }
+            // RKF Pose
             return Vx.PoseCameraFrameRkf;
         }
 
@@ -603,6 +668,12 @@ namespace FanucController
         public Vector<double> GetVxUFPose()
         {
             var cameraPose = VxCameraToUF(GetVxCameraPose(), RotationId.Rotation);
+            return cameraPose;
+        }
+
+        public Vector<double> GetVxUFPose(string mode)
+        {
+            var cameraPose = VxCameraToUF(GetVxCameraPose(mode), RotationId.Rotation);
             return cameraPose;
         }
 

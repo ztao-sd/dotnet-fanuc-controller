@@ -30,9 +30,20 @@ class ReplayBuffer():
             (self.buffer_size,) + self.observations_shape, dtype=np.float32)
         self.dones = np.zeros((self.buffer_size, 1), dtype=np.float32)
 
-    def reset(self):
+    def reset(self, init=False):
         self.pos = 0
         self.full = False
+
+        if init:
+            # Init buffer
+            self.observations = np.zeros(
+                (self.buffer_size,) + self.observations_shape, dtype=np.float32)
+            self.actions = np.zeros(
+                (self.buffer_size, self.action_dim), dtype=np.float32)
+            self.rewards = np.zeros((self.buffer_size, 1), dtype=np.float32)
+            self.next_observations = np.zeros(
+                (self.buffer_size,) + self.observations_shape, dtype=np.float32)
+            self.dones = np.zeros((self.buffer_size, 1), dtype=np.float32)
 
     def to_torch(self, array, copy=True):
         if copy:
