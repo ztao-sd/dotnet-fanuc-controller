@@ -70,7 +70,7 @@ namespace FanucController
         public LinearPathTrackingMBPO()
         {
             ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO";
-            InputDim = 4;
+            InputDim = 6;
             OutputDim = 3;
             InputName = "state";
             OutputName = "control";
@@ -88,18 +88,18 @@ namespace FanucController
             //WarmupIters = 1;
             //NEpochs = 5;
             //GradientSteps = 800;
-            //TrainingIters = 20;
+            //TrainingIters = 25;
             //ExplorationIters = 20;
-            //ModelUsageIters = 30;
-            ExplorationNoise = new double[3] { 0.000, 0.000, 0.000};
-            OUExplorationNoise = new OrnsteinUlhenbeckNoise(ExplorationNoise, new double[] { 0.0, 0.0, 0.0 });
+            //ModelUsageIters = 99;
+            ExplorationNoise = new double[3] { 0.001, 0.001, 0.001};
+            OUExplorationNoise = new OrnsteinUlhenbeckNoise(ExplorationNoise, new double[] { 0.2, 0.2, 0.2 });
             WarmupNoise = 0.10; // ratio of min/max control
-            OUWarmupNoise = new OrnsteinUlhenbeckNoise(new double[] {0.002, 0.002, 0.002}, 
+            OUWarmupNoise = new OrnsteinUlhenbeckNoise(new double[] {0.006, 0.006, 0.006}, 
                 new double[] { 0.2, 0.2, 0.2 });
-            minControl = new double[3] { -0.010, -0.010, -0.010 };
-            maxControl = new double[3] { 0.010, 0.010, 0.010 };
-            minState = new double[4] { 0, -0.20, -0.20, -0.20 };
-            maxState = new double[4] { 20, 0.20, 0.20, 0.20 };
+            minControl = new double[3] { -0.005, -0.005, -0.005 };
+            maxControl = new double[3] { 0.005, 0.005, 0.005 };
+            minState = new double[6] { -2000, -1200, -200, -0.50, -0.50, -0.50 };
+            maxState = new double[6] { -1600, -400, 0, 0.50, 0.50, 0.50 };
         }
         
         #endregion
@@ -127,14 +127,14 @@ namespace FanucController
             OUWarmupNoise.Reset();
         }
 
-        public Vector<double> Control(Vector<double> error, double time, bool rand = true)
+        public Vector<double> Control(Vector<double> pose, Vector<double> error, bool rand = true)
         {
             MbpoControl.Clear();
             if (WarmpupCount > WarmupIters)
             {
                 double[] input = new double[InputDim];
-                input[0] = time;
-                error.SubVector(0, 3).AsArray().CopyTo(input, 1);
+                pose.SubVector(0,3).AsArray().CopyTo(input, 0);
+                error.SubVector(0, 3).AsArray().CopyTo(input, 3);
                 var control = Forward(input);
                 var temp = CreateVector.DenseOfArray<double>(control);
                 temp.CopySubVectorTo(MbpoControl, 0, 0, OutputDim);

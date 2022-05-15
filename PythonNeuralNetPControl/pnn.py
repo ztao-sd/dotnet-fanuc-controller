@@ -101,6 +101,7 @@ class MLPGNetwork(nn.Module):
 
 class PNN:
 
+    pose_file_name = 'LineTrackPose.csv'
     path_error_file_name = 'LineTrackError.csv'
     control_file_name = 'LineTrackControl.csv'
     iteration_prefix = 'iteration_'
@@ -258,6 +259,7 @@ class PNN:
     @staticmethod
     def load_data(top_dir):
 
+        pose_arrays = []
         control_arrays = []
         error_arrays = []
         dirs = os.listdir(top_dir)
@@ -265,19 +267,28 @@ class PNN:
         for dir_ in dirs:
             if PNN.iteration_prefix in dir_:
                 iter_num += 1
-                data_path = os.path.join(top_dir, dir_, PNN.control_file_name)
-                control_array = np.genfromtxt(data_path, delimiter=',',
+                # Pose
+                data_path = os.path.join(top_dir, dir_, PNN.pose_file_name)
+                pose_array = np.genfromtxt(data_path, delimiter=',',
                                               skip_header=1, dtype=np.float32)
-                control_arrays.append(control_array)
+                pose_arrays.append(pose_array[:, 1:4])
+                # Error
                 data_path = os.path.join(
                     top_dir, dir_, PNN.path_error_file_name)
                 error_array = np.genfromtxt(data_path, delimiter=',',
                                             skip_header=1, dtype=np.float32)
-                error_arrays.append(error_array)
+                error_arrays.append(error_array[:, 1:4])
+                # Control
+                data_path = os.path.join(top_dir, dir_, PNN.control_file_name)
+                control_array = np.genfromtxt(data_path, delimiter=',',
+                                              skip_header=1, dtype=np.float32)
+                control_array = np.concatenate([pose_array[:, 1:4], control_array[:, 1:4]], axis=1)
+                control_arrays.append(control_array)
+
         return control_arrays, error_arrays
 
     @staticmethod
-    def shift_data(shift, control_arrays, error_arrays):
+    def shift_data(shift, control_arrays, error_arrays, input_min, input_max):
 
         inputs = []
         targets = []
@@ -287,26 +298,26 @@ class PNN:
             input = np.concatenate([
                 row.reshape(1,-1) for row in control_array if not np.isnan(np.sum(row))
             ], axis=0)
-            start_time = input[0][0]
-            input = input[shift-1:-1, :4]
+            #start_time = input[0][0]
+            input = input[shift-1:-1, :6]
             for i in range(shift-1):
                 input = np.concatenate(
-                    [input, error_array[shift-i-1:-i-1, 1:4]], axis=1)
-            input[:,0] = np.subtract(input[:,0], start_time)
+                    [input, error_array[shift-i-1:-i-1, :]], axis=1)
+            #input[:,0] = np.subtract(input[:,0], start_time)
             inputs.append(input)
 
             # Target
             target = np.concatenate([
                 row.reshape(1,-1) for row in error_array if not np.isnan(np.sum(row))
             ], axis=0)
-            targets.append(target[shift:, 1:4])
+            targets.append(target[shift:, :])
 
         input_array = np.concatenate(inputs, axis=0)
         target_array = np.concatenate(targets, axis=0)
 
         # Normalize control
-        input_array = PNN.normalize_input(input_array, min_values=[0]+[PNN.min_control]*(input_array.shape[0]-1),
-                                          max_values=[35] + [PNN.max_control]*(input_array.shape[0]-1))
+        input_array = PNN.normalize_input(input_array, min_values=input_min,
+                                          max_values=input_max)
         max = np.amax(input_array)
         min = np.amin(input_array)
         return input_array, target_array
@@ -317,7 +328,7 @@ class PNN:
 class PNNPlot:
 
     @staticmethod
-    def pose_data_plot(ax, df, subtitle, xlabel='time (sec)', ylim=[-0.10, 0.10], legend=False):
+    def pose_data_plot(ax, df, subtitle, xlabel='time (sec)', ylim=[-0.005, 0.005], legend=False):
         t, x, y, z = df['time'], df['x'], df['y'], df['z']
         ax.plot(t, x, label='x')
         ax.plot(t, y, label='y')

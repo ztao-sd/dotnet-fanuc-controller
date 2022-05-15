@@ -40,6 +40,7 @@ namespace FanucController
         public Buffer<PoseData> PidControlBuffer;
         public Buffer<PoseData> IlcControlBuffer;
         public Buffer<PoseData> PnnControlBuffer;
+        public Buffer<PoseData> PnnErrorBuffer;
         public Buffer<PoseData> MbpoControlBuffer;
         public Buffer<PoseData> BpnnpidControlBuffer;
         public Buffer<PidCoefficients> BpnnpidCoefficientsBuffer;
@@ -149,6 +150,7 @@ namespace FanucController
             PidControlBuffer = new Buffer<PoseData>(20_000);
             IlcControlBuffer = new Buffer<PoseData>(20_000);
             PnnControlBuffer = new Buffer<PoseData>(20_000);
+            PnnErrorBuffer = new Buffer<PoseData>(20_000);
             MbpoControlBuffer = new Buffer<PoseData>(20_000);
             BpnnpidControlBuffer = new Buffer<PoseData>(20_000);
             BpnnpidCoefficientsBuffer = new Buffer<PidCoefficients>(20_000);
@@ -245,6 +247,7 @@ namespace FanucController
             PidControlBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
+            PnnErrorBuffer.Reset();
             MbpoControlBuffer.Reset();
             BpnnpidControlBuffer.Reset();
             BpnnpidCoefficientsBuffer.Reset();
@@ -313,6 +316,7 @@ namespace FanucController
             PoseBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
+            PnnErrorBuffer.Reset();
             MbpoControlBuffer.Reset();
             BpnnpidControlBuffer.Reset();
             BpnnpidCoefficientsBuffer.Reset();
@@ -434,14 +438,14 @@ namespace FanucController
                 if (flagPNN)
                 {
                     
-                    uPnn = Pnn.Control(u, Time, rand:false);
+                    uPnn = Pnn.Control(x, u, Time, rand:true);
                     u += uPnn;
                 }
 
                 // MBPO
                 if (flagMBPO)
                 {
-                    uMbpo = Mbpo.Control(PathError, Time, rand:true);
+                    uMbpo = Mbpo.Control(x, PathError, rand:true);
                     u += uMbpo;
                 }
 
@@ -478,6 +482,7 @@ namespace FanucController
                 if (flagPNN)
                 {
                     PnnControlBuffer.Add(new PoseData(uPnn.AsArray(), Time));
+                    PnnErrorBuffer.Add(new PoseData(Pnn.PnnError.AsArray(), Time));
                 }
                 if (flagMBPO)
                 {
@@ -555,6 +560,10 @@ namespace FanucController
                 path = Path.Combine(iterDir, "LineTrackPnnControl.csv");
                 Csv.WriteCsv(path, PnnControlBuffer.Memory.ToList());
 
+                // Write PNN error CSV file
+                path = Path.Combine(iterDir, "LineTrackPnnError.csv");
+                Csv.WriteCsv(path, PnnErrorBuffer.Memory.ToList());
+
                 // PNN Plot
                 Pnn.Plot(iterDir:iterDir);
 
@@ -563,7 +572,7 @@ namespace FanucController
                 {
                     OutputDir
                 };
-                Pnn.Iteration(nEpoch: 500, dataDirs: dataDirs);
+                Pnn.Iteration(nEpoch: Pnn.NEpochs, dataDirs: dataDirs);
                 
             }
 

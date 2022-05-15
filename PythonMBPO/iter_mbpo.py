@@ -14,6 +14,7 @@ class FanucEnvironment(Env):
 if __name__ == '__main__':
 
     # FILE NAMES
+    POSE = 'LineTrackPose.csv'
     ERROR = 'LineTrackError.csv'
     CONTROL = 'LineTrackMbpoControl.csv'
     MODEL = 'best_model.pt'
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     POLICY_DELAY = 2
     TD3_GRAD_STEPS = 1
     TD3_BATCH_SIZE = 100
-    GAMMA = 0.99
+    GAMMA = 0.98
     ACTOR_LR = 1e-3
     CRITIC_LR = 1e-3
     TAU = 5e-3
@@ -37,10 +38,10 @@ if __name__ == '__main__':
     EXPLORATION_NOISE = 0.1
 
     # MBPO HYPERPARAMETERS
-    OBS_LOW = [0, -0.20, -0.20, -0.20]
-    OBS_HIGH = [20, 0.20, 0.20, 0.20]
-    ACTION_LOW = [-0.010, -0.010, -0.010]
-    ACTION_HIGH = [0.010, 0.010, 0.010]
+    OBS_LOW = [-2000, -1200, -200, -0.50, -0.50, -0.50]
+    OBS_HIGH = [-1600, -400, 0, 0.50, 0.50, 0.50]
+    ACTION_LOW = [-0.005, -0.005, -0.005]
+    ACTION_HIGH = [0.005, 0.005, 0.005]
     MODEL_HIDDEN_SIZE = [60, 50]
     MODEL_LR = 1e-3
     STOP_TRAINING_THRESHOLD = 2e-4
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     # MBPO_GRAD_STEPS
     HORIZON = 1
     GEN_DATA_RATIO = 0
-    C_REWARD_THRESHOLD = -300
+    C_REWARD_THRESHOLD = -100_0000
 
     # C# HYPERPARAMETERS
     """
@@ -75,11 +76,11 @@ if __name__ == '__main__':
         '1',
         '500',
         '0',
-        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\mbpo',
-        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\mbpo',
-        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output\iteration_0',
+        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\iteration_0',
         r'D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO',
-        r'D:\Fanuc Experiments\mbpo\test-0510\run-1\output'
+        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output'
     ]
 
     # Argument parsing
@@ -96,7 +97,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # args = parser.parse_args(test_args)
 
-    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0513\run-3\output')
+    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0515\warmup\output')
+    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0515\run-1\output')
+    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0515\run-2\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0514\run-9\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0514\run-2\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0514\run-3\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0512\run-0\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0511\run-1\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0511\run-2\output')
@@ -105,7 +111,7 @@ if __name__ == '__main__':
 
 
     # RL environment parameters
-    observation_space = spaces.Box(low=np.array([-1.0]*4), high=np.array([1.0]*4), shape=(4,), dtype=np.float32)
+    observation_space = spaces.Box(low=np.array([-1.0]*6), high=np.array([1.0]*6), shape=(6,), dtype=np.float32)
     action_space = spaces.Box(low=np.array([-1.0]*3), high=np.array([1.0]*3), shape=(3,), dtype=np.float32)
     max_action = 1.0
     min_action = -1.0
@@ -168,7 +174,7 @@ if __name__ == '__main__':
         critic_path = os.path.join(args.rl_dir, CRITIC)
 
     # Load training data into environment buffer
-    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(4,), dtype=np.float32)
+    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(6,), dtype=np.float32)
     act_space = spaces.Box(low=np.array(ACTION_LOW), high=np.array(ACTION_HIGH), shape=(3,), dtype=np.float32)
     iter_dirs = []
     for dir in args.data_dirs:

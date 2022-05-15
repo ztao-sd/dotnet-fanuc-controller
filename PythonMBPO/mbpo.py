@@ -100,6 +100,7 @@ class GaussianModel(nn.Module):
 
 class MBPO:
 
+    pose_file_name = 'LineTrackPose.csv'
     error_file_name = 'LineTrackError.csv'
     mbpo_file_name = 'LineTrackMbpoControl.csv'
     iteration_prefix = 'iteration_'
@@ -323,31 +324,39 @@ class MBPO:
         """
         for dir_ in data_dirs:
             if MBPO.iteration_prefix in dir_:
+                pose_path = os.path.join(dir_, MBPO.pose_file_name)
                 error_path = os.path.join(dir_, MBPO.error_file_name)
                 control_path = os.path.join(dir_, MBPO.mbpo_file_name)
+                pose_array = np.genfromtxt(pose_path, delimiter=',',
+                                            skip_header=1, dtype=np.float32)
                 error_array = np.genfromtxt(error_path, delimiter=',',
                                             skip_header=1, dtype=np.float32)
                 control_array = np.genfromtxt(control_path, delimiter=',',
                                               skip_header=1, dtype=np.float32)
+                pose_rows = []
                 error_rows = []
                 control_rows = []
-                for error_row, control_row in zip(error_array, control_array):
-                    if not np.isnan(np.sum(error_row)) and not np.isnan(np.sum(control_row)):
+                for pose_row, error_row, control_row in zip(pose_array, error_array, control_array):
+                    if not np.isnan(np.sum(error_row)) and not np.isnan(np.sum(control_row)) and not np.isnan(np.sum(pose_row)):
                         # Normalize data
-                        error_rows.append(error_row[:4].reshape(1, -1))
+                        pose_rows.append(pose_row[1:4].reshape(1, -1))
+                        error_rows.append(error_row[1:4].reshape(1, -1))
                         control_rows.append(control_row[1:4].reshape(1, -1))
+                pose_array = np.concatenate(pose_rows, axis=0)
                 error_array = np.concatenate(error_rows, axis=0)
                 control_array = np.concatenate(control_rows, axis=0)
-                error_array, control_array = self.normalize_error_control(
-                    error_array, control_array, obs_space, action_space)
+                # Combine pose and error
+                obs_array = np.concatenate([pose_array, error_array], axis=1)
+                obs_array, control_array = self.normalize_error_control(
+                    obs_array, control_array, obs_space, action_space)
 
                 self.prev_obs = None
                 for i in range(error_array.shape[0]-1):
-                    observation = error_array[i]
+                    observation = obs_array[i]
                     action = control_array[i]
                     reward = self.line_track_reward_v2(observation)
-                    next_observation = error_array[i+1]
-                    if i == error_array.shape[0]-2:
+                    next_observation = obs_array[i+1]
+                    if i == obs_array.shape[0]-2:
                         done = True
                     else:
                         done = False
@@ -445,10 +454,12 @@ class MBPO:
         # if self.prev_obs is not None:
         #     if factor < np.amax(obs[1:4]) * 20:
         #         factor = np.amax(obs[1:4]) * 20
-        r1 = (np.abs(obs[1]) + np.abs(obs[2]) + np.abs(obs[3])) * 10
+        r1 = (np.abs(obs[3]) + np.abs(obs[4]) + np.abs(obs[5])) * 10
         # r1 = 10 * np.sqrt((np.sum(obs[1:4]**2)))
         # if np.abs(obs[3]) > 0.7:
         #     r1 += 2
+        # if np.abs(obs[5]) > 7/20:
+        #     r1 += 100
 
         # path oscillation penalty
         r2 = 0

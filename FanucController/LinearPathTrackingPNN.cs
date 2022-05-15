@@ -32,14 +32,22 @@ namespace FanucController
         private string plotScript = "iter_pnn_plot.py";
 
         // Training
+        public int NEpochs;
         public int WarmupIters;
         public int WarmpupCount;
+        public int TrainingIters;
+        public int IterCount;
+        public OrnsteinUlhenbeckNoise OUWarmupNoise;
 
         // P Control
         public Matrix<double> Kp;
         public double MinError;
         public double MaxError;
         public Vector<double> PnnControl;
+        public Vector<double> PnnError;
+
+        // PID Control
+        public LinearPathTrackingPID Pid;
 
         // Data
         public List<string> DataDirs = new List<string>();
@@ -53,17 +61,37 @@ namespace FanucController
 
         public LinearPathTrackingPNN()
         {
-            InputDim = 4;
+            InputDim = 6;
             OutputDim1 = 2;
             OutputDim2 = 3;
             // ModelPath = Path.Combine(OutputDir, "predictor.onnx"),
             InputName = "prev_control";
             OutputName = "error";
             ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
-            WarmupIters = 3;
-            Kp = CreateMatrix.DenseDiagonal<double>(3, 0.1);
+            
             MinError = -0.08;
             MaxError = 0.08;
+            minState = new double[6] { -2000, -1200, -200, -0.005, -0.005, -0.005 };
+            maxState = new double[6] { -1600, -400, 0, 0.005, 0.005, 0.005 };
+
+            // P
+            Kp = CreateMatrix.DenseDiagonal<double>(3, 0.1);
+
+            // Training
+            NEpochs = 400;
+            WarmupIters = 0;
+            TrainingIters = 0;
+            OUWarmupNoise = new OrnsteinUlhenbeckNoise(new double[] { 0.005, 0.005, 0.005 },
+                new double[] { 0.2, 0.2, 0.2 });
+
+            // PID 
+            Pid = new LinearPathTrackingPID();
+            Pid.Dim = 3;
+            Pid.Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.05, 0.00, 0.00 });
+            Pid.Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.01, 0.0005, 0.0002 });
+            Pid.Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.10, 0.10, 0.10 });
+            Pid.Errors = new List<Vector<double>>();
+            Pid.ControlSignal = CreateVector.Dense<double>(Pid.Dim);
         }
 
         public LinearPathTrackingPNN(string outputDir, string modelPath, string inputName, string outputName, int inputDim, 
@@ -88,6 +116,10 @@ namespace FanucController
             string ModelDir = Path.GetDirectoryName(ModelPath);
             Directory.CreateDirectory(ModelDir);
             WarmpupCount = 0;
+            IterCount = 0;
+
+            // PID
+            Pid.Init();
         }
 
         public void Reset()
@@ -97,35 +129,48 @@ namespace FanucController
                 NewSession();
             }
             PnnControl = CreateVector.Dense<double>(6);
+            PnnError = CreateVector.Dense<double>(6);
+
+            // PID
+            Pid.Reset();
+            OUWarmupNoise.Reset();
         }
 
-        public Vector<double> Control(Vector<double> pControl, double time, bool rand=true)
+        public Vector<double> Control(Vector<double> pose, Vector<double> pidControl, double time, bool rand=true)
         {
             PnnControl.Clear();
+            PnnError.Clear();
+
+            //if (IterCount > TrainingIters)
+            //{
+            //    return PnnControl;
+            //}
+
             if (WarmpupCount >= WarmupIters)
             {
-                if (time < 2.5)
+                if (time < 0)
                 {
                     return PnnControl;
                 }
-                if (pControl.SubVector(0,3).L2Norm() > 0.10 * 0.3)
+                if (pidControl.SubVector(0,3).L2Norm() > 0.10 * 1)
                 {
                     return PnnControl;
                 }
                 double[] input = new double[InputDim];
-                input[0] = time;
-                pControl.SubVector(0, 3).AsArray().CopyTo(input, 1);
-                var control = Forward(input);
-                var vPnn = Kp * CreateVector.DenseOfArray<double>(control);
-                vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
+                pose.SubVector(0, 3).AsArray().CopyTo(input, 0);
+                pidControl.SubVector(0, 3).AsArray().CopyTo(input, 3);
+                var error = CreateVector.DenseOfArray<double>(Forward(input));
+                error.CopySubVectorTo(PnnError, 0, 0, 3);
+                PnnControl = Pid.Control(error);
+                //vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
             }
             else
             {
                 if (rand)
                 {
-                    var vPnn = Kp * CreateVector.DenseOfArray<double>(Sample());
+                    PnnControl = OUWarmupNoise.Sample();
                     //PnnControl = CreateVector.Dense<double>(6);
-                    vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
+                    //vPnn.CopySubVectorTo(PnnControl, 0, 0, 3);
                 }
             }
 
@@ -134,8 +179,17 @@ namespace FanucController
 
         public void Iteration(int nEpoch = 1000, List<string> dataDirs = null)
         {
+            if (IterCount >= TrainingIters)
+            {
+                IterCount++;
+                return;
+            }
+
             // Increment warmup count
             WarmpupCount++;
+
+            // Increment iter count
+            IterCount++;
 
             // Train prediction model with Python script
             if (dataDirs is null)
@@ -152,10 +206,7 @@ namespace FanucController
             List<string> args = DataDirs;
             args.Insert(0, ModelPath);
             args.Insert(0, nEpoch.ToString());
-            if (WarmpupCount < WarmupIters)
-            {
-                PythonScripts.Run(iterScript, args: args.ToArray(), shell: true);
-            }
+            PythonScripts.Run(iterScript, args: args.ToArray(), shell: true);
         }
 
         public void Plot(string iterDir, string savePath = null)

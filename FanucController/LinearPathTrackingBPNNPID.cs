@@ -15,7 +15,7 @@ namespace FanucController
         public double kLimits;
 
         // Hyperparameters of NN
-        public double xite = 0.05; // Learning rate
+        public double xite = 0.07; // Learning rate
         public double alp = 0.04; // Inertia coefficient
         public double IN = 4; // Input layer nodes
         public double H = 5; // Hidden layer nodes

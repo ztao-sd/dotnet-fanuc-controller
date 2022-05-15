@@ -19,13 +19,13 @@ if __name__=='__main__':
     # Constants
     YLIM = [-0.10, 0.10]
     CONTROL_FILE = 'LineTrackMbpoControl.csv'
-    OBS_LOW = [0, -0.20, -0.20, -0.20]
-    OBS_HIGH = [20, 0.20, 0.20, 0.20]
-    ACTION_LOW = [-0.010, -0.010, -0.010]
-    ACTION_HIGH = [0.010, 0.010, 0.010]
+    OBS_LOW = [-2000, -1200, -200, -0.50, -0.50, -0.50]
+    OBS_HIGH = [-1600, -400, 0, 0.50, 0.50, 0.50]
+    ACTION_LOW = [-0.005, -0.005, -0.005]
+    ACTION_HIGH = [0.005, 0.005, 0.005]
 
     # MBPO 
-    observation_space = spaces.Box(low=np.array([-1.0]*4), high=np.array([1.0]*4), shape=(4,), dtype=np.float32)
+    observation_space = spaces.Box(low=np.array([-1.0]*6), high=np.array([1.0]*6), shape=(6,), dtype=np.float32)
     action_space = spaces.Box(low=np.array([-1.0]*3), high=np.array([1.0]*3), shape=(3,), dtype=np.float32)
     mbpo_args_dict={
         'observation_space': observation_space,
@@ -66,7 +66,7 @@ if __name__=='__main__':
         fig.savefig(args.save_path)
 
     # Process and load episode data
-    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(4,), dtype=np.float32)
+    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(6,), dtype=np.float32)
     act_space = spaces.Box(low=np.array(ACTION_LOW), high=np.array(ACTION_HIGH), shape=(3,), dtype=np.float32)
     mbpo.env_data_from_files([args.data_dir], obs_space, act_space)
     csv_path = os.path.join(args.data_dir, 'env_buffer.csv')

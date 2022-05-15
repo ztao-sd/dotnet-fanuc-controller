@@ -213,10 +213,10 @@ namespace FanucController
             checkBoxLineTrackDPM.Checked = false;
             checkBoxLineTrackPControl.Checked = true;
             checkBoxLineTrackIlc.Checked = false;  
-            checkBoxLineTrackPNN.Checked = false;
-            checkBoxLineTrackMBPO.Checked = true;
+            checkBoxLineTrackPNN.Checked = true;
+            checkBoxLineTrackMBPO.Checked = false;
             checkBoxLineTrackBPNNPID.Checked = false;
-            textBoxLineTrackIter.Text = "21";
+            textBoxLineTrackIter.Text = "1";
         }
 
         private void buttonRunMain_Click(object sender, EventArgs e)
@@ -995,17 +995,8 @@ namespace FanucController
         private void buttonPnnTest_Click(object sender, EventArgs e)
         {
             //LinearPathTrackingPNN.Test();
-            var pnn = new LinearPathTrackingPNN
-            {
-                OutputDir = @"D:\Fanuc Experiments\pcontrol-test-0416\output",
-                InputDim = 4,
-                OutputDim1 = 2,
-                OutputDim2 = 3,
-                ModelPath = @"D:\Fanuc Experiments\pcontrol-test-0416\output\pnn_model\mlpg_0416.onnx",
-                InputName = "prev_control",
-                OutputName = "error",
-                ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl",
-            };
+            var pnn = new LinearPathTrackingPNN();
+
             List<string> dataDirs = new List<string>()
             {
                 @"D:\Fanuc Experiments\pcontrol-test-0416\output"
@@ -1037,7 +1028,7 @@ namespace FanucController
             // Control
             Vector<double> error = CreateVector.Dense<double>(6);
             double time = 5;
-            var control = mbpo.Control(error, time);
+            var control = mbpo.Control(error, error);
 
             mbpo.Iteration(nEpoch: 10, gradSteps:500, iterDir, dataDirs:dataDirs);
             mbpo.Plot(iterDir: iterDir);

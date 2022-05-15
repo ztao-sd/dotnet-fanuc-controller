@@ -9,8 +9,8 @@ if __name__ == '__main__':
 
     # Test arguments
     test_args =  [
-        r'D:\Fanuc Experiments\pnn-test-0416\output\iteration_0',
-        r'D:\Fanuc Experiments\pnn-test-0416\output\iteration_0\iter_pnn_fig'
+        r'D:\Fanuc Experiments\pnn\test-0515\training\output\iteration_0',
+        r'D:\Fanuc Experiments\pnn\test-0515\training\output\iteration_0\iter_pnn_fig'
     ]
 
     # Argument parsing
@@ -29,6 +29,18 @@ if __name__ == '__main__':
     PNNPlot.pose_data_plot(ax, df, 'PNN Control')
     if args.save_path is not None:
         fig.savefig(args.save_path)
+
+    # Plot error vs error
+    path = os.path.join(args.data_dir, 'LineTrackError.csv')
+    df = pd.read_csv(path)
+    path = os.path.join(args.data_dir, 'LineTrackPnnError.csv')
+    df_pnn = pd.read_csv(path)
+    fig, ax = plt.subplots()
+    ax.plot(df.iloc[:,1:4].values)
+    ax.plot(df_pnn.iloc[:,1:4].values)
+    save_path = os.path.join(args.data_dir, 'error_comparison')
+    fig.savefig(save_path)
+
 
     plt.show(block=False)
     plt.pause(10)
