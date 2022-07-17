@@ -15,7 +15,7 @@ namespace FanucController
         public double kLimits;
 
         // Hyperparameters of NN
-        public double xite = 0.07; // Learning rate
+        public double xite = 0.08; // Learning rate
         public double alp = 0.04; // Inertia coefficient
         public double IN = 4; // Input layer nodes
         public double H = 5; // Hidden layer nodes
@@ -255,7 +255,7 @@ namespace FanucController
     }
 
 
-    public class LinearPathTrackingBPNNPID
+    public class PathTrackingBPNNPID
     {
         // Memory Buffer
         public Queue<Vector<double>> errorQueue;
@@ -277,7 +277,7 @@ namespace FanucController
 
         #region Constructor
 
-        public LinearPathTrackingBPNNPID()
+        public PathTrackingBPNNPID()
         {
             // Initialize memory buffer
             // errorQueue = new Queue<Vector<double>>();
@@ -353,6 +353,120 @@ namespace FanucController
         {
 
             return  2 / (max - min) * (input - min) - 1;
+
+        }
+
+        public double NormalizeOutput(double output, double min, double max)
+        {
+
+            return (max - min) / 2 * (output + 1) + min;
+
+        }
+
+
+    }
+
+    public class PathTrackingBPNNPID6D
+    {
+        // Memory Buffer
+        public Queue<Vector<double>> errorQueue;
+
+        // Back Propagation
+        public BPNNPID[] Bp;
+        public BPNNPID BpX;
+        public BPNNPID BpY;
+        public BPNNPID BpZ;
+        public BPNNPID BpW;
+        public BPNNPID BpP;
+        public BPNNPID BpR;
+
+        // Limits
+        public double[] minReference = new double[6] { -1800, -1200, -100, 2.90, -0.15, 1.4 };
+        public double[] maxReference = new double[6] { -1600, -400, 0, 3.20, 0.30, 1.60};
+        public double[] minError = new double[6] { -0.50, -0.50, -0.50, -0.002, -0.002, -0.002 };
+        public double[] maxError = new double[6] { 0.50, 0.50, 0.50, 0.002, 0.002, 0.002 };
+
+        // PID Constants
+        public double[] kValues;
+
+        #region Constructor
+
+        public PathTrackingBPNNPID6D()
+        {
+            // Initialize memory buffer
+            // errorQueue = new Queue<Vector<double>>();
+
+            // Initialize BP modules
+            Bp = new BPNNPID[6];
+
+            double[] k = new double[6] { 0.01, 0.01, 0.001, 57.3 * 0.01, 57.3 * 0.001, 57.3 * 0.01 };
+
+            for (int i = 0; i < 6; i++)
+            {
+                Bp[i] = new BPNNPID();
+                Bp[i].kLimits = k[i];
+            }
+
+            kValues = new double[18];
+        }
+
+        #endregion
+
+        #region Actions
+
+        public void Init()
+        {
+
+        }
+
+        public void Reset()
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                Bp[i].Reset();
+            }
+        }
+
+        public Vector<double> Control(Vector<double> reference, Vector<double> actual, Vector<double> error)
+        {
+            Vector<double> control = CreateVector.Dense<double>(6);
+
+            double xd; double x; double e;
+            double[] u = new double[6];
+            double[] kp = new double[6];
+            double[] ki = new double[6];
+            double[] kd = new double[6];
+            for (int i = 0; i < 6; i++)
+            {
+                xd = NormalizeInput(reference[i], minReference[i], maxReference[i]);
+                x = NormalizeInput(actual[i], minReference[i], maxReference[i]);
+                e = error[i];
+                var result = Bp[i].BackProp(xd, x, e);
+                u[i] = result.Last();
+                kp[i] = result[0];
+                ki[i] = result[1];
+                kd[i] = result[2];
+            }
+            var temp = CreateVector.DenseOfArray(u);
+            temp.CopySubVectorTo(control, 0, 0, 6);
+
+            // Assign kValues
+            for (int i = 0; i < 6; i++)
+            {
+                kValues[i] = kp[i];
+                kValues[i + 6] = ki[i];
+                kValues[i + 12] = kd[i];
+            }
+
+            return control;
+        }
+
+        #endregion
+
+        public double NormalizeInput(double input, double min, double max)
+        {
+
+            return 2 / (max - min) * (input - min) - 1;
 
         }
 

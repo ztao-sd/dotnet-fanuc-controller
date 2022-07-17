@@ -76,7 +76,7 @@ namespace FanucController
         public string[] PcdkPaths;
 
         // Linear Path Tracking
-        public LinearPathTracking LinearTrack;
+        public PathTracking LinearTrack;
 
         // Linear Path Tracking Pose
         public double[] LinearTrackPose;
@@ -169,7 +169,7 @@ namespace FanucController
             textBoxPcdkOffsetR.Text = "0.0";
 
             // Initialize Linear Path Tracking
-            LinearTrack = new LinearPathTracking(Vx, Timer, StopWatch, TopDir);
+            LinearTrack = new PathTracking(Vx, Timer, StopWatch, TopDir);
             LinearTrackPose = new double[6]; LinearTrackPathError = new double[6];
 
             // Initialize 
@@ -208,13 +208,21 @@ namespace FanucController
             buttonRotationIdLoadJson_Click(sender, e);
             buttonPoseAttach_Click(sender, e);
 
+            // Line or Circle
+            radioButtonTrackLine.Checked = true;
+            //radioButtonTrackCircle.Checked = true;
+
+            // Position & Orientation
+            checkBoxTrackPosition.Checked = true;
+            checkBoxTrackOrientation.Checked = true;
+
             // Control
             checkBoxLineTrackStep.Checked = false;
             checkBoxLineTrackDPM.Checked = false;
             checkBoxLineTrackPControl.Checked = true;
             checkBoxLineTrackIlc.Checked = false;  
-            checkBoxLineTrackPNN.Checked = true;
-            checkBoxLineTrackMBPO.Checked = false;
+            checkBoxLineTrackPNN.Checked = false;
+            checkBoxLineTrackMBPO.Checked = true;
             checkBoxLineTrackBPNNPID.Checked = false;
             textBoxLineTrackIter.Text = "1";
         }
@@ -231,8 +239,20 @@ namespace FanucController
             bool mbpo = checkBoxLineTrackMBPO.Checked;
             bool bpnnpid = checkBoxLineTrackBPNNPID.Checked;
             bool step = checkBoxLineTrackStep.Checked;
+            bool circle = false;
+            if (radioButtonTrackLine.Checked)
+            {
+                circle = false;
+            }
+            else if (radioButtonTrackCircle.Checked)
+            {
+                circle = true;
+            }
+            bool position = checkBoxTrackPosition.Checked;
+            bool orientation = checkBoxTrackOrientation.Checked;
             LinearTrack.Init(pathPath, progName, iter, dpm:dpm, pControl:pControl,
-                ilc:ilc, pNN:pNN, mbpo:mbpo, bpnnpid:bpnnpid,step:step);
+                ilc:ilc, pNN:pNN, mbpo:mbpo, bpnnpid:bpnnpid,step:step,
+                circle:false, position:position, orientation:orientation);
             LinearTrack.Start();
         }
 
@@ -257,6 +277,16 @@ namespace FanucController
         private void buttonRotationId_Click(object sender, EventArgs e)
         {
             LinearTrack.RotationIdentify(comboBoxRotationXyz.Text);
+        }
+
+        private void buttonRotationId2_Click(object sender, EventArgs e)
+        {
+            LinearTrack.CalculateRotaionWPR(20);
+        }
+
+        private void buttonRotationId3_Click(object sender, EventArgs e)
+        {
+            LinearTrack.CalcualteRotationOffset(20);
         }
 
         private void buttonRotationIdWriteJson_Click(object sender, EventArgs e)
@@ -684,9 +714,9 @@ namespace FanucController
                 textBoxLinearPathX.Text = pose[0].ToString();
                 textBoxLinearPathY.Text = pose[1].ToString();
                 textBoxLinearPathZ.Text = pose[2].ToString();
-                textBoxLinearPathW.Text = pose[3].ToString();
-                textBoxLinearPathP.Text = pose[4].ToString();
-                textBoxLinearPathR.Text = pose[5].ToString();
+                textBoxLinearPathW.Text = (pose[3] * 180 / Math.PI).ToString();
+                textBoxLinearPathP.Text = (pose[4] * 180 / Math.PI).ToString();
+                textBoxLinearPathR.Text = (pose[5] * 180 / Math.PI).ToString();
             }
         }
 
@@ -995,7 +1025,7 @@ namespace FanucController
         private void buttonPnnTest_Click(object sender, EventArgs e)
         {
             //LinearPathTrackingPNN.Test();
-            var pnn = new LinearPathTrackingPNN();
+            var pnn = new PathTrackingPNN();
 
             List<string> dataDirs = new List<string>()
             {
@@ -1013,7 +1043,7 @@ namespace FanucController
         {
             string iterDir = @"D:\Fanuc Experiments\test-master\output\iteration_0";
 
-            var mbpo = new LinearPathTrackingMBPO
+            var mbpo = new PathTrackingMBPO
             {
                 OutputDir = @"D:\Fanuc Experiments\test-master\output",
                 WarmupIters = 0
@@ -1036,7 +1066,7 @@ namespace FanucController
 
         private void buttonBpnnpidTest_Click(object sender, EventArgs e)
         {
-            var bpnnpid = new LinearPathTrackingBPNNPID();
+            var bpnnpid = new PathTrackingBPNNPID();
             Vector<double> reference = CreateVector.DenseOfArray(new double[] { -1953, -1080, -74 });
             Vector<double> actual = CreateVector.DenseOfArray(new double[] { -1800, -900, -60 });
             Vector<double> error = CreateVector.DenseOfArray(new double[] { -0.05, 0.1, 0.3 });
@@ -1049,6 +1079,16 @@ namespace FanucController
             var ou = new OrnsteinUlhenbeckNoise(new double[3] { 0.002, 0.002, 0.002 },
                 new double[3] { 0.2, 0.2, 0.2 });
             var x = ou.Sample();
+        }
+
+        private void buttonFilterTest_Click(object sender, EventArgs e)
+        {
+            string csvPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPose.csv";
+            string kfPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPoseKf.csv";
+            string rkfPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPoseRkf.csv";
+            var test = new FilterTest(csvPath, kfPath, rkfPath);
+            test.Test();
+
         }
 
         #endregion
@@ -1181,6 +1221,10 @@ namespace FanucController
         {
 
         }
+
+
+
+
 
 
         #endregion

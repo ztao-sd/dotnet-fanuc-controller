@@ -98,7 +98,7 @@ class GaussianModel(nn.Module):
         return T.clamp(state, self.min_observation, self.max_observation)
 
 
-class MBPO:
+class MBPOWPR:
 
     pose_file_name = 'LineTrackPose.csv'
     error_file_name = 'LineTrackError.csv'
@@ -323,10 +323,10 @@ class MBPO:
         Collect state transitions from csv files
         """
         for dir_ in data_dirs:
-            if MBPO.iteration_prefix in dir_:
-                pose_path = os.path.join(dir_, MBPO.pose_file_name)
-                error_path = os.path.join(dir_, MBPO.error_file_name)
-                control_path = os.path.join(dir_, MBPO.mbpo_file_name)
+            if MBPOWPR.iteration_prefix in dir_:
+                pose_path = os.path.join(dir_, MBPOWPR.pose_file_name)
+                error_path = os.path.join(dir_, MBPOWPR.error_file_name)
+                control_path = os.path.join(dir_, MBPOWPR.mbpo_file_name)
                 pose_array = np.genfromtxt(pose_path, delimiter=',',
                                             skip_header=1, dtype=np.float32)
                 error_array = np.genfromtxt(error_path, delimiter=',',
@@ -339,9 +339,9 @@ class MBPO:
                 for pose_row, error_row, control_row in zip(pose_array, error_array, control_array):
                     if not np.isnan(np.sum(error_row)) and not np.isnan(np.sum(control_row)) and not np.isnan(np.sum(pose_row)):
                         # Normalize data
-                        pose_rows.append(pose_row[1:].reshape(1, -1))
-                        error_rows.append(error_row[1:].reshape(1, -1))
-                        control_rows.append(control_row[1:].reshape(1, -1))
+                        pose_rows.append(pose_row[4:].reshape(1, -1))
+                        error_rows.append(error_row[4:].reshape(1, -1))
+                        control_rows.append(control_row[4:].reshape(1, -1))
                 pose_array = np.concatenate(pose_rows, axis=0)
                 error_array = np.concatenate(error_rows, axis=0)
                 control_array = np.concatenate(control_rows, axis=0)
@@ -455,8 +455,8 @@ class MBPO:
         # if self.prev_obs is not None:
         #     if factor < np.amax(obs[1:4]) * 20:
         #         factor = np.amax(obs[1:4]) * 20
-        #r1 = (np.abs(obs[3]) + np.abs(obs[4]) + np.abs(obs[5])) * 10
-        r1 = (np.abs(obs[6])*r + np.abs(obs[7])*r + np.abs(obs[8])*r+np.abs(obs[9]) + np.abs(obs[10]) + np.abs(obs[11])) * 10
+        r1 = (np.abs(obs[3]) + np.abs(obs[4]) + np.abs(obs[5])) * 10
+        #r1 = (np.abs(obs[6])*r + np.abs(obs[7])*r + np.abs(obs[8])*r+np.abs(obs[9]) + np.abs(obs[10]) + np.abs(obs[11])) * 10
         # r1 = 10 * np.sqrt((np.sum(obs[1:4]**2)))
         # if np.abs(obs[3]) > 0.7:
         #     r1 += 2
@@ -554,7 +554,7 @@ if __name__ == "__main__":
     horizon = 1
     warmup_steps = 2000
     # Create MBPO object
-    mbpo = MBPO(
+    mbpo = MBPOWPR(
         env.observation_space,
         env.action_space,
         hidden_size=[100, 80],

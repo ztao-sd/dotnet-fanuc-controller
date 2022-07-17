@@ -112,12 +112,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KalmanFilter.cs" />
-    <Compile Include="LinearPathTracking.cs" />
-    <Compile Include="LinearPathTrackingBPNNPID.cs" />
-    <Compile Include="LinearPathTrackingILC.cs" />
-    <Compile Include="LinearPathTrackingMBPO.cs" />
-    <Compile Include="LinearPathTrackingPID.cs" />
-    <Compile Include="LinearPathTrackingPNN.cs" />
+    <Compile Include="PathTracking.cs" />
+    <Compile Include="PathTrackingBPNNPID.cs" />
+    <Compile Include="PathTrackingILC.cs" />
+    <Compile Include="PathTrackingMBPO.cs" />
+    <Compile Include="PathTrackingPID.cs" />
+    <Compile Include="PathTrackingPNN.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

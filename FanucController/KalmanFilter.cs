@@ -43,13 +43,24 @@ namespace FanucController
             }
             // Measurment noise matrix
             R = CreateMatrix.DenseDiagonal<double>(6, 0.001);
-            double[] r = new double[6] { 0.001, 0.001, 0.001, 0.001, 0.001, 0.001 };
+            double r_p = 0.003;
+            double r_r = 0.0006;
+            double[] r = new double[6] { r_p, r_p, r_p, r_r, r_r, r_r };
             for (int i = 0; i < 6; i++)
             {
                 R[i, i] = r[i];
             }
-            P_ = CreateMatrix.DenseDiagonal<double>(12, 0.05);
+            P_ = CreateMatrix.DenseDiagonal<double>(12, 0.001);
             Q = CreateMatrix.DenseDiagonal<double>(12, 0.00001);
+            double q_p = 0.001;
+            double q_p_d = 0.001;
+            double q_o = 0.0002;
+            double q_o_d = 0.0001;
+            double[] q = new double[12] { q_p, q_p, q_p, q_o, q_o, q_o, q_p_d, q_p_d, q_p_d, q_o_d, q_o_d, q_o_d };
+            for (int i = 0; i < 12; i++)
+            {
+                Q[i, i] = q[i];
+            }
             I = CreateMatrix.DenseIdentity<double>(12);
             H = CreateMatrix.DenseIdentity<double>(6, 12);
         }
@@ -95,9 +106,9 @@ namespace FanucController
 
         public RobustKalmanFilter() : base()
         {
-            alpha_ = 1.0;
-            beta = 0.99;
-            omega = 0.99;
+            alpha_ = 0;
+            beta = 0.995;
+            omega = 0.90;
             d_ = CreateVector.Dense<double>(6);
         }
 
@@ -113,7 +124,7 @@ namespace FanucController
             // Prediction
             predX = A * X_;
             d = Z - H * predX;
-            barP = omega * (d_.ToColumnMatrix() * d_.ToRowMatrix()) + (1 - omega) * (d.ToColumnMatrix() * d_.ToRowMatrix());
+            barP = omega * (d_.ToColumnMatrix() * d_.ToRowMatrix()) + (1 - omega) * (d.ToColumnMatrix() * d.ToRowMatrix());
             predP = A * P_ * A.Transpose() + Q;
             if (barP.Trace() < predP.Trace())
             {
@@ -136,6 +147,77 @@ namespace FanucController
             alpha_ = alpha;
 
             return X;
+        }
+
+    }
+
+    public class FilterTest
+    {
+        public string CsvPath;
+        public string KfPath;
+        public string RkfPath;
+        public KalmanFilter KalmanFilter;
+        public KalmanFilter RobustKalmanFilter;
+        public List<PoseData> PoseDataList;
+        public bool KalmanFilterEnabled = false;
+        public bool RobustKalmanFilterEnabled = false;
+
+        public FilterTest(string csvPath, string kfPath, string rkfPath)
+        {
+            CsvPath = csvPath;
+            KfPath = kfPath;
+            RkfPath = rkfPath;
+            KalmanFilter = new KalmanFilter();
+            RobustKalmanFilter = new RobustKalmanFilter();
+            PoseDataList = Csv.ReadCsv<PoseData>(CsvPath);
+        }
+
+        public Vector<double> ApplyKalmanFilter(Vector<double> newPose)
+        {
+            if (!KalmanFilterEnabled)
+            {
+                KalmanFilter.Initialize(newPose);
+                KalmanFilterEnabled = true;
+                return newPose;
+            }
+            else
+            {
+                Vector<double> _poseTemp = KalmanFilter.Estimate(newPose);
+                return _poseTemp;
+            }
+        }
+
+        public Vector<double> ApplyRobustKalmanFilter(Vector<double> newPose)
+        {
+            if (!RobustKalmanFilterEnabled)
+            {
+                RobustKalmanFilter.Initialize(newPose);
+                RobustKalmanFilterEnabled = true;
+                return newPose;
+            }
+            else
+            {
+                Vector<double> _poseTemp = RobustKalmanFilter.Estimate(newPose);
+                return _poseTemp;
+            }
+        }
+
+        public void Test()
+        {
+            var kfList = new List<PoseData>();
+            var rkfList = new List<PoseData>();
+
+            foreach (var poseData in PoseDataList)
+            {
+                var newPose = poseData.ToVector();
+                var time = poseData.Time;
+                var kfPose = ApplyKalmanFilter(newPose);
+                var rkfPose = ApplyRobustKalmanFilter(newPose);
+                kfList.Add(new PoseData(kfPose, time));
+                rkfList.Add(new PoseData(rkfPose, time));
+                Csv.WriteCsv(KfPath, kfList);
+                Csv.WriteCsv(RkfPath, rkfList);
+            }
         }
 
     }

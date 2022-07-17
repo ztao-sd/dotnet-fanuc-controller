@@ -23,8 +23,10 @@ if __name__ == '__main__':
     ACTOR_ONNX = 'actor.onnx'
 
     # TD3 HYPERPARAMETERS
-    ACTOR_HIDDEN_SIZE = [60, 50]
-    CRITIC_HIDDEN_SIZE = [120, 100]
+    INPUT_DIM = 12
+    OUTPUT_DIM = 6
+    ACTOR_HIDDEN_SIZE = [80, 80]
+    CRITIC_HIDDEN_SIZE = [150, 130]
     LEARN_DELAY = 0
     POLICY_DELAY = 2
     TD3_GRAD_STEPS = 1
@@ -38,10 +40,10 @@ if __name__ == '__main__':
     EXPLORATION_NOISE = 0.1
 
     # MBPO HYPERPARAMETERS
-    OBS_LOW = [-2000, -1200, -200, -0.50, -0.50, -0.50]
-    OBS_HIGH = [-1600, -400, 0, 0.50, 0.50, 0.50]
-    ACTION_LOW = [-0.005, -0.005, -0.005]
-    ACTION_HIGH = [0.005, 0.005, 0.005]
+    OBS_LOW = [-1800, -1200, -100, 2.90, -0.15, 1.4, -0.50, -0.50, -0.50, -0.002, -0.002, -0.002]
+    OBS_HIGH = [-1600, -400, 0, 3.20, 0.30, 1.60, 0.50, 0.50, 0.50, 0.002, 0.002, 0.002]
+    ACTION_LOW = [-0.10, -0.10, -0.10, -0.005, -0.005, -0.005]
+    ACTION_HIGH = [ 0.10, 0.10, 0.10, 0.005, 0.005, 0.005]
     MODEL_HIDDEN_SIZE = [60, 50]
     MODEL_LR = 1e-3
     STOP_TRAINING_THRESHOLD = 2e-4
@@ -73,14 +75,14 @@ if __name__ == '__main__':
     # Test arguments
     test_args = [
         '20',
-        '1',
+        '0',
         '500',
         '0',
-        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\mbpo',
-        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\mbpo',
-        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output\iteration_0',
+        r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-3\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-3\output\mbpo',
+        r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-3\output\iteration_0',
         r'D:\LocalRepos\dotnet-fanuc-controller\PythonMBPO',
-        r'D:\Fanuc Experiments\mbpo\test-0514\run-8\output'
+        r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-3\output',
     ]
 
     # Argument parsing
@@ -95,10 +97,11 @@ if __name__ == '__main__':
     parser.add_argument('script_dir', type=str, help='script dir')
     parser.add_argument('data_dirs', type=str, nargs='+', help='list of data dirs')
     args = parser.parse_args()
-    # args = parser.parse_args(test_args)
+    #args = parser.parse_args(test_args)
 
-    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0516\warmup\output')
-    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0516\run-1\output')
+    # args.data_dirs.clear()
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0516\warmup\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0516\run-1\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0515\run-2\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0514\run-9\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0514\run-2\output')
@@ -108,11 +111,13 @@ if __name__ == '__main__':
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0511\run-2\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0510\iterations\run-1\output')
     # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo\test-0510\iterations\run-2\output')
-
+    args.data_dirs.append(r'D:\Fanuc Experiments\mbpo-6d\test-0711\warmup-1\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-1\output')
+    # args.data_dirs.append(r'D:\Fanuc Experiments\mbpo-6d\test-0710-b\run-2\output')
 
     # RL environment parameters
-    observation_space = spaces.Box(low=np.array([-1.0]*6), high=np.array([1.0]*6), shape=(6,), dtype=np.float32)
-    action_space = spaces.Box(low=np.array([-1.0]*3), high=np.array([1.0]*3), shape=(3,), dtype=np.float32)
+    observation_space = spaces.Box(low=np.array([-1.0]*INPUT_DIM), high=np.array([1.0]*INPUT_DIM), shape=(INPUT_DIM,), dtype=np.float32)
+    action_space = spaces.Box(low=np.array([-1.0]*OUTPUT_DIM), high=np.array([1.0]*OUTPUT_DIM), shape=(OUTPUT_DIM,), dtype=np.float32)
     max_action = 1.0
     min_action = -1.0
 
@@ -174,8 +179,8 @@ if __name__ == '__main__':
         critic_path = os.path.join(args.rl_dir, CRITIC)
 
     # Load training data into environment buffer
-    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(6,), dtype=np.float32)
-    act_space = spaces.Box(low=np.array(ACTION_LOW), high=np.array(ACTION_HIGH), shape=(3,), dtype=np.float32)
+    obs_space = spaces.Box(low=np.array(OBS_LOW), high=np.array(OBS_HIGH), shape=(INPUT_DIM,), dtype=np.float32)
+    act_space = spaces.Box(low=np.array(ACTION_LOW), high=np.array(ACTION_HIGH), shape=(OUTPUT_DIM,), dtype=np.float32)
     iter_dirs = []
     for dir in args.data_dirs:
         for iter_dir in os.listdir(dir):
@@ -240,11 +245,11 @@ if __name__ == '__main__':
     # To be implemented
 
     # Copy python scripts to directory of iteration
-    src = os.path.join(args.script_dir, 'iter_mbpo.py')
-    dst = os.path.join(args.rl_dir, 'iter_mbpo.py')
+    src = os.path.join(args.script_dir, 'iter_mbpo_6d.py')
+    dst = os.path.join(args.rl_dir, 'iter_mbpo_6d.py')
     shutil.copy2(src, dst)
-    src = os.path.join(args.script_dir, 'iter_mbpo_plot.py')
-    dst = os.path.join(args.rl_dir, 'iter_mbpo_plot.py')
+    src = os.path.join(args.script_dir, 'iter_mbpo_plot_6d.py')
+    dst = os.path.join(args.rl_dir, 'iter_mbpo_plot_6d.py')
     shutil.copy2(src, dst)
 
     plt.show(block=False)

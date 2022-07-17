@@ -37,13 +37,31 @@ class IlcPlotting:
             ax.set_ylim(ylim)
             if legend:
                 ax.legend()
+        
+        def iter_subplot_orientation(pd, ax, subtitle, xlabel='time (sec)', ylim=[-0.003, 0.003], legend=False):
+            t, x, y, z = pd['time'], pd['gamma'], pd['beta'], pd['alpha']
+            ax.plot(t,x, label='gamma')
+            ax.plot(t,y, label='beta')
+            ax.plot(t,z, label='alpha')
+            ax.set_xlabel(xlabel)
+            ax.set_title(subtitle)
+            ax.set_ylim(ylim)
+            if legend:
+                ax.legend()
 
-        fig, ax = plt.subplots(1,2, figsize=(8, 5))
-        # Plot path error
-        iter_subplot(error_pd, ax[0], 'Path Error (mm)')
+        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
+        # Plot path error XYZ
+        iter_subplot(error_pd, ax[0,0], 'Path Error (mm)')
 
-        # Plot control signal
-        iter_subplot(control_pd, ax[1], 'Control Signal (mm)', legend=True)
+        # Plot control signal XYZ
+        iter_subplot(control_pd, ax[0,1], 'Control Signal (mm)', legend=True)
+
+        # Plot orientation error WPR
+        iter_subplot_orientation(error_pd, ax[1,0], 'Orientation Error (rad)')
+        # Plot control signal WPR
+        iter_subplot_orientation(control_pd, ax[1,1], 'Orientation (deg)', legend=True, ylim=[-0.03, 0.03])
+
+        
 
         fig.suptitle('Iteration Plot')
         fig.tight_layout()

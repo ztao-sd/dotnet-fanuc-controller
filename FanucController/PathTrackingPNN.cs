@@ -12,7 +12,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace FanucController
 {
-    public class LinearPathTrackingPNN
+    public class PathTrackingPNN
     {
         // File
         public string OutputDir;
@@ -47,7 +47,7 @@ namespace FanucController
         public Vector<double> PnnError;
 
         // PID Control
-        public LinearPathTrackingPID Pid;
+        public PathTrackingPID Pid;
 
         // Data
         public List<string> DataDirs = new List<string>();
@@ -59,7 +59,7 @@ namespace FanucController
         private double[] minState = new double[4] { 0, -0.20, -0.20, -0.20 };
         private double[] maxState = new double[4] { 35, 0.20, 0.20, 0.20 };
 
-        public LinearPathTrackingPNN()
+        public PathTrackingPNN()
         {
             InputDim = 6;
             OutputDim1 = 2;
@@ -85,7 +85,7 @@ namespace FanucController
                 new double[] { 0.2, 0.2, 0.2 });
 
             // PID 
-            Pid = new LinearPathTrackingPID();
+            Pid = new PathTrackingPID();
             Pid.Dim = 3;
             Pid.Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.05, 0.00, 0.00 });
             Pid.Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.01, 0.0005, 0.0002 });
@@ -94,7 +94,7 @@ namespace FanucController
             Pid.ControlSignal = CreateVector.Dense<double>(Pid.Dim);
         }
 
-        public LinearPathTrackingPNN(string outputDir, string modelPath, string inputName, string outputName, int inputDim, 
+        public PathTrackingPNN(string outputDir, string modelPath, string inputName, string outputName, int inputDim, 
             int outputDim1, int outputDim2, string scriptDir)
         {
             OutputDir = outputDir;
@@ -317,7 +317,7 @@ namespace FanucController
             string outputDir = @"D:\Fanuc Experiments\stuff\ML - Python\data\dec_14\run_2";
             string modelPath = @"D:\Fanuc Experiments\stuff\ML - Python\data\dec_14\run_2\mlpg_0401.onnx";
             string scriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
-            var model = new LinearPathTrackingPNN(outputDir:outputDir, modelPath: modelPath, inputName:"input.1", outputName:"error",
+            var model = new PathTrackingPNN(outputDir:outputDir, modelPath: modelPath, inputName:"input.1", outputName:"error",
                 inputDim: 4, outputDim1: 2, outputDim2: 3, scriptDir:scriptDir);
 
             var normalDistribution = new Normal(0.0, 0.5);

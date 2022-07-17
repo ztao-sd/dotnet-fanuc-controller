@@ -7,7 +7,7 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace FanucController
 {
-    public class LinearPathTrackingPID
+    public class PathTrackingPID
     {
         public int Dim;
 
@@ -24,12 +24,13 @@ namespace FanucController
 
         #region Constructor
 
-        public LinearPathTrackingPID()
+        public PathTrackingPID()
         {
             Dim = 3;
-            Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] {0.2, 0.2, 0.1});
-            Ki = CreateMatrix.DenseDiagonal(Dim, 0.005);
-            Kd = CreateMatrix.DenseDiagonal(Dim, 0.05);
+            Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] {0.2, 0.2, 0.6});
+            //Ki = CreateMatrix.DenseDiagonal(Dim, 0.005);
+            Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.005, 0.005, 0.01 });
+            Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.05, 0.05, 0.01 });
             Errors = new List<Vector<double>>();
             ControlSignal = CreateVector.Dense<double>(Dim);
         }
@@ -56,7 +57,7 @@ namespace FanucController
             ControlSignal.Clear();
         }
 
-        public Vector<double> Control(Vector<double> error)
+        public Vector<double> Control(Vector<double> error, bool wpr=false)
         {
             // Add & delete from error list
             Errors.Insert(0, error);
@@ -64,8 +65,16 @@ namespace FanucController
 
             ControlSignal += Kp * (Errors[0] - Errors[1]) + Ki * (Errors[0]) + Kd * (Errors[0] - 2 * Errors[1] + Errors[2]);
             Vector<double> control = CreateVector.Dense<double>(6);
-            ControlSignal.CopySubVectorTo(control, 0, 0, 3);
-
+            
+            if (!wpr)
+            {
+                ControlSignal.CopySubVectorTo(control, 0, 0, 3);
+            }
+            else
+            {
+                ControlSignal.CopySubVectorTo(control, 0, 3, 3);
+            }
+            
             return control;
         }
 

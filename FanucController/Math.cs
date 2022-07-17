@@ -27,6 +27,42 @@ namespace FanucController
             return R;
         }
 
+        public static Matrix<double> RotationX(double gamma)
+        {
+            var R = CreateMatrix.Dense<double>(3, 3);
+            R[0, 0] = 1;
+            R[1, 1] = Math.Cos(gamma);
+            R[1, 2] = -Math.Sin(gamma);
+            R[2, 1] = Math.Sin(gamma);
+            R[2, 2] = Math.Cos(gamma);
+
+            return R;
+        }
+
+        public static Matrix<double> RotationY(double beta)
+        {
+            var R = CreateMatrix.Dense<double>(3, 3);
+            R[0, 0] = Math.Cos(beta);
+            R[0, 2] = Math.Sin(beta);
+            R[1, 1] = 1;
+            R[2, 0] = -Math.Sin(beta);
+            R[2, 2] = Math.Cos(beta);
+
+            return R;
+        }
+
+        public static Matrix<double> RotationZ(double alpha)
+        {
+            var R = CreateMatrix.Dense<double>(3, 3);
+            R[0, 0] = Math.Cos(alpha);
+            R[0, 1] = -Math.Sin(alpha);
+            R[1, 0] = Math.Sin(alpha);
+            R[1, 1] = Math.Cos(alpha);
+            R[2, 2] = 1;
+
+            return R;
+        }
+
         public static Matrix<double> RotationMatrix(Vector<double> x, Vector<double> y, Vector<double> z)
         {
             var R = CreateMatrix.Dense<double>(3, 3);
@@ -36,10 +72,22 @@ namespace FanucController
 
         public static double[] FixedAnglesIkine(Matrix<double> R)
         {
+            //X-Y-Z fixed angles
             double[] angles = new double[3];
             angles[1] = Math.Atan2(-R[2, 0], Math.Sqrt(Math.Pow(R[0, 0], 2) + Math.Pow(R[1, 0] , 2)));
             angles[2] = Math.Atan2(R[1, 0] / Math.Cos(angles[1]), R[0, 0] / Math.Cos(angles[1]));
             angles[0] = Math.Atan2(R[2, 1] / Math.Cos(angles[1]), R[2, 2] / Math.Cos(angles[1]));
+            return angles;
+        }
+
+        public static double[] EulerAnglesIkine(Matrix<double> R)
+        {
+            //X-Y-Z euler angles
+            double[] angles = new double[3];
+            angles[1] = Math.Atan2(R[0, 2], Math.Sqrt(Math.Pow(R[1, 2], 2) + Math.Pow(R[2, 2], 2)));
+            angles[2] = Math.Atan2(-R[0, 1] / Math.Cos(angles[1]), R[0, 0] / Math.Cos(angles[1]));
+            angles[0] = Math.Atan2(-R[1, 2] / Math.Cos(angles[1]), R[2, 2] / Math.Cos(angles[1]));
+
             return angles;
         }
 

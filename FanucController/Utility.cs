@@ -117,9 +117,9 @@ namespace FanucController
             Map(m => m.X).Name("x");
             Map(m => m.Y).Name("y");
             Map(m => m.Z).Name("z");
-            Map(m => m.Alpha).Name("alpha");
-            Map(m => m.Beta).Name("beta");
             Map(m => m.Gamma).Name("gamma");
+            Map(m => m.Beta).Name("beta");
+            Map(m => m.Alpha).Name("alpha");
         }
     }
 
@@ -129,9 +129,11 @@ namespace FanucController
         [Name("x")] public double X { get; set; }
         [Name("y")] public double Y { get; set; }
         [Name("z")] public double Z { get; set; }
-        [Name("alpha")] public double Alpha { get; set; }
-        [Name("beta")] public double Beta { get; set; }
         [Name("gamma")] public double Gamma { get; set; }
+        [Name("beta")] public double Beta { get; set; }
+        [Name("alpha")] public double Alpha { get; set; }
+        
+        
 
         public PoseData()
         {
@@ -142,24 +144,23 @@ namespace FanucController
         {
             Time = time;
             X = pose[0]; Y = pose[1]; Z = pose[2];
-            Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
+            Alpha = pose[5]; Beta = pose[4]; Gamma = pose[3];
         }
 
         public PoseData(double[] pose, double time)
         {
             Time = time;
             X = pose[0]; Y = pose[1]; Z = pose[2];
-            Alpha = pose[3]; Beta = pose[4]; Gamma = pose[5];
+            Alpha = pose[5]; Beta = pose[4]; Gamma = pose[3];
         }
 
         public Vector<double> ToVector()
         {
             var vector = CreateVector.Dense<double>(6);
             vector[0] = X; vector[1] = Y; vector[2] = Z;
-            vector[3] = Alpha; vector[4] = Beta; vector[5] = Gamma;
+            vector[5] = Alpha; vector[4] = Beta; vector[3] = Gamma;
             return vector;
         }
-
     }
 
     public class PidCoefficients
@@ -194,6 +195,60 @@ namespace FanucController
             KdX = kValues[6];
             KdY = kValues[7];
             KdZ = kValues[8];
+        }
+
+    }
+
+    public class PidCoefficients6D
+    {
+
+        [Name("time")] public double Time { get; set; }
+        [Name("KpX")] public double KpX { get; set; }
+        [Name("KpY")] public double KpY { get; set; }
+        [Name("KpZ")] public double KpZ { get; set; }
+        [Name("KpW")] public double KpW { get; set; }
+        [Name("KpP")] public double KpP { get; set; }
+        [Name("KpR")] public double KpR { get; set; }
+        [Name("KiX")] public double KiX { get; set; }
+        [Name("KiY")] public double KiY { get; set; }
+        [Name("KiZ")] public double KiZ { get; set; }
+        [Name("KiW")] public double KiW { get; set; }
+        [Name("KiP")] public double KiP { get; set; }
+        [Name("KiR")] public double KiR { get; set; }
+        [Name("KdX")] public double KdX { get; set; }
+        [Name("KdY")] public double KdY { get; set; }
+        [Name("KdZ")] public double KdZ { get; set; }
+        [Name("KdW")] public double KdW { get; set; }
+        [Name("KdP")] public double KdP { get; set; }
+        [Name("KdR")] public double KdR { get; set; }
+
+
+        public PidCoefficients6D()
+        {
+
+        }
+
+        public PidCoefficients6D(double[] kValues, double time)
+        {
+            Time = time;
+            KpX = kValues[0];
+            KpY = kValues[1];
+            KpZ = kValues[2];
+            KpW = kValues[3];
+            KpP = kValues[4];
+            KpR = kValues[5];
+            KiX = kValues[6];
+            KiY = kValues[7];
+            KiZ = kValues[8];
+            KiW = kValues[9];
+            KiP = kValues[10];
+            KiR = kValues[11];
+            KdX = kValues[12];
+            KdY = kValues[13];
+            KdZ = kValues[14];
+            KdW = kValues[15];
+            KdP = kValues[16];
+            KdR = kValues[17];
         }
 
     }

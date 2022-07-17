@@ -339,9 +339,9 @@ class MBPO:
                 for pose_row, error_row, control_row in zip(pose_array, error_array, control_array):
                     if not np.isnan(np.sum(error_row)) and not np.isnan(np.sum(control_row)) and not np.isnan(np.sum(pose_row)):
                         # Normalize data
-                        pose_rows.append(pose_row[1:].reshape(1, -1))
-                        error_rows.append(error_row[1:].reshape(1, -1))
-                        control_rows.append(control_row[1:].reshape(1, -1))
+                        pose_rows.append(pose_row[1:4].reshape(1, -1))
+                        error_rows.append(error_row[1:4].reshape(1, -1))
+                        control_rows.append(control_row[1:4].reshape(1, -1))
                 pose_array = np.concatenate(pose_rows, axis=0)
                 error_array = np.concatenate(error_rows, axis=0)
                 control_array = np.concatenate(control_rows, axis=0)
@@ -455,8 +455,8 @@ class MBPO:
         # if self.prev_obs is not None:
         #     if factor < np.amax(obs[1:4]) * 20:
         #         factor = np.amax(obs[1:4]) * 20
-        #r1 = (np.abs(obs[3]) + np.abs(obs[4]) + np.abs(obs[5])) * 10
-        r1 = (np.abs(obs[6])*r + np.abs(obs[7])*r + np.abs(obs[8])*r+np.abs(obs[9]) + np.abs(obs[10]) + np.abs(obs[11])) * 10
+        r1 = (np.abs(obs[3]) + np.abs(obs[4]) + np.abs(obs[5])) * 10
+        #r1 = (np.abs(obs[6])*r + np.abs(obs[7])*r + np.abs(obs[8])*r+np.abs(obs[9]) + np.abs(obs[10]) + np.abs(obs[11])) * 10
         # r1 = 10 * np.sqrt((np.sum(obs[1:4]**2)))
         # if np.abs(obs[3]) > 0.7:
         #     r1 += 2
