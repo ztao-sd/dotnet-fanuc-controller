@@ -45,6 +45,8 @@ namespace FanucController
             R = CreateMatrix.DenseDiagonal<double>(6, 0.001);
             double r_p = 0.003;
             double r_r = 0.0006;
+            //double r_p = 0.001;
+            //double r_r = 0.001;
             double[] r = new double[6] { r_p, r_p, r_p, r_r, r_r, r_r };
             for (int i = 0; i < 6; i++)
             {
@@ -56,6 +58,10 @@ namespace FanucController
             double q_p_d = 0.001;
             double q_o = 0.0002;
             double q_o_d = 0.0001;
+            //double q_p = 0.00001;
+            //double q_p_d = 0.00001;
+            //double q_o = 0.00001;
+            //double q_o_d = 0.00001;
             double[] q = new double[12] { q_p, q_p, q_p, q_o, q_o, q_o, q_p_d, q_p_d, q_p_d, q_o_d, q_o_d, q_o_d };
             for (int i = 0; i < 12; i++)
             {
@@ -107,6 +113,7 @@ namespace FanucController
         public RobustKalmanFilter() : base()
         {
             alpha_ = 0;
+            //alpha_ = 0.9;
             beta = 0.995;
             omega = 0.90;
             d_ = CreateVector.Dense<double>(6);

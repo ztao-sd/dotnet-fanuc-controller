@@ -1083,9 +1083,9 @@ namespace FanucController
 
         private void buttonFilterTest_Click(object sender, EventArgs e)
         {
-            string csvPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPose.csv";
-            string kfPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPoseKf.csv";
-            string rkfPath = @"D:\Fanuc Experiments\pid\test-0513\run-1\output\iteration_0\LineTrackPoseRkf.csv";
+            string csvPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseRaw.csv";
+            string kfPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseKf.csv";
+            string rkfPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseRkf.csv";
             var test = new FilterTest(csvPath, kfPath, rkfPath);
             test.Test();
 
@@ -1221,6 +1221,8 @@ namespace FanucController
         {
 
         }
+
+
 
 
 
