@@ -4,6 +4,8 @@ This repository contains code for the followings:
 1. Windows form app to command the visual servoing experiment.
 2. Python code to carry out reinforcement learning.
 
+Link: https://github.com/ztao-sd/dotnet-fanuc-controller.git
+
 # Solution structure
 
 * The *FanucController*  folder contains code for:
@@ -21,7 +23,7 @@ This repository contains code for the followings:
 
 # Form Design
 
-![](D:\LocalRepos\dotnet-fanuc-controller\form.PNG)
+![](\form.PNG)
 
 # Tutorials
 
