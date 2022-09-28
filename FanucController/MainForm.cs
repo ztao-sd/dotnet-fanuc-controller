@@ -21,6 +21,9 @@ using FanucPCDK;
 
 namespace FanucController
 {
+    /// <summary>
+    /// This class contains the methods corresponding to the form controls.
+    /// </summary>
     public partial class MainForm : Form
     {
 

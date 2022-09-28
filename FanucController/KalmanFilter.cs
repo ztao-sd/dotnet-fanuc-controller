@@ -8,8 +8,14 @@ using MathNet.Numerics.LinearAlgebra;
 namespace FanucController
 {
 
+    /// <summary>
+    /// This class contains functions, parameters and variables pertaining to Kalman filters.
+    /// </summary>
     public class KalmanFilter
     {
+        // This implementation of Kalman filter might contains bugs.
+        // The result is not as expected.
+
         protected double CtrackInterval = 1 / 29;
 
         // Prediction
@@ -33,6 +39,9 @@ namespace FanucController
         // Measurement
         protected Matrix<double> H; // Observation matrix
 
+        /// <summary>
+        /// Constructor for the Kalman filter class.
+        /// </summary>
         public KalmanFilter()
         {
             // State transition matrix
@@ -71,6 +80,10 @@ namespace FanucController
             H = CreateMatrix.DenseIdentity<double>(6, 12);
         }
 
+        /// <summary>
+        /// Initialize the state and the predicted state.
+        /// </summary>
+        /// <param name="initPose"></param>
         public virtual void Initialize(Vector<double> initPose)
         {
             // Initial state
@@ -80,6 +93,11 @@ namespace FanucController
             X = CreateVector.Dense<double>(12);
         }
 
+        /// <summary>
+        /// Calculate one instance of filtered state.
+        /// </summary>
+        /// <param name="pose"></param>
+        /// <returns></returns>
         public virtual Vector<double> Estimate(Vector<double> pose)
         {
             // Measurement
@@ -99,6 +117,9 @@ namespace FanucController
         }
     }
 
+    /// <summary>
+    /// This class inherits from KalmanFilter class.
+    /// </summary>
     public class RobustKalmanFilter : KalmanFilter
     {
         private double alpha_;

@@ -16,6 +16,9 @@ using Serilog;
 
 namespace FanucController
 {
+    /// <summary>
+    /// This class contains members regarding the line following experiment.
+    /// </summary>
     public class PathTracking
     {
         #region Fields
