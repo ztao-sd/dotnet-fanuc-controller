@@ -86,6 +86,18 @@ namespace FanucController
                 lock (poseLock) { poseCameraFrame[2] = value; }
             }
         }
+        public Vector<double> PoseCameraFrameAkf
+        {
+            get
+            {
+                lock (poseLock) { return poseCameraFrame[3]; }
+            }
+            set
+            {
+                lock (poseLock) { poseCameraFrame[3] = value; }
+            }
+        }
+
         public bool[] filterActivated;
 
         // Stopwatch
@@ -98,8 +110,10 @@ namespace FanucController
         // Kalman Filter
         private KalmanFilter standardKalman;
         private RobustKalmanFilter robustKalman;
+        private KalmanFilterAcc accKalman;
         private bool standardKalmanEnabled;
         private bool robustKalmanEnabled;
+        private bool accKalmanEnabled;
 
         #endregion
 
@@ -135,11 +149,14 @@ namespace FanucController
             standardKalmanEnabled = false;
             robustKalman = new RobustKalmanFilter();
             robustKalmanEnabled = false;
+            accKalman = new KalmanFilterAcc();
+            accKalmanEnabled = false;
             poseTemp = CreateVector.Dense<double>(6);
-            poseCameraFrame = new Vector<double>[3];
+            poseCameraFrame = new Vector<double>[4];
             poseCameraFrame[0] = CreateVector.Dense<double>(6); // raw
             poseCameraFrame[1] = CreateVector.Dense<double>(6); // kf
             poseCameraFrame[2] = CreateVector.Dense<double>(6); // rkf
+            poseCameraFrame[3] = CreateVector.Dense<double>(6); // akf
             filterActivated = new bool[3];
 
             // Buffer
@@ -425,6 +442,7 @@ namespace FanucController
             PoseCameraFrame = poseTemp;
             standardKalmanFiltering(poseTemp);
             robustKalmanFiltering(poseTemp);
+            accKalmanFiltering(poseTemp);
             addToBuffers();
         }
 
@@ -442,6 +460,23 @@ namespace FanucController
             {
                 Vector<double> _poseTemp = standardKalman.Estimate(newPose);
                 PoseCameraFrameKf = _poseTemp;
+            }
+        }
+
+        private void accKalmanFiltering(Vector<double> newPose)
+        {
+            if (!filterActivated[1]) return;
+
+            if (!accKalmanEnabled)
+            {
+                accKalman.Initialize(newPose);
+                PoseCameraFrameAkf = newPose;
+                accKalmanEnabled = true;
+            }
+            else
+            {
+                Vector<double> _poseTemp = accKalman.Estimate(newPose);
+                PoseCameraFrameAkf = _poseTemp;
             }
         }
 

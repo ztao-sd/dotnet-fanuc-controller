@@ -43,6 +43,7 @@ namespace FanucController
         public Buffer<PoseData> PoseBufferRaw;
         public Buffer<PoseData> PoseBufferKf;
         public Buffer<PoseData> PoseBufferRkf;
+        public Buffer<PoseData> PoseBufferAkf;
         public Buffer<PoseData> PidControlBuffer;
         public Buffer<PoseData> IlcControlBuffer;
         public Buffer<PoseData> PnnControlBuffer;
@@ -158,9 +159,9 @@ namespace FanucController
             ReferenceDir = Path.Combine(topDir, "reference");
             ScriptsDir = Path.Combine(topDir, "scripts");
             RotationId = new RotationIdentification();
-            RotationId.fileName = "RotationID.json";
+            RotationId.FileName = "RotationID.json";
             LinearPath = new LinearPath();
-            LinearPath.fileName = "LinearPath.json";
+            LinearPath.FileName = "LinearPath.json";
             PoseDict = new Dictionary<string, Vector<double>>();
 
             // Buffers
@@ -172,6 +173,7 @@ namespace FanucController
             PoseBufferRaw = new Buffer<PoseData>(20_000);
             PoseBufferKf = new Buffer<PoseData>(20_000);
             PoseBufferRkf = new Buffer<PoseData>(20_000);
+            PoseBufferAkf = new Buffer<PoseData>(20_000);
             PidControlBuffer = new Buffer<PoseData>(20_000);
             IlcControlBuffer = new Buffer<PoseData>(20_000);
             PnnControlBuffer = new Buffer<PoseData>(20_000);
@@ -201,7 +203,7 @@ namespace FanucController
             // PID Control
             PidControlPosition = new PathTrackingPID()
             {
-                Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.4, 0.3, 0.4 }),
+                Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.2, 0.2, 0.6 }),
                 Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.005, 0.005, 0.05 }),
                 Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.0005, 0.0005, 0.0030})
             };
@@ -333,6 +335,7 @@ namespace FanucController
             PoseBufferRaw.Reset();
             PoseBufferKf.Reset();
             PoseBufferRkf.Reset();
+            PoseBufferAkf.Reset();
             PidControlBuffer.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
@@ -421,6 +424,7 @@ namespace FanucController
             PoseBufferRaw.Reset();
             PoseBufferKf.Reset();
             PoseBufferRkf.Reset();
+            PoseBufferAkf.Reset();
             IlcControlBuffer.Reset();
             PnnControlBuffer.Reset();
             PnnErrorBuffer.Reset();
@@ -525,6 +529,7 @@ namespace FanucController
                 Vector<double> xRaw = GetVxUFPose(mode: "raw");
                 Vector<double> xKf = GetVxUFPose(mode: "kf");
                 Vector<double> xRkf = GetVxUFPose(mode: "rkf");
+                Vector<double> xAkf = GetVxUFPose(mode: "akf");
                 Vector<double> x = xRkf;
                 //Vector<double> closestP = MathLib.PointToLinePoint(LinearPath.PointStart.SubVector(0,3), LinearPath.PointEnd.SubVector(0,3), x.SubVector(0, 3));
                 //Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
@@ -624,6 +629,7 @@ namespace FanucController
                 PoseBufferRaw.Add(new PoseData(xRaw.AsArray(), Time));
                 PoseBufferKf.Add(new PoseData(xKf.AsArray(), Time));
                 PoseBufferRkf.Add(new PoseData(xRkf.AsArray(), Time));
+                PoseBufferAkf.Add(new PoseData(xAkf.AsArray(), Time));
                 if (flagPControl)
                 {
                     PidControlBuffer.Add(new PoseData(uPID.AsArray(), Time));
@@ -692,6 +698,8 @@ namespace FanucController
             Csv.WriteCsv(path, PoseBufferKf.Memory.ToList());
             path = Path.Combine(iterDir, "LineTrackPoseRkf.csv");
             Csv.WriteCsv(path, PoseBufferRkf.Memory.ToList());
+            path = Path.Combine(iterDir, "LineTrackPoseAkf.csv");
+            Csv.WriteCsv(path, PoseBufferAkf.Memory.ToList());
             Thread.Sleep(1000);
 
             // Plot iteration data in python
@@ -887,25 +895,21 @@ namespace FanucController
                 System.Threading.Thread.Sleep(50);
             }
 
-
+            // Pose average over 'sampleNum' samples.
             cameraPose = CreateVector.DenseOfEnumerable(cameraPoseSum.Select(x => x / sampleNum));
             robotPose = CreateVector.DenseOfEnumerable(robotPoseSum.Select(x => x / sampleNum));
 
+            // Calculate position offset.
             RotationId.PositionOffset = robotPose.SubVector(0, 3) -  RotationId.Rotation * cameraPose.SubVector(0, 3);
 
+            // Convert degree to radian.
             robotPose[3] = robotPose[3] * Math.PI / 180;
             robotPose[4] = robotPose[4] * Math.PI / 180;
             robotPose[5] = robotPose[5] * Math.PI / 180;
 
+            // Calculate orientation offset.
             var rotationCamera = MathLib.RotationZ(cameraPose[5]) * MathLib.RotationY(cameraPose[4]) * MathLib.RotationX(cameraPose[3]);
             var rotationRobot = MathLib.RotationZ(robotPose[5]) * MathLib.RotationY(robotPose[4]) * MathLib.RotationX(robotPose[3]);
-            //var rotationCamera = MathLib.RotationMatrix(cameraPose[5], cameraPose[4], cameraPose[3]);
-            //var rotationRobot = MathLib.RotationMatrix(robotPose[5], robotPose[4], robotPose[3]);
-
-
-            //RotationId.RotationOffset = rotationRobot * (RotationId.Rotation * rotationCamera).Transpose();
-            //RotationId.RotationOffset = RotationId.Rotation.Transpose() * rotationRobot * rotationCamera.Transpose();
-            //RotationId.RotationOffset = rotationRobot * rotationCamera.Transpose() * RotationId.Rotation.Transpose();
             RotationId.RotationOffset = rotationCamera.Transpose() * RotationId.Rotation.Transpose() * rotationRobot;
         }
 
@@ -922,6 +926,8 @@ namespace FanucController
                 case "raw":
                     // KF Pose
                     return Vx.PoseCameraFrame;
+                case "akf":
+                    return Vx.PoseCameraFrameAkf;
             }
             // RKF Pose
             return Vx.PoseCameraFrameRkf;
@@ -1018,16 +1024,18 @@ namespace FanucController
         #endregion
     }
 
+    /// <summary>
+    /// Watch DPM offset values and check if they surpass a certain threshold. If so, disable DPM.
+    /// To-do: implement saturation.
+    /// </summary>
     public class DpmWatcher
     {
-        // This class watches the DPM offset values and check if they surpass a certain threshold.
-
-        public double OffsetLimit;
-        public Vector<double> CumulativeOffset;
-        public double CumulativeOffsetLimit;
-        public double ErrorLimit;
-        public Vector<double> CumulativeError;
-        public double CumulativeErrorLimit;
+        public double OffsetLimit = 0;
+        public double CumulativeOffsetLimit = 0;
+        public double ErrorLimit = 0;
+        public double CumulativeErrorLimit = 0;
+        public Vector<double> CumulativeOffset = CreateVector.Dense<double>(3);
+        public Vector<double> CumulativeError = CreateVector.Dense<double>(3);
 
         public void Reset()
         {
@@ -1051,10 +1059,11 @@ namespace FanucController
         }
     }
 
+    /// <summary>
+    /// Idenfication of the rotation matrix from C-Track Sensor frame to FANUC user frme.
+    /// </summary>
     public class RotationIdentification
     {
-        // This class encapsulates the identification of the rotation matrix from C-Track Sensor frame to FANUC user frame.
-
         [JsonIgnore] public Vector<double>[] x = new Vector<double>[2];
         [JsonIgnore] public Vector<double>[] y = new Vector<double>[2];
         [JsonIgnore] public Vector<double>[] z = new Vector<double>[2];
@@ -1062,7 +1071,7 @@ namespace FanucController
         [JsonIgnore] public Matrix<double> RotationWpr;
         [JsonIgnore] public Matrix<double> RotationOffset;
         [JsonIgnore] public Vector<double> PositionOffset;
-        [JsonIgnore] public string fileName;
+        [JsonIgnore] public string FileName;
 
         public void CalculateRotationMatrixXY()
         {
@@ -1114,7 +1123,7 @@ namespace FanucController
 
         public void ReadJson(string dir)
         {
-            string path = Path.Combine(dir, fileName);
+            string path = Path.Combine(dir, FileName);
             string jsonString = File.ReadAllText(path);
             var x = JsonSerializer.Deserialize<RotationIdentification>(jsonString);
             double[] array = JsonSerializer.Deserialize<RotationIdentification>(jsonString).RotationArray;
@@ -1135,7 +1144,7 @@ namespace FanucController
 
         public void ToJson(string dir)
         {
-            string path = Path.Combine(dir, fileName);
+            string path = Path.Combine(dir, FileName);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string stringJson = JsonSerializer.Serialize(this, options);
             File.WriteAllText(path, stringJson);
@@ -1151,6 +1160,9 @@ namespace FanucController
         }
     }
 
+    /// <summary>
+    /// Description of a line task path.
+    /// </summary>
     public class LinearPath
     {
         // This class represents a linear path.
@@ -1158,7 +1170,7 @@ namespace FanucController
         [JsonIgnore] public Matrix<double> Rotation; //Rotation Camera -> UF
         [JsonIgnore] public Vector<double> PointStart;
         [JsonIgnore] public Vector<double> PointEnd;
-        [JsonIgnore] public string fileName;
+        [JsonIgnore] public string FileName;
 
         public double[] RotationArray
         {
@@ -1187,7 +1199,7 @@ namespace FanucController
 
         public void ReadJson(string outDir)
         {
-            string path = Path.Combine(outDir, fileName);
+            string path = Path.Combine(outDir, FileName);
             string jsonString = File.ReadAllText(path);
             LinearPath temp = JsonSerializer.Deserialize<LinearPath>(jsonString);
             RotationArray = temp.RotationArray;
@@ -1203,7 +1215,7 @@ namespace FanucController
 
         public void ToJson(string outDir)
         {
-            string path = Path.Combine(outDir, fileName);
+            string path = Path.Combine(outDir, FileName);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string stringJson = JsonSerializer.Serialize(this, options);
             File.WriteAllText(path, stringJson);

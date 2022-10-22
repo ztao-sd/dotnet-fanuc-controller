@@ -266,7 +266,7 @@ namespace FanucController
             Vector<double> pose = CreateVector.Dense<double>(6);
             switch (comboBoxPoseFrame.Text)
             {
-                case "World Frame":
+                case "Sensor Frame":
                     pose = LinearTrack.GetVxCameraPose(sampleNum);
                     break;
 
@@ -305,7 +305,7 @@ namespace FanucController
         private void buttonLinearPath_Click(object sender, EventArgs e)
         {
             LinearTrack.LinearPath.GetData(LinearTrack.PoseDict, LinearTrack.RotationId);
-            LinearTrack.LinearPath.fileName = "LinearPath.json";
+            LinearTrack.LinearPath.FileName = "LinearPath.json";
             LinearTrack.LinearPath.ToJson(ReferenceDir);
         }
 
@@ -767,7 +767,7 @@ namespace FanucController
                 double[] pose = null;
                 switch (comboBoxPcdkPose.Text)
                 {
-                    case "World Frame":
+                    case "Sensor Frame":
                         pose = poseWF;
                         break;
                     case "User Frame":
@@ -1089,7 +1089,8 @@ namespace FanucController
             string csvPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseRaw.csv";
             string kfPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseKf.csv";
             string rkfPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseRkf.csv";
-            var test = new FilterTest(csvPath, kfPath, rkfPath);
+            string kfaPath = @"D:\Fanuc Experiments\mbpo-6d\test-0712-b\eval-1\output\LineTrackPoseKfa.csv";
+            var test = new FilterTest(csvPath, kfPath, rkfPath, kfaPath);
             test.Test();
 
         }
@@ -1232,9 +1233,13 @@ namespace FanucController
 
 
 
+
         #endregion
 
+        private void comboBoxPoseFrame_SelectedIndexChanged(object sender, EventArgs e)
+        {
 
+        }
     }
 
 

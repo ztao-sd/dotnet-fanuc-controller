@@ -16,7 +16,7 @@ namespace FanucController
         // This implementation of Kalman filter might contains bugs.
         // The result is not as expected.
 
-        protected double CtrackInterval = 1 / 29;
+        protected const double CtrackInterval = 1.0 / 29.0;
 
         // Prediction
         protected Matrix<double> A; // State transition matrix
@@ -179,25 +179,130 @@ namespace FanucController
 
     }
 
+    public class KalmanFilterAcc : KalmanFilter
+    {
+        public KalmanFilterAcc()
+        {
+            // State transition matrix
+            A = CreateMatrix.DenseIdentity<double>(18);
+            for (int i = 0; i < 6; i++)
+            {
+                A[i, 6 + i] = CtrackInterval;
+                A[i, 12 + i] = 0.5 * CtrackInterval * CtrackInterval;
+            }
+
+            // Measurment noise matrix
+            R = CreateMatrix.DenseDiagonal<double>(6, 0.001);
+            R[0, 0] = 0.00015;
+            R[1, 1] = 0.00015;
+            R[2, 2] = 0.00075;
+            R[3, 3] = 0.000158;
+            R[4, 4] = 0.000143;
+            R[5, 5] = 0.0000219;
+
+            P_ = CreateMatrix.DenseDiagonal<double>(18, 0.05);
+
+            // Process Noise
+            Q = CreateMatrix.DenseDiagonal<double>(18, 0.00001);
+            Q[0, 0] = 0.000001;
+            Q[1, 1] = 0.000001;
+            Q[2, 2] = 0.00001;
+            Q[3, 3] = 0.000001;
+            Q[4, 4] = 0.000001;
+            Q[5, 5] = 0.000001;
+            Q[6, 6] = 0.001;
+            Q[7, 7] = 0.001;
+            Q[8, 8] = 0.008;
+            Q[9, 9] = 0.001;
+            Q[10, 10] = 0.001;
+            Q[11, 11] = 0.002;
+            Q[12, 12] = 0.006;
+            Q[13, 13] = 0.007;
+            Q[14, 14] = 0.009;
+            Q[15, 15] = 0.005;
+            Q[16, 16] = 0.01;
+            Q[17, 17] = 0.01;
+
+            I = CreateMatrix.DenseIdentity<double>(18);
+            H = CreateMatrix.DenseIdentity<double>(6, 18);
+        }
+
+        /// <summary>
+        /// Initialize the state and the predicted state.
+        /// </summary>
+        /// <param name="initPose"></param>
+        public override void Initialize(Vector<double> initPose)
+        {
+            // Initial state
+            X_ = CreateVector.Dense<double>(18);
+            initPose.CopySubVectorTo(X_, 0, 0, 6);
+            // Clear variables
+            X = CreateVector.Dense<double>(18);
+        }
+
+        /// <summary>
+        /// Calculate one instance of filtered state.
+        /// </summary>
+        /// <param name="pose"></param>
+        /// <returns></returns>
+        public override Vector<double> Estimate(Vector<double> pose)
+        {
+            // Measurement
+            Z = pose;
+            // Prediction
+            predX = A * X_;
+            predP = A * P_ * A.Transpose() + Q;
+            // Estimation
+            S = (H * predP * H.Transpose() + R).Inverse();
+            K = predP * H.Transpose() * S;
+            X = predX + K * (Z - H * predX);
+            // Update last variables
+            P_ = (I - K * H) * predP;
+            X_ = X;
+
+            return X;
+        }
+    }
+
     public class FilterTest
     {
         public string CsvPath;
         public string KfPath;
         public string RkfPath;
+        public string KfaPath;
         public KalmanFilter KalmanFilter;
         public KalmanFilter RobustKalmanFilter;
+        public KalmanFilter KalmanFilterAcc;
         public List<PoseData> PoseDataList;
         public bool KalmanFilterEnabled = false;
         public bool RobustKalmanFilterEnabled = false;
+        public bool KalmanFilterAccEnabled = false;
 
-        public FilterTest(string csvPath, string kfPath, string rkfPath)
+        public FilterTest(string csvPath, string kfPath, string rkfPath, string kfaPath)
         {
             CsvPath = csvPath;
             KfPath = kfPath;
             RkfPath = rkfPath;
+            KfaPath = kfaPath;
             KalmanFilter = new KalmanFilter();
             RobustKalmanFilter = new RobustKalmanFilter();
+            KalmanFilterAcc = new KalmanFilterAcc();
             PoseDataList = Csv.ReadCsv<PoseData>(CsvPath);
+        }
+
+        public Vector<double> ApplyFilter(Vector<double> newPose, ref KalmanFilter filter, ref bool filterEnabled)
+        {
+            if (!filterEnabled)
+            {
+                filter.Initialize(newPose);
+                filterEnabled = true;
+                return newPose;
+            }
+            else
+            {
+                Vector<double> _poseTemp = filter.Estimate(newPose);
+                return _poseTemp;
+            }
         }
 
         public Vector<double> ApplyKalmanFilter(Vector<double> newPose)
@@ -234,6 +339,7 @@ namespace FanucController
         {
             var kfList = new List<PoseData>();
             var rkfList = new List<PoseData>();
+            var kfaList = new List<PoseData>();
 
             foreach (var poseData in PoseDataList)
             {
@@ -241,10 +347,13 @@ namespace FanucController
                 var time = poseData.Time;
                 var kfPose = ApplyKalmanFilter(newPose);
                 var rkfPose = ApplyRobustKalmanFilter(newPose);
+                var kfaPose = ApplyFilter(newPose, ref KalmanFilterAcc, ref KalmanFilterAccEnabled);
                 kfList.Add(new PoseData(kfPose, time));
                 rkfList.Add(new PoseData(rkfPose, time));
+                kfaList.Add(new PoseData(kfaPose, time));
                 Csv.WriteCsv(KfPath, kfList);
                 Csv.WriteCsv(RkfPath, rkfList);
+                Csv.WriteCsv(KfaPath, kfaList);
             }
         }
 
