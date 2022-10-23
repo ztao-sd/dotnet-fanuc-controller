@@ -863,15 +863,27 @@ namespace FanucController
             Vector<double> robotPoseSum = CreateVector.Dense<double>(6);
             for (int i = 0; i < sampleNum; i++)
             {
-                cameraPose = Vx.PoseCameraFrameRkf;
+                //cameraPose = Vx.PoseCameraFrameRkf;
+
+                //add by stt
+                cameraPose = Vx.PoseCameraFrameAkf;
+
                 cameraPoseSum = CreateVector.DenseOfEnumerable(cameraPoseSum.Zip(cameraPose, (x, y) => x + y));
                 robotPose = GetFanucPose();
+
+                //add by stt
+                robotPose[3] = robotPose[3] * Math.PI / 180.0;
+                robotPose[4] = robotPose[4] * Math.PI / 180.0;
+                robotPose[5] = robotPose[5] * Math.PI / 180.0;
+
                 robotPoseSum = CreateVector.DenseOfEnumerable(robotPoseSum.Zip(robotPose, (x, y) => x + y));
                 System.Threading.Thread.Sleep(50);
             }
 
             cameraPose = CreateVector.DenseOfEnumerable(cameraPoseSum.Select(x => x / sampleNum));
-            robotPose = CreateVector.DenseOfEnumerable(robotPoseSum.Select(x => x * Math.PI / 180 / sampleNum));
+            // commented and modified by stt
+            // robotPose = CreateVector.DenseOfEnumerable(robotPoseSum.Select(x => x * Math.PI / 180 / sampleNum));
+            robotPose = CreateVector.DenseOfEnumerable(robotPoseSum.Select(x => x / sampleNum));
 
             var rotationCamera = MathLib.RotationMatrix(cameraPose[5], cameraPose[4], cameraPose[3]);
             //var rotationRobot = MathLib.RotationMatrix(robotPose[5], robotPose[4], robotPose[3]);
@@ -888,9 +900,19 @@ namespace FanucController
             Vector<double> robotPoseSum = CreateVector.Dense<double>(6);
             for (int i = 0; i < sampleNum; i++)
             {
-                cameraPose = Vx.PoseCameraFrameRkf;
+                //cameraPose = Vx.PoseCameraFrameRkf;
+
+                //add by stt
+                cameraPose = Vx.PoseCameraFrameAkf;
+               
                 cameraPoseSum = CreateVector.DenseOfEnumerable(cameraPoseSum.Zip(cameraPose, (x, y) => x + y));
                 robotPose = GetFanucPose();
+
+                //add by stt
+                robotPose[3] = robotPose[3] * Math.PI / 180.0;
+                robotPose[4] = robotPose[4] * Math.PI / 180.0;
+                robotPose[5] = robotPose[5] * Math.PI / 180.0;
+
                 robotPoseSum = CreateVector.DenseOfEnumerable(robotPoseSum.Zip(robotPose, (x, y) => x + y));
                 System.Threading.Thread.Sleep(50);
             }
@@ -902,10 +924,11 @@ namespace FanucController
             // Calculate position offset.
             RotationId.PositionOffset = robotPose.SubVector(0, 3) -  RotationId.Rotation * cameraPose.SubVector(0, 3);
 
+            /*
             // Convert degree to radian.
-            robotPose[3] = robotPose[3] * Math.PI / 180;
-            robotPose[4] = robotPose[4] * Math.PI / 180;
-            robotPose[5] = robotPose[5] * Math.PI / 180;
+            robotPose[3] = robotPose[3] * Math.PI / 180.0;
+            robotPose[4] = robotPose[4] * Math.PI / 180.0;
+            robotPose[5] = robotPose[5] * Math.PI / 180.0;*/
 
             // Calculate orientation offset.
             var rotationCamera = MathLib.RotationZ(cameraPose[5]) * MathLib.RotationY(cameraPose[4]) * MathLib.RotationX(cameraPose[3]);
@@ -930,7 +953,9 @@ namespace FanucController
                     return Vx.PoseCameraFrameAkf;
             }
             // RKF Pose
-            return Vx.PoseCameraFrameRkf;
+            // return Vx.PoseCameraFrameRkf;
+            return Vx.PoseCameraFrameAkf;
+
         }
 
         public Vector<double> GetVxCameraPose(int sampleNum)

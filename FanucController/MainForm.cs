@@ -717,9 +717,12 @@ namespace FanucController
                 textBoxLinearPathX.Text = pose[0].ToString();
                 textBoxLinearPathY.Text = pose[1].ToString();
                 textBoxLinearPathZ.Text = pose[2].ToString();
+
+              
                 textBoxLinearPathW.Text = (pose[3] * 180 / Math.PI).ToString();
                 textBoxLinearPathP.Text = (pose[4] * 180 / Math.PI).ToString();
                 textBoxLinearPathR.Text = (pose[5] * 180 / Math.PI).ToString();
+               
             }
         }
 
@@ -749,9 +752,11 @@ namespace FanucController
                 textBoxVxX.Text = pose[0].ToString("0.00000");
                 textBoxVxY.Text = pose[1].ToString("0.00000");
                 textBoxVxZ.Text = pose[2].ToString("0.00000");
+               
                 textBoxVxAlpha.Text = (pose[3] * 180 / Math.PI).ToString("0.00000");
                 textBoxVxBeta.Text = (pose[4] * 180 / Math.PI).ToString("0.00000");
                 textBoxVxGamma.Text = (pose[5] * 180 / Math.PI).ToString("0.00000");
+                        
             }
         }
 
@@ -1237,6 +1242,16 @@ namespace FanucController
         #endregion
 
         private void comboBoxPoseFrame_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBoxVxFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkBoxVxRaw_CheckedChanged(object sender, EventArgs e)
         {
 
         }

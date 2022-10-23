@@ -204,7 +204,7 @@ namespace FanucController
             // buttonLineTrackRunMain
             // 
             this.buttonLineTrackRunMain.Location = new System.Drawing.Point(8, 23);
-            this.buttonLineTrackRunMain.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonLineTrackRunMain.Margin = new System.Windows.Forms.Padding(4);
             this.buttonLineTrackRunMain.Name = "buttonLineTrackRunMain";
             this.buttonLineTrackRunMain.Size = new System.Drawing.Size(100, 28);
             this.buttonLineTrackRunMain.TabIndex = 0;
@@ -215,7 +215,7 @@ namespace FanucController
             // buttonVxReset
             // 
             this.buttonVxReset.Location = new System.Drawing.Point(8, 156);
-            this.buttonVxReset.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxReset.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxReset.Name = "buttonVxReset";
             this.buttonVxReset.Size = new System.Drawing.Size(124, 37);
             this.buttonVxReset.TabIndex = 5;
@@ -226,7 +226,7 @@ namespace FanucController
             // buttonTest
             // 
             this.buttonTest.Location = new System.Drawing.Point(49, 757);
-            this.buttonTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonTest.Name = "buttonTest";
             this.buttonTest.Size = new System.Drawing.Size(80, 32);
             this.buttonTest.TabIndex = 6;
@@ -237,7 +237,7 @@ namespace FanucController
             // buttonVxStartTracking
             // 
             this.buttonVxStartTracking.Location = new System.Drawing.Point(8, 68);
-            this.buttonVxStartTracking.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxStartTracking.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxStartTracking.Name = "buttonVxStartTracking";
             this.buttonVxStartTracking.Size = new System.Drawing.Size(124, 37);
             this.buttonVxStartTracking.TabIndex = 7;
@@ -248,7 +248,7 @@ namespace FanucController
             // buttonVxStopTracking
             // 
             this.buttonVxStopTracking.Location = new System.Drawing.Point(8, 112);
-            this.buttonVxStopTracking.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxStopTracking.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxStopTracking.Name = "buttonVxStopTracking";
             this.buttonVxStopTracking.Size = new System.Drawing.Size(124, 37);
             this.buttonVxStopTracking.TabIndex = 7;
@@ -259,7 +259,7 @@ namespace FanucController
             // buttonVxQuickConnect
             // 
             this.buttonVxQuickConnect.Location = new System.Drawing.Point(8, 23);
-            this.buttonVxQuickConnect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxQuickConnect.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxQuickConnect.Name = "buttonVxQuickConnect";
             this.buttonVxQuickConnect.Size = new System.Drawing.Size(124, 37);
             this.buttonVxQuickConnect.TabIndex = 5;
@@ -270,7 +270,7 @@ namespace FanucController
             // textBoxVxX
             // 
             this.textBoxVxX.Location = new System.Drawing.Point(240, 65);
-            this.textBoxVxX.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxX.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxX.Name = "textBoxVxX";
             this.textBoxVxX.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxX.TabIndex = 8;
@@ -278,7 +278,7 @@ namespace FanucController
             // textBoxVxY
             // 
             this.textBoxVxY.Location = new System.Drawing.Point(240, 149);
-            this.textBoxVxY.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxY.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxY.Name = "textBoxVxY";
             this.textBoxVxY.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxY.TabIndex = 8;
@@ -286,7 +286,7 @@ namespace FanucController
             // textBoxVxZ
             // 
             this.textBoxVxZ.Location = new System.Drawing.Point(240, 231);
-            this.textBoxVxZ.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxZ.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxZ.Name = "textBoxVxZ";
             this.textBoxVxZ.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxZ.TabIndex = 8;
@@ -294,7 +294,7 @@ namespace FanucController
             // textBoxVxAlpha
             // 
             this.textBoxVxAlpha.Location = new System.Drawing.Point(240, 97);
-            this.textBoxVxAlpha.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxAlpha.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxAlpha.Name = "textBoxVxAlpha";
             this.textBoxVxAlpha.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxAlpha.TabIndex = 8;
@@ -302,7 +302,7 @@ namespace FanucController
             // textBoxVxBeta
             // 
             this.textBoxVxBeta.Location = new System.Drawing.Point(240, 181);
-            this.textBoxVxBeta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxBeta.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxBeta.Name = "textBoxVxBeta";
             this.textBoxVxBeta.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxBeta.TabIndex = 8;
@@ -310,7 +310,7 @@ namespace FanucController
             // textBoxVxGamma
             // 
             this.textBoxVxGamma.Location = new System.Drawing.Point(240, 263);
-            this.textBoxVxGamma.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxVxGamma.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxVxGamma.Name = "textBoxVxGamma";
             this.textBoxVxGamma.Size = new System.Drawing.Size(105, 22);
             this.textBoxVxGamma.TabIndex = 8;
@@ -340,9 +340,9 @@ namespace FanucController
             this.groupBoxVx.Controls.Add(this.textBoxVxY);
             this.groupBoxVx.Controls.Add(this.textBoxVxX);
             this.groupBoxVx.Location = new System.Drawing.Point(781, 15);
-            this.groupBoxVx.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxVx.Margin = new System.Windows.Forms.Padding(4);
             this.groupBoxVx.Name = "groupBoxVx";
-            this.groupBoxVx.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxVx.Padding = new System.Windows.Forms.Padding(4);
             this.groupBoxVx.Size = new System.Drawing.Size(377, 319);
             this.groupBoxVx.TabIndex = 9;
             this.groupBoxVx.TabStop = false;
@@ -351,7 +351,7 @@ namespace FanucController
             // buttonVxDisplay
             // 
             this.buttonVxDisplay.Location = new System.Drawing.Point(8, 252);
-            this.buttonVxDisplay.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxDisplay.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxDisplay.Name = "buttonVxDisplay";
             this.buttonVxDisplay.Size = new System.Drawing.Size(124, 43);
             this.buttonVxDisplay.TabIndex = 15;
@@ -365,7 +365,7 @@ namespace FanucController
             this.checkBoxVxDisplay.Checked = true;
             this.checkBoxVxDisplay.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxVxDisplay.Location = new System.Drawing.Point(240, 23);
-            this.checkBoxVxDisplay.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxVxDisplay.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxVxDisplay.Name = "checkBoxVxDisplay";
             this.checkBoxVxDisplay.Size = new System.Drawing.Size(75, 20);
             this.checkBoxVxDisplay.TabIndex = 14;
@@ -378,7 +378,7 @@ namespace FanucController
             this.checkBoxVxRkf.Checked = true;
             this.checkBoxVxRkf.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxVxRkf.Location = new System.Drawing.Point(148, 182);
-            this.checkBoxVxRkf.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxVxRkf.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxVxRkf.Name = "checkBoxVxRkf";
             this.checkBoxVxRkf.Size = new System.Drawing.Size(55, 20);
             this.checkBoxVxRkf.TabIndex = 13;
@@ -391,12 +391,13 @@ namespace FanucController
             this.checkBoxVxRaw.Checked = true;
             this.checkBoxVxRaw.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxVxRaw.Location = new System.Drawing.Point(148, 132);
-            this.checkBoxVxRaw.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxVxRaw.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxVxRaw.Name = "checkBoxVxRaw";
             this.checkBoxVxRaw.Size = new System.Drawing.Size(56, 20);
             this.checkBoxVxRaw.TabIndex = 13;
             this.checkBoxVxRaw.Text = "Raw";
             this.checkBoxVxRaw.UseVisualStyleBackColor = true;
+            this.checkBoxVxRaw.CheckedChanged += new System.EventHandler(this.checkBoxVxRaw_CheckedChanged);
             // 
             // checkBoxVxKf
             // 
@@ -404,7 +405,7 @@ namespace FanucController
             this.checkBoxVxKf.Checked = true;
             this.checkBoxVxKf.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxVxKf.Location = new System.Drawing.Point(148, 156);
-            this.checkBoxVxKf.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxVxKf.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxVxKf.Name = "checkBoxVxKf";
             this.checkBoxVxKf.Size = new System.Drawing.Size(45, 20);
             this.checkBoxVxKf.TabIndex = 13;
@@ -415,7 +416,7 @@ namespace FanucController
             // 
             this.checkBoxVxAppend.AutoSize = true;
             this.checkBoxVxAppend.Location = new System.Drawing.Point(140, 78);
-            this.checkBoxVxAppend.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxVxAppend.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxVxAppend.Name = "checkBoxVxAppend";
             this.checkBoxVxAppend.Size = new System.Drawing.Size(77, 20);
             this.checkBoxVxAppend.TabIndex = 12;
@@ -430,11 +431,12 @@ namespace FanucController
             "KF",
             "RKF"});
             this.comboBoxVxFilter.Location = new System.Drawing.Point(148, 212);
-            this.comboBoxVxFilter.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxVxFilter.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxVxFilter.Name = "comboBoxVxFilter";
             this.comboBoxVxFilter.Size = new System.Drawing.Size(64, 24);
             this.comboBoxVxFilter.TabIndex = 11;
             this.comboBoxVxFilter.Text = "RKF";
+            this.comboBoxVxFilter.SelectedIndexChanged += new System.EventHandler(this.comboBoxVxFilter_SelectedIndexChanged);
             // 
             // label3
             // 
@@ -469,7 +471,7 @@ namespace FanucController
             // buttonVxExit
             // 
             this.buttonVxExit.Location = new System.Drawing.Point(8, 201);
-            this.buttonVxExit.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxExit.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxExit.Name = "buttonVxExit";
             this.buttonVxExit.Size = new System.Drawing.Size(124, 37);
             this.buttonVxExit.TabIndex = 9;
@@ -479,7 +481,7 @@ namespace FanucController
             // buttonVxExport
             // 
             this.buttonVxExport.Location = new System.Drawing.Point(140, 23);
-            this.buttonVxExport.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonVxExport.Margin = new System.Windows.Forms.Padding(4);
             this.buttonVxExport.Name = "buttonVxExport";
             this.buttonVxExport.Size = new System.Drawing.Size(92, 52);
             this.buttonVxExport.TabIndex = 5;
@@ -496,7 +498,7 @@ namespace FanucController
             this.listViewLogger.GridLines = true;
             this.listViewLogger.HideSelection = false;
             this.listViewLogger.Location = new System.Drawing.Point(7, 796);
-            this.listViewLogger.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.listViewLogger.Margin = new System.Windows.Forms.Padding(4);
             this.listViewLogger.Name = "listViewLogger";
             this.listViewLogger.Size = new System.Drawing.Size(720, 90);
             this.listViewLogger.TabIndex = 11;
@@ -536,9 +538,9 @@ namespace FanucController
             this.groupBoxPCDK.Controls.Add(this.textBoxPcdkRobotName);
             this.groupBoxPCDK.Controls.Add(this.buttonPcdkConnect);
             this.groupBoxPCDK.Location = new System.Drawing.Point(415, 15);
-            this.groupBoxPCDK.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxPCDK.Margin = new System.Windows.Forms.Padding(4);
             this.groupBoxPCDK.Name = "groupBoxPCDK";
-            this.groupBoxPCDK.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxPCDK.Padding = new System.Windows.Forms.Padding(4);
             this.groupBoxPCDK.Size = new System.Drawing.Size(347, 640);
             this.groupBoxPCDK.TabIndex = 13;
             this.groupBoxPCDK.TabStop = false;
@@ -547,7 +549,7 @@ namespace FanucController
             // buttonPcdkDisplay
             // 
             this.buttonPcdkDisplay.Location = new System.Drawing.Point(24, 490);
-            this.buttonPcdkDisplay.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkDisplay.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkDisplay.Name = "buttonPcdkDisplay";
             this.buttonPcdkDisplay.Size = new System.Drawing.Size(100, 28);
             this.buttonPcdkDisplay.TabIndex = 33;
@@ -561,7 +563,7 @@ namespace FanucController
             this.checkBoxPcdkDisplay.Checked = true;
             this.checkBoxPcdkDisplay.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxPcdkDisplay.Location = new System.Drawing.Point(252, 11);
-            this.checkBoxPcdkDisplay.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxPcdkDisplay.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxPcdkDisplay.Name = "checkBoxPcdkDisplay";
             this.checkBoxPcdkDisplay.Size = new System.Drawing.Size(75, 20);
             this.checkBoxPcdkDisplay.TabIndex = 35;
@@ -607,9 +609,9 @@ namespace FanucController
             this.groupBox3.Controls.Add(this.buttonPcdkGetJoint);
             this.groupBox3.Controls.Add(this.buttonPcdkAttachJoint);
             this.groupBox3.Location = new System.Drawing.Point(19, 345);
-            this.groupBox3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox3.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox3.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox3.Size = new System.Drawing.Size(313, 134);
             this.groupBox3.TabIndex = 34;
             this.groupBox3.TabStop = false;
@@ -619,7 +621,7 @@ namespace FanucController
             // 
             this.checkBoxPcdkJointAppend.AutoSize = true;
             this.checkBoxPcdkJointAppend.Location = new System.Drawing.Point(253, 32);
-            this.checkBoxPcdkJointAppend.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxPcdkJointAppend.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxPcdkJointAppend.Name = "checkBoxPcdkJointAppend";
             this.checkBoxPcdkJointAppend.Size = new System.Drawing.Size(38, 20);
             this.checkBoxPcdkJointAppend.TabIndex = 34;
@@ -629,7 +631,7 @@ namespace FanucController
             // buttonPcdkExportJoint
             // 
             this.buttonPcdkExportJoint.Location = new System.Drawing.Point(181, 26);
-            this.buttonPcdkExportJoint.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkExportJoint.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkExportJoint.Name = "buttonPcdkExportJoint";
             this.buttonPcdkExportJoint.Size = new System.Drawing.Size(67, 27);
             this.buttonPcdkExportJoint.TabIndex = 33;
@@ -700,7 +702,7 @@ namespace FanucController
             // textBoxPcdkJ6
             // 
             this.textBoxPcdkJ6.Location = new System.Drawing.Point(124, 91);
-            this.textBoxPcdkJ6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ6.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ6.Name = "textBoxPcdkJ6";
             this.textBoxPcdkJ6.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ6.TabIndex = 21;
@@ -708,7 +710,7 @@ namespace FanucController
             // textBoxPcdkJ5
             // 
             this.textBoxPcdkJ5.Location = new System.Drawing.Point(67, 91);
-            this.textBoxPcdkJ5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ5.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ5.Name = "textBoxPcdkJ5";
             this.textBoxPcdkJ5.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ5.TabIndex = 22;
@@ -716,7 +718,7 @@ namespace FanucController
             // textBoxPcdkJ4
             // 
             this.textBoxPcdkJ4.Location = new System.Drawing.Point(9, 91);
-            this.textBoxPcdkJ4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ4.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ4.Name = "textBoxPcdkJ4";
             this.textBoxPcdkJ4.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ4.TabIndex = 23;
@@ -724,7 +726,7 @@ namespace FanucController
             // textBoxPcdkJ3
             // 
             this.textBoxPcdkJ3.Location = new System.Drawing.Point(124, 46);
-            this.textBoxPcdkJ3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ3.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ3.Name = "textBoxPcdkJ3";
             this.textBoxPcdkJ3.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ3.TabIndex = 24;
@@ -732,7 +734,7 @@ namespace FanucController
             // textBoxPcdkJ2
             // 
             this.textBoxPcdkJ2.Location = new System.Drawing.Point(67, 46);
-            this.textBoxPcdkJ2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ2.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ2.Name = "textBoxPcdkJ2";
             this.textBoxPcdkJ2.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ2.TabIndex = 25;
@@ -740,7 +742,7 @@ namespace FanucController
             // textBoxPcdkJ1
             // 
             this.textBoxPcdkJ1.Location = new System.Drawing.Point(9, 46);
-            this.textBoxPcdkJ1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkJ1.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkJ1.Name = "textBoxPcdkJ1";
             this.textBoxPcdkJ1.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkJ1.TabIndex = 26;
@@ -748,7 +750,7 @@ namespace FanucController
             // buttonPcdkGetJoint
             // 
             this.buttonPcdkGetJoint.Location = new System.Drawing.Point(256, 87);
-            this.buttonPcdkGetJoint.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkGetJoint.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkGetJoint.Name = "buttonPcdkGetJoint";
             this.buttonPcdkGetJoint.Size = new System.Drawing.Size(48, 28);
             this.buttonPcdkGetJoint.TabIndex = 20;
@@ -759,7 +761,7 @@ namespace FanucController
             // buttonPcdkAttachJoint
             // 
             this.buttonPcdkAttachJoint.Location = new System.Drawing.Point(181, 87);
-            this.buttonPcdkAttachJoint.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkAttachJoint.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkAttachJoint.Name = "buttonPcdkAttachJoint";
             this.buttonPcdkAttachJoint.Size = new System.Drawing.Size(71, 28);
             this.buttonPcdkAttachJoint.TabIndex = 20;
@@ -787,9 +789,9 @@ namespace FanucController
             this.groupBox2.Controls.Add(this.buttonPcdkGetPose);
             this.groupBox2.Controls.Add(this.buttonPcdkAttachPose);
             this.groupBox2.Location = new System.Drawing.Point(19, 69);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox2.Size = new System.Drawing.Size(313, 134);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
@@ -802,7 +804,7 @@ namespace FanucController
             "World Frame",
             "User Frame"});
             this.comboBoxPcdkPose.Location = new System.Drawing.Point(185, 53);
-            this.comboBoxPcdkPose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxPcdkPose.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxPcdkPose.Name = "comboBoxPcdkPose";
             this.comboBoxPcdkPose.Size = new System.Drawing.Size(111, 24);
             this.comboBoxPcdkPose.TabIndex = 36;
@@ -812,7 +814,7 @@ namespace FanucController
             // 
             this.checkBoxPcdkPoseAppend.AutoSize = true;
             this.checkBoxPcdkPoseAppend.Location = new System.Drawing.Point(253, 21);
-            this.checkBoxPcdkPoseAppend.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxPcdkPoseAppend.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxPcdkPoseAppend.Name = "checkBoxPcdkPoseAppend";
             this.checkBoxPcdkPoseAppend.Size = new System.Drawing.Size(38, 20);
             this.checkBoxPcdkPoseAppend.TabIndex = 35;
@@ -822,7 +824,7 @@ namespace FanucController
             // buttonPcdkExportPose
             // 
             this.buttonPcdkExportPose.Location = new System.Drawing.Point(181, 15);
-            this.buttonPcdkExportPose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkExportPose.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkExportPose.Name = "buttonPcdkExportPose";
             this.buttonPcdkExportPose.Size = new System.Drawing.Size(67, 27);
             this.buttonPcdkExportPose.TabIndex = 34;
@@ -893,7 +895,7 @@ namespace FanucController
             // textBoxPcdkR
             // 
             this.textBoxPcdkR.Location = new System.Drawing.Point(124, 91);
-            this.textBoxPcdkR.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkR.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkR.Name = "textBoxPcdkR";
             this.textBoxPcdkR.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkR.TabIndex = 21;
@@ -901,7 +903,7 @@ namespace FanucController
             // textBoxPcdkP
             // 
             this.textBoxPcdkP.Location = new System.Drawing.Point(67, 91);
-            this.textBoxPcdkP.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkP.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkP.Name = "textBoxPcdkP";
             this.textBoxPcdkP.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkP.TabIndex = 22;
@@ -909,7 +911,7 @@ namespace FanucController
             // textBoxPcdkW
             // 
             this.textBoxPcdkW.Location = new System.Drawing.Point(9, 91);
-            this.textBoxPcdkW.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkW.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkW.Name = "textBoxPcdkW";
             this.textBoxPcdkW.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkW.TabIndex = 23;
@@ -917,7 +919,7 @@ namespace FanucController
             // textBoxPcdkZ
             // 
             this.textBoxPcdkZ.Location = new System.Drawing.Point(124, 46);
-            this.textBoxPcdkZ.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkZ.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkZ.Name = "textBoxPcdkZ";
             this.textBoxPcdkZ.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkZ.TabIndex = 24;
@@ -925,7 +927,7 @@ namespace FanucController
             // textBoxPcdkY
             // 
             this.textBoxPcdkY.Location = new System.Drawing.Point(67, 46);
-            this.textBoxPcdkY.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkY.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkY.Name = "textBoxPcdkY";
             this.textBoxPcdkY.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkY.TabIndex = 25;
@@ -933,7 +935,7 @@ namespace FanucController
             // textBoxPcdkX
             // 
             this.textBoxPcdkX.Location = new System.Drawing.Point(9, 46);
-            this.textBoxPcdkX.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkX.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkX.Name = "textBoxPcdkX";
             this.textBoxPcdkX.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkX.TabIndex = 26;
@@ -941,7 +943,7 @@ namespace FanucController
             // buttonPcdkGetPose
             // 
             this.buttonPcdkGetPose.Location = new System.Drawing.Point(256, 91);
-            this.buttonPcdkGetPose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkGetPose.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkGetPose.Name = "buttonPcdkGetPose";
             this.buttonPcdkGetPose.Size = new System.Drawing.Size(48, 28);
             this.buttonPcdkGetPose.TabIndex = 20;
@@ -952,7 +954,7 @@ namespace FanucController
             // buttonPcdkAttachPose
             // 
             this.buttonPcdkAttachPose.Location = new System.Drawing.Point(184, 91);
-            this.buttonPcdkAttachPose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkAttachPose.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkAttachPose.Name = "buttonPcdkAttachPose";
             this.buttonPcdkAttachPose.Size = new System.Drawing.Size(68, 28);
             this.buttonPcdkAttachPose.TabIndex = 20;
@@ -977,9 +979,9 @@ namespace FanucController
             this.groupBox1.Controls.Add(this.textBoxPcdkOffsetR);
             this.groupBox1.Controls.Add(this.textBoxPcdkOffsetP);
             this.groupBox1.Location = new System.Drawing.Point(19, 210);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(313, 127);
             this.groupBox1.TabIndex = 32;
             this.groupBox1.TabStop = false;
@@ -988,7 +990,7 @@ namespace FanucController
             // numericUpDownPcdkDpmSch
             // 
             this.numericUpDownPcdkDpmSch.Location = new System.Drawing.Point(205, 42);
-            this.numericUpDownPcdkDpmSch.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.numericUpDownPcdkDpmSch.Margin = new System.Windows.Forms.Padding(4);
             this.numericUpDownPcdkDpmSch.Name = "numericUpDownPcdkDpmSch";
             this.numericUpDownPcdkDpmSch.Size = new System.Drawing.Size(47, 22);
             this.numericUpDownPcdkDpmSch.TabIndex = 32;
@@ -1021,7 +1023,7 @@ namespace FanucController
             // buttonDpmOffset
             // 
             this.buttonDpmOffset.Location = new System.Drawing.Point(185, 82);
-            this.buttonDpmOffset.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonDpmOffset.Margin = new System.Windows.Forms.Padding(4);
             this.buttonDpmOffset.Name = "buttonDpmOffset";
             this.buttonDpmOffset.Size = new System.Drawing.Size(100, 28);
             this.buttonDpmOffset.TabIndex = 0;
@@ -1042,7 +1044,7 @@ namespace FanucController
             // textBoxPcdkOffsetX
             // 
             this.textBoxPcdkOffsetX.Location = new System.Drawing.Point(13, 41);
-            this.textBoxPcdkOffsetX.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetX.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetX.Name = "textBoxPcdkOffsetX";
             this.textBoxPcdkOffsetX.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetX.TabIndex = 25;
@@ -1061,7 +1063,7 @@ namespace FanucController
             // textBoxPcdkOffsetY
             // 
             this.textBoxPcdkOffsetY.Location = new System.Drawing.Point(71, 41);
-            this.textBoxPcdkOffsetY.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetY.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetY.Name = "textBoxPcdkOffsetY";
             this.textBoxPcdkOffsetY.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetY.TabIndex = 24;
@@ -1080,7 +1082,7 @@ namespace FanucController
             // textBoxPcdkOffsetZ
             // 
             this.textBoxPcdkOffsetZ.Location = new System.Drawing.Point(128, 41);
-            this.textBoxPcdkOffsetZ.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetZ.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetZ.Name = "textBoxPcdkOffsetZ";
             this.textBoxPcdkOffsetZ.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetZ.TabIndex = 23;
@@ -1099,7 +1101,7 @@ namespace FanucController
             // textBoxPcdkOffsetW
             // 
             this.textBoxPcdkOffsetW.Location = new System.Drawing.Point(13, 86);
-            this.textBoxPcdkOffsetW.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetW.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetW.Name = "textBoxPcdkOffsetW";
             this.textBoxPcdkOffsetW.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetW.TabIndex = 22;
@@ -1108,7 +1110,7 @@ namespace FanucController
             // textBoxPcdkOffsetR
             // 
             this.textBoxPcdkOffsetR.Location = new System.Drawing.Point(128, 86);
-            this.textBoxPcdkOffsetR.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetR.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetR.Name = "textBoxPcdkOffsetR";
             this.textBoxPcdkOffsetR.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetR.TabIndex = 20;
@@ -1117,7 +1119,7 @@ namespace FanucController
             // textBoxPcdkOffsetP
             // 
             this.textBoxPcdkOffsetP.Location = new System.Drawing.Point(71, 86);
-            this.textBoxPcdkOffsetP.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkOffsetP.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkOffsetP.Name = "textBoxPcdkOffsetP";
             this.textBoxPcdkOffsetP.Size = new System.Drawing.Size(48, 22);
             this.textBoxPcdkOffsetP.TabIndex = 21;
@@ -1126,7 +1128,7 @@ namespace FanucController
             // textBoxPcdkIpAddress
             // 
             this.textBoxPcdkIpAddress.Location = new System.Drawing.Point(108, 36);
-            this.textBoxPcdkIpAddress.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkIpAddress.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkIpAddress.Name = "textBoxPcdkIpAddress";
             this.textBoxPcdkIpAddress.Size = new System.Drawing.Size(109, 22);
             this.textBoxPcdkIpAddress.TabIndex = 1;
@@ -1134,7 +1136,7 @@ namespace FanucController
             // textBoxPcdkRobotName
             // 
             this.textBoxPcdkRobotName.Location = new System.Drawing.Point(19, 36);
-            this.textBoxPcdkRobotName.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxPcdkRobotName.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxPcdkRobotName.Name = "textBoxPcdkRobotName";
             this.textBoxPcdkRobotName.Size = new System.Drawing.Size(77, 22);
             this.textBoxPcdkRobotName.TabIndex = 1;
@@ -1142,7 +1144,7 @@ namespace FanucController
             // buttonPcdkConnect
             // 
             this.buttonPcdkConnect.Location = new System.Drawing.Point(252, 32);
-            this.buttonPcdkConnect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPcdkConnect.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPcdkConnect.Name = "buttonPcdkConnect";
             this.buttonPcdkConnect.Size = new System.Drawing.Size(80, 28);
             this.buttonPcdkConnect.TabIndex = 0;
@@ -1160,9 +1162,9 @@ namespace FanucController
             this.groupBoxExperiment.Controls.Add(this.groupBox6);
             this.groupBoxExperiment.Controls.Add(this.groupBox4);
             this.groupBoxExperiment.Location = new System.Drawing.Point(16, 15);
-            this.groupBoxExperiment.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxExperiment.Margin = new System.Windows.Forms.Padding(4);
             this.groupBoxExperiment.Name = "groupBoxExperiment";
-            this.groupBoxExperiment.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxExperiment.Padding = new System.Windows.Forms.Padding(4);
             this.groupBoxExperiment.Size = new System.Drawing.Size(387, 712);
             this.groupBoxExperiment.TabIndex = 14;
             this.groupBoxExperiment.TabStop = false;
@@ -1171,7 +1173,7 @@ namespace FanucController
             // textBoxTopDir
             // 
             this.textBoxTopDir.Location = new System.Drawing.Point(137, 21);
-            this.textBoxTopDir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxTopDir.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(235, 22);
             this.textBoxTopDir.TabIndex = 27;
@@ -1194,9 +1196,9 @@ namespace FanucController
             this.groupBox9.Controls.Add(this.label25);
             this.groupBox9.Controls.Add(this.buttonRecordPose);
             this.groupBox9.Location = new System.Drawing.Point(8, 49);
-            this.groupBox9.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox9.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox9.Name = "groupBox9";
-            this.groupBox9.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox9.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox9.Size = new System.Drawing.Size(365, 75);
             this.groupBox9.TabIndex = 25;
             this.groupBox9.TabStop = false;
@@ -1209,7 +1211,7 @@ namespace FanucController
             "Sensor Frame",
             "User Frame"});
             this.comboBoxPoseFrame.Location = new System.Drawing.Point(220, 39);
-            this.comboBoxPoseFrame.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxPoseFrame.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxPoseFrame.Name = "comboBoxPoseFrame";
             this.comboBoxPoseFrame.Size = new System.Drawing.Size(116, 24);
             this.comboBoxPoseFrame.TabIndex = 8;
@@ -1231,7 +1233,7 @@ namespace FanucController
             "testP1",
             "testP2 "});
             this.comboBoxPoseDict.Location = new System.Drawing.Point(103, 39);
-            this.comboBoxPoseDict.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxPoseDict.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxPoseDict.Name = "comboBoxPoseDict";
             this.comboBoxPoseDict.Size = new System.Drawing.Size(85, 24);
             this.comboBoxPoseDict.TabIndex = 5;
@@ -1249,7 +1251,7 @@ namespace FanucController
             // buttonRecordPose
             // 
             this.buttonRecordPose.Location = new System.Drawing.Point(8, 37);
-            this.buttonRecordPose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonRecordPose.Margin = new System.Windows.Forms.Padding(4);
             this.buttonRecordPose.Name = "buttonRecordPose";
             this.buttonRecordPose.Size = new System.Drawing.Size(79, 28);
             this.buttonRecordPose.TabIndex = 7;
@@ -1279,9 +1281,9 @@ namespace FanucController
             this.groupBox8.Controls.Add(this.checkBoxLineTrackDPM);
             this.groupBox8.Controls.Add(this.buttonLineTrackQuickSetup);
             this.groupBox8.Location = new System.Drawing.Point(8, 453);
-            this.groupBox8.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox8.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox8.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox8.Size = new System.Drawing.Size(373, 245);
             this.groupBox8.TabIndex = 24;
             this.groupBox8.TabStop = false;
@@ -1291,7 +1293,7 @@ namespace FanucController
             // 
             this.radioButtonTrackCircle.AutoSize = true;
             this.radioButtonTrackCircle.Location = new System.Drawing.Point(132, 204);
-            this.radioButtonTrackCircle.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonTrackCircle.Margin = new System.Windows.Forms.Padding(4);
             this.radioButtonTrackCircle.Name = "radioButtonTrackCircle";
             this.radioButtonTrackCircle.Size = new System.Drawing.Size(62, 20);
             this.radioButtonTrackCircle.TabIndex = 41;
@@ -1303,7 +1305,7 @@ namespace FanucController
             this.radioButtonTrackLine.AutoSize = true;
             this.radioButtonTrackLine.Checked = true;
             this.radioButtonTrackLine.Location = new System.Drawing.Point(132, 177);
-            this.radioButtonTrackLine.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonTrackLine.Margin = new System.Windows.Forms.Padding(4);
             this.radioButtonTrackLine.Name = "radioButtonTrackLine";
             this.radioButtonTrackLine.Size = new System.Drawing.Size(53, 20);
             this.radioButtonTrackLine.TabIndex = 40;
@@ -1315,7 +1317,7 @@ namespace FanucController
             // 
             this.checkBoxTrackOrientation.AutoSize = true;
             this.checkBoxTrackOrientation.Location = new System.Drawing.Point(16, 206);
-            this.checkBoxTrackOrientation.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxTrackOrientation.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxTrackOrientation.Name = "checkBoxTrackOrientation";
             this.checkBoxTrackOrientation.Size = new System.Drawing.Size(93, 20);
             this.checkBoxTrackOrientation.TabIndex = 39;
@@ -1326,7 +1328,7 @@ namespace FanucController
             // 
             this.checkBoxTrackPosition.AutoSize = true;
             this.checkBoxTrackPosition.Location = new System.Drawing.Point(16, 177);
-            this.checkBoxTrackPosition.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxTrackPosition.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxTrackPosition.Name = "checkBoxTrackPosition";
             this.checkBoxTrackPosition.Size = new System.Drawing.Size(77, 20);
             this.checkBoxTrackPosition.TabIndex = 38;
@@ -1337,7 +1339,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackBPNNPID.AutoSize = true;
             this.checkBoxLineTrackBPNNPID.Location = new System.Drawing.Point(132, 140);
-            this.checkBoxLineTrackBPNNPID.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackBPNNPID.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackBPNNPID.Name = "checkBoxLineTrackBPNNPID";
             this.checkBoxLineTrackBPNNPID.Size = new System.Drawing.Size(89, 20);
             this.checkBoxLineTrackBPNNPID.TabIndex = 24;
@@ -1348,7 +1350,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackStep.AutoSize = true;
             this.checkBoxLineTrackStep.Location = new System.Drawing.Point(239, 122);
-            this.checkBoxLineTrackStep.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackStep.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackStep.Name = "checkBoxLineTrackStep";
             this.checkBoxLineTrackStep.Size = new System.Drawing.Size(95, 20);
             this.checkBoxLineTrackStep.TabIndex = 37;
@@ -1368,7 +1370,7 @@ namespace FanucController
             // textBoxLineTrackIter
             // 
             this.textBoxLineTrackIter.Location = new System.Drawing.Point(53, 111);
-            this.textBoxLineTrackIter.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLineTrackIter.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLineTrackIter.Name = "textBoxLineTrackIter";
             this.textBoxLineTrackIter.Size = new System.Drawing.Size(52, 22);
             this.textBoxLineTrackIter.TabIndex = 36;
@@ -1378,7 +1380,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackIlc.AutoSize = true;
             this.checkBoxLineTrackIlc.Location = new System.Drawing.Point(132, 66);
-            this.checkBoxLineTrackIlc.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackIlc.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackIlc.Name = "checkBoxLineTrackIlc";
             this.checkBoxLineTrackIlc.Size = new System.Drawing.Size(48, 20);
             this.checkBoxLineTrackIlc.TabIndex = 4;
@@ -1389,7 +1391,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackMBPO.AutoSize = true;
             this.checkBoxLineTrackMBPO.Location = new System.Drawing.Point(132, 114);
-            this.checkBoxLineTrackMBPO.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackMBPO.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackMBPO.Name = "checkBoxLineTrackMBPO";
             this.checkBoxLineTrackMBPO.Size = new System.Drawing.Size(68, 20);
             this.checkBoxLineTrackMBPO.TabIndex = 4;
@@ -1400,7 +1402,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackPNN.AutoSize = true;
             this.checkBoxLineTrackPNN.Location = new System.Drawing.Point(132, 92);
-            this.checkBoxLineTrackPNN.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackPNN.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackPNN.Name = "checkBoxLineTrackPNN";
             this.checkBoxLineTrackPNN.Size = new System.Drawing.Size(62, 20);
             this.checkBoxLineTrackPNN.TabIndex = 4;
@@ -1411,7 +1413,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackPControl.AutoSize = true;
             this.checkBoxLineTrackPControl.Location = new System.Drawing.Point(132, 43);
-            this.checkBoxLineTrackPControl.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackPControl.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackPControl.Name = "checkBoxLineTrackPControl";
             this.checkBoxLineTrackPControl.Size = new System.Drawing.Size(83, 20);
             this.checkBoxLineTrackPControl.TabIndex = 3;
@@ -1431,7 +1433,7 @@ namespace FanucController
             // textBoxLineTrackProgName
             // 
             this.textBoxLineTrackProgName.Location = new System.Drawing.Point(247, 46);
-            this.textBoxLineTrackProgName.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLineTrackProgName.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLineTrackProgName.Name = "textBoxLineTrackProgName";
             this.textBoxLineTrackProgName.Size = new System.Drawing.Size(97, 22);
             this.textBoxLineTrackProgName.TabIndex = 1;
@@ -1440,7 +1442,7 @@ namespace FanucController
             // buttonLineTrackIlcRun
             // 
             this.buttonLineTrackIlcRun.Location = new System.Drawing.Point(8, 59);
-            this.buttonLineTrackIlcRun.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonLineTrackIlcRun.Margin = new System.Windows.Forms.Padding(4);
             this.buttonLineTrackIlcRun.Name = "buttonLineTrackIlcRun";
             this.buttonLineTrackIlcRun.Size = new System.Drawing.Size(100, 28);
             this.buttonLineTrackIlcRun.TabIndex = 0;
@@ -1452,7 +1454,7 @@ namespace FanucController
             // 
             this.checkBoxLineTrackDPM.AutoSize = true;
             this.checkBoxLineTrackDPM.Location = new System.Drawing.Point(132, 20);
-            this.checkBoxLineTrackDPM.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkBoxLineTrackDPM.Margin = new System.Windows.Forms.Padding(4);
             this.checkBoxLineTrackDPM.Name = "checkBoxLineTrackDPM";
             this.checkBoxLineTrackDPM.Size = new System.Drawing.Size(59, 20);
             this.checkBoxLineTrackDPM.TabIndex = 2;
@@ -1462,7 +1464,7 @@ namespace FanucController
             // buttonLineTrackQuickSetup
             // 
             this.buttonLineTrackQuickSetup.Location = new System.Drawing.Point(216, 78);
-            this.buttonLineTrackQuickSetup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonLineTrackQuickSetup.Margin = new System.Windows.Forms.Padding(4);
             this.buttonLineTrackQuickSetup.Name = "buttonLineTrackQuickSetup";
             this.buttonLineTrackQuickSetup.Size = new System.Drawing.Size(129, 37);
             this.buttonLineTrackQuickSetup.TabIndex = 4;
@@ -1482,9 +1484,9 @@ namespace FanucController
             this.groupBox7.Controls.Add(this.textBoxLinearPathY);
             this.groupBox7.Controls.Add(this.textBoxLinearPathX);
             this.groupBox7.Location = new System.Drawing.Point(8, 303);
-            this.groupBox7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox7.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox7.Name = "groupBox7";
-            this.groupBox7.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox7.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox7.Size = new System.Drawing.Size(345, 142);
             this.groupBox7.TabIndex = 23;
             this.groupBox7.TabStop = false;
@@ -1493,7 +1495,7 @@ namespace FanucController
             // buttonPoseGet
             // 
             this.buttonPoseGet.Location = new System.Drawing.Point(121, 96);
-            this.buttonPoseGet.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPoseGet.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPoseGet.Name = "buttonPoseGet";
             this.buttonPoseGet.Size = new System.Drawing.Size(51, 28);
             this.buttonPoseGet.TabIndex = 24;
@@ -1504,7 +1506,7 @@ namespace FanucController
             // buttonDisplay
             // 
             this.buttonDisplay.Location = new System.Drawing.Point(193, 96);
-            this.buttonDisplay.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonDisplay.Margin = new System.Windows.Forms.Padding(4);
             this.buttonDisplay.Name = "buttonDisplay";
             this.buttonDisplay.Size = new System.Drawing.Size(100, 28);
             this.buttonDisplay.TabIndex = 10;
@@ -1515,7 +1517,7 @@ namespace FanucController
             // buttonPoseAttach
             // 
             this.buttonPoseAttach.Location = new System.Drawing.Point(16, 96);
-            this.buttonPoseAttach.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPoseAttach.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPoseAttach.Name = "buttonPoseAttach";
             this.buttonPoseAttach.Size = new System.Drawing.Size(84, 28);
             this.buttonPoseAttach.TabIndex = 23;
@@ -1526,7 +1528,7 @@ namespace FanucController
             // textBoxLinearPathW
             // 
             this.textBoxLinearPathW.Location = new System.Drawing.Point(16, 58);
-            this.textBoxLinearPathW.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathW.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathW.Name = "textBoxLinearPathW";
             this.textBoxLinearPathW.Size = new System.Drawing.Size(63, 22);
             this.textBoxLinearPathW.TabIndex = 17;
@@ -1534,7 +1536,7 @@ namespace FanucController
             // textBoxLinearPathP
             // 
             this.textBoxLinearPathP.Location = new System.Drawing.Point(88, 58);
-            this.textBoxLinearPathP.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathP.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathP.Name = "textBoxLinearPathP";
             this.textBoxLinearPathP.Size = new System.Drawing.Size(60, 22);
             this.textBoxLinearPathP.TabIndex = 18;
@@ -1542,7 +1544,7 @@ namespace FanucController
             // textBoxLinearPathR
             // 
             this.textBoxLinearPathR.Location = new System.Drawing.Point(157, 58);
-            this.textBoxLinearPathR.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathR.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathR.Name = "textBoxLinearPathR";
             this.textBoxLinearPathR.Size = new System.Drawing.Size(60, 22);
             this.textBoxLinearPathR.TabIndex = 19;
@@ -1550,7 +1552,7 @@ namespace FanucController
             // textBoxLinearPathZ
             // 
             this.textBoxLinearPathZ.Location = new System.Drawing.Point(157, 21);
-            this.textBoxLinearPathZ.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathZ.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathZ.Name = "textBoxLinearPathZ";
             this.textBoxLinearPathZ.Size = new System.Drawing.Size(60, 22);
             this.textBoxLinearPathZ.TabIndex = 20;
@@ -1558,7 +1560,7 @@ namespace FanucController
             // textBoxLinearPathY
             // 
             this.textBoxLinearPathY.Location = new System.Drawing.Point(88, 21);
-            this.textBoxLinearPathY.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathY.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathY.Name = "textBoxLinearPathY";
             this.textBoxLinearPathY.Size = new System.Drawing.Size(60, 22);
             this.textBoxLinearPathY.TabIndex = 21;
@@ -1566,7 +1568,7 @@ namespace FanucController
             // textBoxLinearPathX
             // 
             this.textBoxLinearPathX.Location = new System.Drawing.Point(16, 21);
-            this.textBoxLinearPathX.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBoxLinearPathX.Margin = new System.Windows.Forms.Padding(4);
             this.textBoxLinearPathX.Name = "textBoxLinearPathX";
             this.textBoxLinearPathX.Size = new System.Drawing.Size(63, 22);
             this.textBoxLinearPathX.TabIndex = 22;
@@ -1576,9 +1578,9 @@ namespace FanucController
             this.groupBox6.Controls.Add(this.buttonLinearPathLoadJson);
             this.groupBox6.Controls.Add(this.buttonLinearPath);
             this.groupBox6.Location = new System.Drawing.Point(8, 232);
-            this.groupBox6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox6.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox6.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox6.Size = new System.Drawing.Size(345, 63);
             this.groupBox6.TabIndex = 11;
             this.groupBox6.TabStop = false;
@@ -1587,7 +1589,7 @@ namespace FanucController
             // buttonLinearPathLoadJson
             // 
             this.buttonLinearPathLoadJson.Location = new System.Drawing.Point(116, 23);
-            this.buttonLinearPathLoadJson.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonLinearPathLoadJson.Margin = new System.Windows.Forms.Padding(4);
             this.buttonLinearPathLoadJson.Name = "buttonLinearPathLoadJson";
             this.buttonLinearPathLoadJson.Size = new System.Drawing.Size(100, 28);
             this.buttonLinearPathLoadJson.TabIndex = 1;
@@ -1598,7 +1600,7 @@ namespace FanucController
             // buttonLinearPath
             // 
             this.buttonLinearPath.Location = new System.Drawing.Point(8, 23);
-            this.buttonLinearPath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonLinearPath.Margin = new System.Windows.Forms.Padding(4);
             this.buttonLinearPath.Name = "buttonLinearPath";
             this.buttonLinearPath.Size = new System.Drawing.Size(100, 28);
             this.buttonLinearPath.TabIndex = 0;
@@ -1615,9 +1617,9 @@ namespace FanucController
             this.groupBox4.Controls.Add(this.comboBoxRotationXyz);
             this.groupBox4.Controls.Add(this.label24);
             this.groupBox4.Location = new System.Drawing.Point(8, 132);
-            this.groupBox4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox4.Size = new System.Drawing.Size(345, 92);
             this.groupBox4.TabIndex = 10;
             this.groupBox4.TabStop = false;
@@ -1626,7 +1628,7 @@ namespace FanucController
             // buttonRotationId3
             // 
             this.buttonRotationId3.Location = new System.Drawing.Point(223, 58);
-            this.buttonRotationId3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonRotationId3.Margin = new System.Windows.Forms.Padding(4);
             this.buttonRotationId3.Name = "buttonRotationId3";
             this.buttonRotationId3.Size = new System.Drawing.Size(111, 27);
             this.buttonRotationId3.TabIndex = 11;
@@ -1637,7 +1639,7 @@ namespace FanucController
             // buttonRotationIdLoadJson
             // 
             this.buttonRotationIdLoadJson.Location = new System.Drawing.Point(115, 22);
-            this.buttonRotationIdLoadJson.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonRotationIdLoadJson.Margin = new System.Windows.Forms.Padding(4);
             this.buttonRotationIdLoadJson.Name = "buttonRotationIdLoadJson";
             this.buttonRotationIdLoadJson.Size = new System.Drawing.Size(100, 28);
             this.buttonRotationIdLoadJson.TabIndex = 9;
@@ -1648,7 +1650,7 @@ namespace FanucController
             // buttonRotationIdWriteJson
             // 
             this.buttonRotationIdWriteJson.Location = new System.Drawing.Point(8, 22);
-            this.buttonRotationIdWriteJson.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonRotationIdWriteJson.Margin = new System.Windows.Forms.Padding(4);
             this.buttonRotationIdWriteJson.Name = "buttonRotationIdWriteJson";
             this.buttonRotationIdWriteJson.Size = new System.Drawing.Size(100, 28);
             this.buttonRotationIdWriteJson.TabIndex = 9;
@@ -1659,7 +1661,7 @@ namespace FanucController
             // buttonRotationId
             // 
             this.buttonRotationId.Location = new System.Drawing.Point(223, 22);
-            this.buttonRotationId.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonRotationId.Margin = new System.Windows.Forms.Padding(4);
             this.buttonRotationId.Name = "buttonRotationId";
             this.buttonRotationId.Size = new System.Drawing.Size(111, 28);
             this.buttonRotationId.TabIndex = 9;
@@ -1675,7 +1677,7 @@ namespace FanucController
             "xz",
             "yz"});
             this.comboBoxRotationXyz.Location = new System.Drawing.Point(46, 55);
-            this.comboBoxRotationXyz.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxRotationXyz.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxRotationXyz.Name = "comboBoxRotationXyz";
             this.comboBoxRotationXyz.Size = new System.Drawing.Size(125, 24);
             this.comboBoxRotationXyz.TabIndex = 1;
@@ -1694,7 +1696,7 @@ namespace FanucController
             // buttonTestLogger
             // 
             this.buttonTestLogger.Location = new System.Drawing.Point(140, 757);
-            this.buttonTestLogger.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonTestLogger.Margin = new System.Windows.Forms.Padding(4);
             this.buttonTestLogger.Name = "buttonTestLogger";
             this.buttonTestLogger.Size = new System.Drawing.Size(156, 32);
             this.buttonTestLogger.TabIndex = 6;
@@ -1707,9 +1709,9 @@ namespace FanucController
             this.groupBox5.Controls.Add(this.textBox1);
             this.groupBox5.Controls.Add(this.comboBoxFileStructure);
             this.groupBox5.Location = new System.Drawing.Point(1240, 427);
-            this.groupBox5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox5.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox5.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox5.Size = new System.Drawing.Size(605, 178);
             this.groupBox5.TabIndex = 16;
             this.groupBox5.TabStop = false;
@@ -1718,7 +1720,7 @@ namespace FanucController
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(209, 38);
-            this.textBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(4);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(249, 22);
             this.textBox1.TabIndex = 1;
@@ -1740,7 +1742,7 @@ namespace FanucController
             "Linear Path Tracking PoseCamera Path",
             "Linear Path Tracking PoseUF Path"});
             this.comboBoxFileStructure.Location = new System.Drawing.Point(25, 38);
-            this.comboBoxFileStructure.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboBoxFileStructure.Margin = new System.Windows.Forms.Padding(4);
             this.comboBoxFileStructure.Name = "comboBoxFileStructure";
             this.comboBoxFileStructure.Size = new System.Drawing.Size(155, 24);
             this.comboBoxFileStructure.TabIndex = 0;
@@ -1748,7 +1750,7 @@ namespace FanucController
             // buttonTestTest
             // 
             this.buttonTestTest.Location = new System.Drawing.Point(41, 27);
-            this.buttonTestTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonTestTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonTestTest.Name = "buttonTestTest";
             this.buttonTestTest.Size = new System.Drawing.Size(100, 28);
             this.buttonTestTest.TabIndex = 3;
@@ -1768,7 +1770,7 @@ namespace FanucController
             this.Column5,
             this.Column6});
             this.dataGridView.Location = new System.Drawing.Point(1223, 32);
-            this.dataGridView.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView.Name = "dataGridView";
             this.dataGridView.RowHeadersWidth = 51;
             this.dataGridView.Size = new System.Drawing.Size(591, 337);
@@ -1838,7 +1840,7 @@ namespace FanucController
             // buttonDgvShow
             // 
             this.buttonDgvShow.Location = new System.Drawing.Point(1223, 377);
-            this.buttonDgvShow.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonDgvShow.Margin = new System.Windows.Forms.Padding(4);
             this.buttonDgvShow.Name = "buttonDgvShow";
             this.buttonDgvShow.Size = new System.Drawing.Size(100, 28);
             this.buttonDgvShow.TabIndex = 20;
@@ -1849,7 +1851,7 @@ namespace FanucController
             // buttonDgvClear
             // 
             this.buttonDgvClear.Location = new System.Drawing.Point(1331, 377);
-            this.buttonDgvClear.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonDgvClear.Margin = new System.Windows.Forms.Padding(4);
             this.buttonDgvClear.Name = "buttonDgvClear";
             this.buttonDgvClear.Size = new System.Drawing.Size(92, 28);
             this.buttonDgvClear.TabIndex = 22;
@@ -1866,9 +1868,9 @@ namespace FanucController
             this.groupBox10.Controls.Add(this.buttonPnnTest);
             this.groupBox10.Controls.Add(this.buttonTestTest);
             this.groupBox10.Location = new System.Drawing.Point(1291, 683);
-            this.groupBox10.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox10.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox10.Name = "groupBox10";
-            this.groupBox10.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox10.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox10.Size = new System.Drawing.Size(524, 188);
             this.groupBox10.TabIndex = 23;
             this.groupBox10.TabStop = false;
@@ -1877,7 +1879,7 @@ namespace FanucController
             // buttonFilterTest
             // 
             this.buttonFilterTest.Location = new System.Drawing.Point(41, 150);
-            this.buttonFilterTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonFilterTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonFilterTest.Name = "buttonFilterTest";
             this.buttonFilterTest.Size = new System.Drawing.Size(101, 31);
             this.buttonFilterTest.TabIndex = 8;
@@ -1888,7 +1890,7 @@ namespace FanucController
             // buttonOUTest
             // 
             this.buttonOUTest.Location = new System.Drawing.Point(317, 36);
-            this.buttonOUTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonOUTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonOUTest.Name = "buttonOUTest";
             this.buttonOUTest.Size = new System.Drawing.Size(115, 47);
             this.buttonOUTest.TabIndex = 7;
@@ -1899,7 +1901,7 @@ namespace FanucController
             // buttonBpnnpidTest
             // 
             this.buttonBpnnpidTest.Location = new System.Drawing.Point(149, 82);
-            this.buttonBpnnpidTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonBpnnpidTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonBpnnpidTest.Name = "buttonBpnnpidTest";
             this.buttonBpnnpidTest.Size = new System.Drawing.Size(140, 34);
             this.buttonBpnnpidTest.TabIndex = 6;
@@ -1910,7 +1912,7 @@ namespace FanucController
             // buttonMbpoTest
             // 
             this.buttonMbpoTest.Location = new System.Drawing.Point(149, 27);
-            this.buttonMbpoTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonMbpoTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonMbpoTest.Name = "buttonMbpoTest";
             this.buttonMbpoTest.Size = new System.Drawing.Size(100, 28);
             this.buttonMbpoTest.TabIndex = 5;
@@ -1921,7 +1923,7 @@ namespace FanucController
             // buttonPnnTest
             // 
             this.buttonPnnTest.Location = new System.Drawing.Point(41, 82);
-            this.buttonPnnTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonPnnTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonPnnTest.Name = "buttonPnnTest";
             this.buttonPnnTest.Size = new System.Drawing.Size(100, 34);
             this.buttonPnnTest.TabIndex = 4;
@@ -1947,7 +1949,7 @@ namespace FanucController
             this.Controls.Add(this.groupBoxVx);
             this.Controls.Add(this.buttonTestLogger);
             this.Controls.Add(this.buttonTest);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
             this.Text = "Form1";
             this.groupBoxVx.ResumeLayout(false);

@@ -115,6 +115,11 @@ namespace FanucController
         private bool robustKalmanEnabled;
         private bool accKalmanEnabled;
 
+        int ncount = 0;
+
+        const double RadtoDeg = 57.295779513082323;
+        const double DegtoRad = Math.PI/180.0;
+
         #endregion
 
         #region Constructor
@@ -158,6 +163,11 @@ namespace FanucController
             poseCameraFrame[2] = CreateVector.Dense<double>(6); // rkf
             poseCameraFrame[3] = CreateVector.Dense<double>(6); // akf
             filterActivated = new bool[3];
+
+            //add by stt for initialization
+            filterActivated[0] = false;
+            filterActivated[1] = false;
+            filterActivated[2] = false;
 
             // Buffer
             int buffer_size = 20000;
@@ -414,6 +424,8 @@ namespace FanucController
 
         #region Data Processing
 
+        // commented and modified by stt
+        /*
         private void ProcessPose3d(ITrackingEntity trackingEntity)
         {
             poseRaw = GetLastPose(trackingEntity);
@@ -444,7 +456,44 @@ namespace FanucController
             robustKalmanFiltering(poseTemp);
             accKalmanFiltering(poseTemp);
             addToBuffers();
+        }*/
+
+        private void ProcessPose3d(ITrackingEntity trackingEntity)
+        {          
+
+            poseRaw = GetLastPose(trackingEntity);
+            time = stopWatch.Elapsed.TotalSeconds;
+            if (poseRaw.Valid)
+            {
+                poseTemp[0] = poseRaw.Translation.X;
+                poseTemp[1] = poseRaw.Translation.Y;
+                poseTemp[2] = poseRaw.Translation.Z;
+                poseTemp[3] = poseRaw.Rotation.X;
+                poseTemp[4] = poseRaw.Rotation.Y;
+                poseTemp[5] = poseRaw.Rotation.Z;
+
+                PoseCameraFrame = poseTemp;
+                standardKalmanFiltering(poseTemp);
+                robustKalmanFiltering(poseTemp);
+                accKalmanFiltering(poseTemp);
+                addToBuffers();
+
+            }
+
+/*
+            else
+            {
+                poseTemp[0] = Double.NaN;
+                poseTemp[1] = Double.NaN;
+                poseTemp[2] = Double.NaN;
+                poseTemp[3] = Double.NaN;
+                poseTemp[4] = Double.NaN;
+                poseTemp[5] = Double.NaN;
+            }*/
+
+           
         }
+
 
         private void standardKalmanFiltering(Vector<double> newPose)
         {
@@ -465,19 +514,35 @@ namespace FanucController
 
         private void accKalmanFiltering(Vector<double> newPose)
         {
+
+            newPose[3] = newPose[3] * RadtoDeg;
+            newPose[4] = newPose[4] * RadtoDeg;
+            newPose[5] = newPose[5] * RadtoDeg;
+
             if (!filterActivated[1]) return;
 
             if (!accKalmanEnabled)
             {
-                accKalman.Initialize(newPose);
-                PoseCameraFrameAkf = newPose;
-                accKalmanEnabled = true;
+                // ncount added by stt
+                ncount++;
+                if (ncount > 20)
+                {
+                    accKalman.Initialize(newPose);
+                    PoseCameraFrameAkf = newPose;
+                    accKalmanEnabled = true;
+                    ncount = 0;
+                }
+
             }
             else
             {
                 Vector<double> _poseTemp = accKalman.Estimate(newPose);
                 PoseCameraFrameAkf = _poseTemp;
             }
+
+            PoseCameraFrameAkf[3] = PoseCameraFrameAkf[3] * DegtoRad;
+            PoseCameraFrameAkf[4] = PoseCameraFrameAkf[4] * DegtoRad;
+            PoseCameraFrameAkf[5] = PoseCameraFrameAkf[5] * DegtoRad;
         }
 
         private void robustKalmanFiltering(Vector<double> newPose)

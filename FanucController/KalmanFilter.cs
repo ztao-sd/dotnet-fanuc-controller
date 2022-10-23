@@ -107,7 +107,9 @@ namespace FanucController
             predP = A * P_ * A.Transpose() + Q;
             // Estimation
             S = (H * predP * H.Transpose() + R).Inverse();
+
             K = predP * H.Transpose() * S;
+
             X = predX + K * (Z - H * predX);
             // Update last variables
             P_ = (I - K * H) * predP;
