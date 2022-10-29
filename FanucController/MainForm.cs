@@ -1003,6 +1003,13 @@ namespace FanucController
 
         #region Test
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string iterDir = @"C:\Users\Tao\LocalRepos\Fanuc Experiments\mbpo\test-0516\eval-2\output\iteration_2";
+            PidIlc ilc = new PidIlc(iterDir);
+            ilc.Test();
+        }
+
         private void buttonTestTest_Click(object sender, EventArgs e)
         {
             var kp = CreateMatrix.Dense<double>(6, 6);
@@ -1255,6 +1262,8 @@ namespace FanucController
         {
 
         }
+
+
     }
 
 

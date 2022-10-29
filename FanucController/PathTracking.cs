@@ -17,6 +17,25 @@ using Serilog;
 namespace FanucController
 {
     /// <summary>
+    /// Interface for a path tracking controller
+    /// </summary>
+    public interface IPathTracking
+    {
+        #region Action
+
+        void Init();
+
+        void Reset();
+
+        Vector<double> Control(Vector<double> error, Vector<double> pose, double time=0);
+
+        void Iteration();
+
+
+        #endregion
+    }
+
+    /// <summary>
     /// This class contains members regarding the line following experiment.
     /// </summary>
     public class PathTracking

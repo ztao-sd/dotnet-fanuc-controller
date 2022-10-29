@@ -184,6 +184,7 @@ namespace FanucController
             this.buttonBpnnpidTest = new System.Windows.Forms.Button();
             this.buttonMbpoTest = new System.Windows.Forms.Button();
             this.buttonPnnTest = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -1177,7 +1178,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(235, 22);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\test\\test-1021\\eval-1";
+            this.textBoxTopDir.Text = "C:\\Users\\Tao\\LocalRepos\\Fanuc Experiments\\mbpo\\test-0516\\eval-2";
             // 
             // label28
             // 
@@ -1861,13 +1862,14 @@ namespace FanucController
             // 
             // groupBox10
             // 
+            this.groupBox10.Controls.Add(this.button1);
             this.groupBox10.Controls.Add(this.buttonFilterTest);
             this.groupBox10.Controls.Add(this.buttonOUTest);
             this.groupBox10.Controls.Add(this.buttonBpnnpidTest);
             this.groupBox10.Controls.Add(this.buttonMbpoTest);
             this.groupBox10.Controls.Add(this.buttonPnnTest);
             this.groupBox10.Controls.Add(this.buttonTestTest);
-            this.groupBox10.Location = new System.Drawing.Point(1291, 683);
+            this.groupBox10.Location = new System.Drawing.Point(808, 645);
             this.groupBox10.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox10.Name = "groupBox10";
             this.groupBox10.Padding = new System.Windows.Forms.Padding(4);
@@ -1878,7 +1880,7 @@ namespace FanucController
             // 
             // buttonFilterTest
             // 
-            this.buttonFilterTest.Location = new System.Drawing.Point(41, 150);
+            this.buttonFilterTest.Location = new System.Drawing.Point(41, 136);
             this.buttonFilterTest.Margin = new System.Windows.Forms.Padding(4);
             this.buttonFilterTest.Name = "buttonFilterTest";
             this.buttonFilterTest.Size = new System.Drawing.Size(101, 31);
@@ -1930,6 +1932,16 @@ namespace FanucController
             this.buttonPnnTest.Text = "PNN Test";
             this.buttonPnnTest.UseVisualStyleBackColor = true;
             this.buttonPnnTest.Click += new System.EventHandler(this.buttonPnnTest_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(183, 140);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 9;
+            this.button1.Text = "ILC Test";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // MainForm
             // 
@@ -2140,6 +2152,7 @@ namespace FanucController
         private System.Windows.Forms.RadioButton radioButtonTrackCircle;
         private System.Windows.Forms.RadioButton radioButtonTrackLine;
         private System.Windows.Forms.CheckBox checkBoxTrackOrientation;
+        private System.Windows.Forms.Button button1;
     }
 }
 

@@ -132,8 +132,10 @@ namespace FanucController
             int index1 = Array.IndexOf(timeArray, timeArray.Min());
             int index2;
             Vector<double> qVector = sampleVectors[index1];
+            
             if (index1 == 0 || index1 == sampleVectors.Length)
             {
+                if (qTime > times.Last()) qVector.Clear();
                 return qVector;
             }
 

@@ -9,9 +9,11 @@ using System.Windows.Forms;
 using MathNet.Numerics.LinearAlgebra;
 using FanucPCDK;
 using Serilog;
+using MathNet.Numerics.LinearAlgebra.Solvers;
 
 namespace FanucController
 {
+
     public class IterativeLearningControl
     {
         // Raw data
@@ -20,7 +22,7 @@ namespace FanucController
         public double StartTime = 0;
 
         // Processed data
-        public int Length; 
+        public int Length;
         public Vector<double>[] ControlArray;
         public double[] TimeArray;
         public Vector<double>[] NextControlArray;
@@ -67,7 +69,7 @@ namespace FanucController
             TimeArray = lastIlc.NextTimeArray;
             ControlArray = lastIlc.NextControlArray;
         }
-        
+
 
         public void Add(Vector<double> error, double time)
         {
@@ -88,12 +90,13 @@ namespace FanucController
             Array.Clear(ErrorDotArray, 0, ErrorDotArray.Length);
         }
 
-        public void ShiftTime(double? startTime=null)
+        public void ShiftTime(double? startTime = null)
         {
             if (startTime == null)
             {
                 StartTime = Times[0];
-            }else
+            }
+            else
             {
                 StartTime = startTime.Value;
             }
@@ -124,7 +127,7 @@ namespace FanucController
 
         public void PDControl()
         {
-            
+
             Vector<double> control;
             Vector<double> nextControl;
             Vector<double> error;
@@ -169,7 +172,7 @@ namespace FanucController
             Csv.WriteCsv(path, dataList);
         }
 
-        public void FromCsv(string controlPath, string errorPath=null)
+        public void FromCsv(string controlPath, string errorPath = null)
         {
             List<PoseData> dataList = Csv.ReadCsv<PoseData>(controlPath);
             ControlArray = new Vector<double>[dataList.Count];
@@ -207,7 +210,235 @@ namespace FanucController
             string scriptPath = Path.Combine(ScriptDir, "iter_ilc_plot.py");
             PythonScripts.RunParallel("iter_ilc_plot.py", args: args);
         }
-        
+
+
+        #endregion
+
+    }
+
+    public class PidIlc : IPathTracking
+    {
+        // Constants
+        const int dim = 6;
+        const int timeSteps = 2000;
+        const int histSize = 3;
+
+        // Pid coefficients.
+        Matrix<double> kp = CreateMatrix.DenseDiagonal<double>(dim, 0.01);
+        Matrix<double> ki = CreateMatrix.DenseDiagonal<double>(dim, 0.01);
+        Matrix<double> kd = CreateMatrix.DenseDiagonal<double>(dim, 0.01);
+
+        // ILC parameters.
+        int iterCount = 0;
+        bool firstLoading = false; // Flag for first loading.
+        //double startTime = 0.0;
+        //double endTime = 0.0;
+        Vector<double> control = CreateVector.Dense<double>(6);
+
+        // Error and time lists
+        List<Vector<double>> tempErrors = new List<Vector<double>>();
+        List<double> tempTimes = new List<double>();
+
+        // Input Data
+        double[] times = new double[timeSteps];
+        Vector<double>[] errors = new Vector<double>[timeSteps];
+        Vector<double>[] errorDots = new Vector<double>[timeSteps];
+        Vector<double>[] errorDotDots = new Vector<double>[timeSteps];
+        Vector<double>[] controls = new Vector<double>[timeSteps];
+
+        // Output Data
+        double[] nextTimes = new double[timeSteps];
+        //Vector<double>[] nextErrors = new Vector<double>[timeSteps];
+        Vector<double>[] nextControls = new Vector<double>[timeSteps];
+
+        // Paths and directories
+        public string firstIterDir = @"";
+        public string iterDir = @"";
+        public string ilcControlName = "LineTrackPidIlcControl.csv";
+        public string ilcErrorName = "LineTrackError.csv";
+
+
+        // Python script directory.
+        public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+
+        public PidIlc(string firstIterDir)
+        {
+            this.firstIterDir = firstIterDir;
+
+            // PID Gains
+            var pGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
+            var iGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
+            var dGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
+            for (int i = 0; i < dim; i++)
+            {
+                kp[i, i] = pGains[i];
+                ki[i, i] = iGains[i];
+                kd[i, i] = dGains[i];
+            }
+        }
+
+        #region Actions
+
+        public void Init()
+        {
+            Reset();
+            times = MathLib.LinSpace(0.0, 2000, timeSteps);
+            controls.Select(control => CreateVector.Dense<double>(6));
+            firstLoading = false;
+        }
+
+        public void Init(string firstIterDir)
+        {
+            // Load control and error data from CSV files.
+            Reset();
+            if (firstIterDir != null)
+            {
+                FromCsv(firstIterDir);
+            }
+            else
+            {
+                FromCsv(this.firstIterDir);
+            }
+            firstLoading = true;
+        }
+
+        public void Reset()
+        {
+            // Clear temporary errors and times.
+            tempErrors.Clear();
+            tempTimes.Clear();
+        }
+
+        public Vector<double> Control(Vector<double> error, Vector<double> pose, double time = 0)
+        {
+            tempErrors.Add(error);
+            tempTimes.Add(time);
+            control = MathLib.InterpV(controls, times, time);
+            return control;
+        }
+
+        public void Iteration()
+        {
+
+        }
+
+        public void Iteration(string iterDir, bool verbose = false)
+        {
+
+            // Resize times, errors and controls.
+            //nextTimes = MathLib.LinSpace(tempTimes.First(), tempTimes.Last(), timeSteps);
+            nextTimes = MathLib.LinSpace(0.0, 17.0, timeSteps);
+            controls = MathLib.InterpV(controls, times, nextTimes);
+            if (!firstLoading && iterCount > 0)
+            {
+                errors = MathLib.InterpV(tempErrors.ToArray(), tempTimes.ToArray(), nextTimes);
+            }
+            else
+            {
+                errors = MathLib.InterpV(errors, times, nextTimes);
+            }
+
+            // Derivative of the errors.
+            errorDots = errors.Skip(1).Append(CreateVector.Dense<double>(6)).Zip(errors, (e1, e0) => e1 - e0).ToArray();
+            errorDots[errorDots.Length - 1] = CreateVector.Dense<double>(dim);
+            errorDotDots = errorDots.Skip(1).Append(CreateVector.Dense<double>(6)).Zip(errorDots, (e1, e0) => e1 - e0).ToArray();
+            errorDotDots[errorDots.Length - 1] = CreateVector.Dense<double>(dim);
+
+            // Compute ILC control.
+            var ilcControl = CreateVector.Dense<double>(6);
+            for (int i = 0; i < timeSteps; i++)
+            {
+                ilcControl += kp * errorDots[i] + ki * errors[i] + kd * errorDotDots[i];
+                nextControls[i] = controls[i] + ilcControl;
+            }
+
+            // Export to Csv files.
+            ToCsv(iterDir, verbose);
+
+            // Update.
+            iterCount++;
+            Array.Copy(nextControls, controls, timeSteps);
+            Array.Copy(nextTimes, times, timeSteps);
+
+        }
+
+
+        #endregion
+
+        #region I/O
+
+        public void FromCsv(string iterDir)
+        {
+            // Read control and error data.
+            string path = Path.Combine(iterDir, ilcErrorName);
+            List<PoseData> errorPoseData = Csv.ReadCsv<PoseData>(path);
+            path = Path.Combine(iterDir, ilcControlName);
+            List<PoseData> controlPoseData = Csv.ReadCsv<PoseData>(path);
+
+            // Convert to list of vectors
+            var errorList = errorPoseData.Select(pose => pose.ToVector()).ToList();
+            var controlList = controlPoseData.Select(pose => pose.ToVector()).ToList();
+            var timeList = errorPoseData.Select(pose => pose.Time).ToList();
+
+            // Resize list of vectors
+            times = MathLib.LinSpace(timeList.First(), timeList.Last(), timeSteps);
+            errors = MathLib.InterpV(errorList.ToArray(), timeList.ToArray(), times);
+            controls = MathLib.InterpV(controlList.ToArray(), timeList.ToArray(), times);
+        }
+
+        public void ToCsv(string iterDir, bool verbose = false)
+        {
+            List<PoseData> ilcControlList = new List<PoseData>();
+            for (int i = 0; i < nextControls.Length; i++)
+            {
+                ilcControlList.Add(new PoseData(nextControls[i].AsArray(), nextTimes[i]));
+
+
+            }
+            string path = Path.Combine(iterDir, ilcControlName);
+            Csv.WriteCsv(path, ilcControlList);
+
+            if (verbose)
+            {
+                List<PoseData> dataList = new List<PoseData>();
+
+                dataList.Clear();
+                for (int i = 0; i < controls.Length; i++)
+                {
+                    dataList.Add(new PoseData(controls[i].AsArray(), times[i]));
+                }
+                path = Path.Combine(iterDir, "LineTrackPidIlcPrevControl.csv");
+                Csv.WriteCsv(path, dataList);
+
+                dataList.Clear();
+                for (int i = 0; i < errors.Length; i++)
+                {
+                    dataList.Add(new PoseData(errors[i].AsArray(), nextTimes[i]));
+                }
+                path = Path.Combine(iterDir, "LineTrackPidIlcError.csv");
+                Csv.WriteCsv(path, dataList);
+
+                dataList.Clear();
+                for (int i = 0; i < errorDots.Length; i++)
+                {
+                    dataList.Add(new PoseData(errorDots[i].AsArray(), nextTimes[i]));
+                }
+                path = Path.Combine(iterDir, "LineTrackPidIlcErrorDot.csv");
+                Csv.WriteCsv(path, dataList);
+
+            }
+        }
+
+        #endregion
+
+        #region Testing
+
+        public void Test()
+        {
+            string iterDir = @"C:\Users\Tao\LocalRepos\Fanuc Experiments\mbpo\test-0516\eval-2\output\iteration_3";
+            Init(firstIterDir: null);
+            Iteration(iterDir, true);
+        }
 
         #endregion
 

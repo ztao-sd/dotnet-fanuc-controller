@@ -19,6 +19,11 @@ class IlcPlotting:
     control_file_name = 'LineTrackControl.csv'
     ilc_control_file_name = 'LineTrackIlcControl.csv'
 
+    pid_ilc_prev_control_file_name = 'LineTrackPidIlcPrevControl.csv'
+    pid_ilc_control_file_name = 'LineTrackPidIlcControl.csv'
+    pid_ilc_error_file_name = 'LineTrackPidIlcError.csv'
+    pid_ilc_error_dot_file_name = 'LineTrackPidIlcErrorDot.csv'
+
     def iter_plot(data_dir, save_path=None):
 
         # Read data
@@ -69,10 +74,13 @@ class IlcPlotting:
         if save_path is not None:
             fig.savefig(save_path)
 
-    def iter_ilc_plot(data_dir, save_path=None):
+    def iter_ilc_plot(data_dir, save_path_xyz=None, save_path_wpr=None):
 
         # Read data
-        ilc_control_pd = pd.read_csv(os.path.join(data_dir, IlcPlotting.ilc_control_file_name))
+        ilc_error_pd = pd.read_csv(os.path.join(data_dir, IlcPlotting.pid_ilc_error_file_name))
+        ilc_error_dot_pd = pd.read_csv(os.path.join(data_dir, IlcPlotting.pid_ilc_error_dot_file_name))
+        ilc_control_pd = pd.read_csv(os.path.join(data_dir, IlcPlotting.pid_ilc_control_file_name))
+        ilc_prev_control_pd = pd.read_csv(os.path.join(data_dir, IlcPlotting.pid_ilc_prev_control_file_name))
 
         # Define subplot
         def iter_subplot(pd, ax, subtitle, xlabel='time (sec)', ylim=[-0.30, 0.30], legend=False):
@@ -86,15 +94,40 @@ class IlcPlotting:
             if legend:
                 ax.legend()
         
-        fig, ax = plt.subplots(figsize=(5, 5))
-        # Plot control signal
-        iter_subplot(ilc_control_pd, ax, 'ILC Control Signal (mm)', ylim=[-0.05, 0.05],legend=True)
+        def iter_subplot_orientation(pd, ax, subtitle, xlabel='time (sec)', ylim=[-0.003, 0.003], legend=False):
+            t, x, y, z = pd['time'], pd['gamma'], pd['beta'], pd['alpha']
+            ax.plot(t,x, label='gamma')
+            ax.plot(t,y, label='beta')
+            ax.plot(t,z, label='alpha')
+            ax.set_xlabel(xlabel)
+            ax.set_title(subtitle)
+            ax.set_ylim(ylim)
+            if legend:
+                ax.legend()
 
-        fig.suptitle('Iteration ILC Plot')
+        # Plot XYZ
+        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
+        iter_subplot(ilc_prev_control_pd, ax[0,0], "Prev. Control (mm)", ylim=[-0.05, 0.05])
+        iter_subplot(ilc_control_pd, ax[0,1], "Control (mm)", ylim=[-0.05, 0.05])
+        iter_subplot(ilc_error_pd, ax[1,0], "Error (mm)", ylim=[-0.05, 0.05])
+        iter_subplot(ilc_error_dot_pd, ax[1,1], "ErrorDot (mm)", ylim=[-0.05, 0.05])
+        fig.suptitle('Iteration ILC Position Plot')
         fig.tight_layout()
-        
-        if save_path is not None:
-            fig.savefig(save_path)
+        if save_path_xyz is not None:
+            fig.savefig(save_path_xyz)
+
+        # Plot WPR
+        fig, ax = plt.subplots(2, 2, figsize=(12, 6))
+        iter_subplot_orientation(ilc_prev_control_pd, ax[0,0], "Prev. Control (mm)", ylim=[-0.05, 0.05])
+        iter_subplot_orientation(ilc_control_pd, ax[0,1], "Control (mm)", ylim=[-0.05, 0.05])
+        iter_subplot_orientation(ilc_error_pd, ax[1,0], "Error (mm)", ylim=[-0.05, 0.05])
+        iter_subplot_orientation(ilc_error_pd, ax[1,1], "Error (mm)", ylim=[-0.05, 0.05])
+        fig.suptitle('Iteration ILC Orientation Plot')
+        fig.tight_layout()
+        if save_path_wpr is not None:
+            fig.savefig(save_path_wpr)
+
+
 
 #if __name__=='__main__':
 
