@@ -462,7 +462,8 @@ namespace FanucController
 
     public static class PythonScripts
     {
-        private const string scriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+        //private const string scriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
+        private const string scriptDir = @"D:\LocalRepos\develop\dotnet-fanuc-controller-tt\PythonNeuralNetPControl";
         private const string pythonEnvDir = @"C:\Users\admin\anaconda3\envs\fanuc_rl";
         private const string pythonEnvPath = @"C:\Users\admin\anaconda3\envs\fanuc_rl\python.exe";
 

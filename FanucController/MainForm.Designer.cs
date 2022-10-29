@@ -179,12 +179,12 @@ namespace FanucController
             this.buttonDgvShow = new System.Windows.Forms.Button();
             this.buttonDgvClear = new System.Windows.Forms.Button();
             this.groupBox10 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.buttonFilterTest = new System.Windows.Forms.Button();
             this.buttonOUTest = new System.Windows.Forms.Button();
             this.buttonBpnnpidTest = new System.Windows.Forms.Button();
             this.buttonMbpoTest = new System.Windows.Forms.Button();
             this.buttonPnnTest = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             this.groupBoxVx.SuspendLayout();
             this.groupBoxPCDK.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -1178,7 +1178,7 @@ namespace FanucController
             this.textBoxTopDir.Name = "textBoxTopDir";
             this.textBoxTopDir.Size = new System.Drawing.Size(235, 22);
             this.textBoxTopDir.TabIndex = 27;
-            this.textBoxTopDir.Text = "C:\\Users\\Tao\\LocalRepos\\Fanuc Experiments\\mbpo\\test-0516\\eval-2";
+            this.textBoxTopDir.Text = "D:\\Fanuc Experiments\\test\\test-1029\\eval-2";
             // 
             // label28
             // 
@@ -1878,6 +1878,16 @@ namespace FanucController
             this.groupBox10.TabStop = false;
             this.groupBox10.Text = "Testing";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(183, 140);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 9;
+            this.button1.Text = "ILC Test";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // buttonFilterTest
             // 
             this.buttonFilterTest.Location = new System.Drawing.Point(41, 136);
@@ -1932,16 +1942,6 @@ namespace FanucController
             this.buttonPnnTest.Text = "PNN Test";
             this.buttonPnnTest.UseVisualStyleBackColor = true;
             this.buttonPnnTest.Click += new System.EventHandler(this.buttonPnnTest_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(183, 140);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 9;
-            this.button1.Text = "ILC Test";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // MainForm
             // 

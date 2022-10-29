@@ -143,6 +143,7 @@ namespace FanucController
         public List<IterativeLearningControl> IlcList;
         public IterativeLearningControl Ilc;
         public IterativeLearningControl LastIlc;
+        public PidIlc PidIlc;
 
         // P Neural Network (PNN)
         public PathTrackingPNN Pnn;
@@ -168,13 +169,14 @@ namespace FanucController
 
         #region Constructor
 
-        public PathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch, string topDir)
+        public PathTracking(VXelementsUtility vx, System.Timers.Timer timer, Stopwatch stopwatch, string topDir, string OutputDir)
         {
             Vx = vx;
             Timer = timer;
             Stopwatch = stopwatch;
             TopDir = topDir;
-            OutputDir = Path.Combine(topDir, "output");
+            //OutputDir = Path.Combine(topDir, "output");
+            this.OutputDir = OutputDir;
             ReferenceDir = Path.Combine(topDir, "reference");
             ScriptsDir = Path.Combine(topDir, "scripts");
             RotationId = new RotationIdentification();
@@ -222,9 +224,11 @@ namespace FanucController
             // PID Control
             PidControlPosition = new PathTrackingPID()
             {
-                Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.2, 0.2, 0.6 }),
+                Kp = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.2, 0.2, 0.3 }),
+                //Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.00, 0.00, 0.0 }),
+                Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.000, 0.000, 0.000 }),
                 Ki = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.005, 0.005, 0.05 }),
-                Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.0005, 0.0005, 0.0030})
+                //Kd = CreateMatrix.DenseOfDiagonalArray(new double[3] { 0.0005, 0.0005, 0.0030})
             };
 
             PidControlOrientation = new PathTrackingPID()
@@ -242,6 +246,7 @@ namespace FanucController
             KdIlc[0, 0] = 0; KdIlc[1, 1] = 0; KdIlc[2, 2] = 0;
             Ilc = new IterativeLearningControl(KpIlc, KdIlc);
             LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
+            PidIlc = new PidIlc();
 
             // P Neural Network
             Pnn = new PathTrackingPNN()
@@ -330,17 +335,17 @@ namespace FanucController
             {
                 OffsetLimit = 0.5,
                 CumulativeOffset = CreateVector.DenseOfArray<double>(new double[3] { 0.0, 0.0, 0.0 }),
-                CumulativeOffsetLimit = 5,
+                CumulativeOffsetLimit = 20,
                 ErrorLimit = 5,
                 CumulativeError = CreateVector.Dense<double>(3),
-                CumulativeErrorLimit = 5
+                CumulativeErrorLimit = 20
             };
             OrientationWatcher = new DpmWatcher
             {
-                OffsetLimit = 0.40,
+                OffsetLimit = 0.40, // degree
                 CumulativeOffset = CreateVector.DenseOfArray<double>(new double[3] { 0.0, 0.0, 0.0 }),
                 CumulativeOffsetLimit = 10.0,
-                ErrorLimit = 0.010,
+                ErrorLimit = 0.010, // radian
                 CumulativeError = CreateVector.Dense<double>(3),
                 CumulativeErrorLimit = 2.00
             };
@@ -392,9 +397,17 @@ namespace FanucController
             flagIlc = ilc;
             if (flagIlc)
             {
-                IlcList.Clear();
-                Ilc = new IterativeLearningControl(KpIlc, KdIlc);
-                LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
+                //IlcList.Clear();
+                //Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+                //LastIlc = new IterativeLearningControl(KpIlc, KdIlc);
+                string firstIterDir = Path.Combine(OutputDir, "iteration_first");
+                PidIlc = new PidIlc();
+
+                // Start ILC from an existing iteration.
+                //PidIlc.Init(firstIterDir);
+
+                // Start ILC from zero.
+                PidIlc.Init();
             }
 
             // P Neural Network
@@ -467,16 +480,17 @@ namespace FanucController
             // ILC
             if (flagIlc)
             {
-                LastIlc = Ilc;
-                Ilc = new IterativeLearningControl(KpIlc, KdIlc);
-                if (iterIndex == 0)
-                {
-                    Ilc.Init();
-                }
-                else
-                {
-                    Ilc.Init(LastIlc);
-                }
+                //LastIlc = Ilc;
+                //Ilc = new IterativeLearningControl(KpIlc, KdIlc);
+                //if (iterIndex == 0)
+                //{
+                //    Ilc.Init();
+                //}
+                //else
+                //{
+                //    Ilc.Init(LastIlc);
+                //}
+                PidIlc.Reset();
             }
 
             // P Neural Network
@@ -549,7 +563,7 @@ namespace FanucController
                 Vector<double> xKf = GetVxUFPose(mode: "kf");
                 Vector<double> xRkf = GetVxUFPose(mode: "rkf");
                 Vector<double> xAkf = GetVxUFPose(mode: "akf");
-                Vector<double> x = xRkf;
+                Vector<double> x = xAkf;
                 //Vector<double> closestP = MathLib.PointToLinePoint(LinearPath.PointStart.SubVector(0,3), LinearPath.PointEnd.SubVector(0,3), x.SubVector(0, 3));
                 //Vector<double> xd = (closestP.ToColumnMatrix().Stack(x.SubVector(3, 3).ToColumnMatrix())).Column(0);
                 Vector<double> xd;
@@ -580,8 +594,10 @@ namespace FanucController
                 // ILC
                 if (flagIlc)
                 {
-                    Ilc.Add(PathError, Time);
-                    uIlc = Ilc.Query(Time);
+                    //Ilc.Add(PathError, Time);
+                    //uIlc = Ilc.Query(Time);
+
+                    uIlc = PidIlc.Control(PathError, x, Time);
                     u += uIlc;
                 }
 
@@ -691,13 +707,14 @@ namespace FanucController
             // Create Iter dir
             string iterDir = Path.Combine(OutputDir, $"iteration_{iterIndex}");
             Directory.CreateDirectory(iterDir);
+            Thread.Sleep(50);
 
             // Export VXelements Data
             var VxPaths = new string[3];
             VxPaths[0] = Path.Combine(iterDir, "VxRaw.csv");
             VxPaths[1] = Path.Combine(iterDir, "VxKf.csv");
             VxPaths[2] = Path.Combine(iterDir, "VxRkf.csv");
-            Vx.ExportBuffers(VxPaths);
+            //Vx.ExportBuffers(VxPaths);
 
             // Export buffer data
             string path;
@@ -738,16 +755,22 @@ namespace FanucController
             // ILC
             if (flagIlc)
             {
-                Ilc.PControl();
+                //Ilc.PControl();
+                ////path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
+                ////Ilc.ToCsv(path);
                 //path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
-                //Ilc.ToCsv(path);
-                path = Path.Combine(iterDir, "LineTrackIlcControl.csv");
-                Csv.WriteCsv(path, IlcControlBuffer.Memory.ToList());
-                Thread.Sleep(200);
+                //Csv.WriteCsv(path, IlcControlBuffer.Memory.ToList());
+                //Thread.Sleep(200);
+
+                PidIlc.Iteration(iterDir, verbose:true);
+                string savePathXyz = Path.Combine(iterDir, "iter_ilc_xyz_fig");
+                string savePathWpr = Path.Combine(iterDir, "iter_ilc_wpr_fig");
+                args = new string[3] { iterDir, savePathXyz, savePathWpr };
+                PythonScripts.RunParallel("iter_ilc_plot.py", args: args);
 
                 // Plot iteration data in python
-                savePath = Path.Combine(iterDir, $"iteration_ilc_fig_{iterIndex}");
-                Ilc.Iteration(savePath, iterDir);
+                //savePath = Path.Combine(iterDir, $"iteration_ilc_fig_{iterIndex}");
+                //Ilc.Iteration(savePath, iterDir);
             }
 
             // PNN

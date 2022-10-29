@@ -100,7 +100,7 @@ namespace FanucController
             // TopDir = Path.Combine(MetaTopDir, textBoxTopDir.Text);
             TopDir = @textBoxTopDir.Text;
             ReferenceDir = Path.Combine(TopDir, "reference");
-            OutputDir = Path.Combine(TopDir, "output");
+            OutputDir = Path.Combine(TopDir, $"output_{DateTime.Now.ToString("MM-dd-yyyy HH.mm.ss")}");
             // ScriptsDir = Path.Combine(TopDir, "Scripts");
             LogDir = Path.Combine(TopDir, "log");
             Directory.CreateDirectory(TopDir);
@@ -172,7 +172,7 @@ namespace FanucController
             textBoxPcdkOffsetR.Text = "0.0";
 
             // Initialize Linear Path Tracking
-            LinearTrack = new PathTracking(Vx, Timer, StopWatch, TopDir);
+            LinearTrack = new PathTracking(Vx, Timer, StopWatch, TopDir, OutputDir);
             LinearTrackPose = new double[6]; LinearTrackPathError = new double[6];
 
             // Initialize 
@@ -217,15 +217,15 @@ namespace FanucController
 
             // Position & Orientation
             checkBoxTrackPosition.Checked = true;
-            checkBoxTrackOrientation.Checked = true;
+            checkBoxTrackOrientation.Checked = false;
 
             // Control
             checkBoxLineTrackStep.Checked = false;
             checkBoxLineTrackDPM.Checked = false;
             checkBoxLineTrackPControl.Checked = true;
-            checkBoxLineTrackIlc.Checked = false;  
+            checkBoxLineTrackIlc.Checked = true;  
             checkBoxLineTrackPNN.Checked = false;
-            checkBoxLineTrackMBPO.Checked = true;
+            checkBoxLineTrackMBPO.Checked = false;
             checkBoxLineTrackBPNNPID.Checked = false;
             textBoxLineTrackIter.Text = "1";
         }
@@ -608,8 +608,8 @@ namespace FanucController
 
         private void buttonVxQuickConnect_Click(object sender, EventArgs e)
         {
-            string targetsPath = Path.Combine(ReferenceDir, "targets_0510.txt");
-            string modelPath = Path.Combine(ReferenceDir, "model_0510.txt");
+            string targetsPath = Path.Combine(ReferenceDir, "targets_1029.txt");
+            string modelPath = Path.Combine(ReferenceDir, "model_1029.txt");
             Vx.QuickConnect(targetsPath, modelPath);
             // Activate the necessary filters
             Vx.filterActivated[0] = checkBoxVxRaw.Checked;
@@ -719,9 +719,9 @@ namespace FanucController
                 textBoxLinearPathZ.Text = pose[2].ToString();
 
               
-                textBoxLinearPathW.Text = (pose[3] * 180 / Math.PI).ToString();
-                textBoxLinearPathP.Text = (pose[4] * 180 / Math.PI).ToString();
-                textBoxLinearPathR.Text = (pose[5] * 180 / Math.PI).ToString();
+                textBoxLinearPathW.Text = (pose[3] * 180.0 / Math.PI).ToString();
+                textBoxLinearPathP.Text = (pose[4] * 180.0 / Math.PI).ToString();
+                textBoxLinearPathR.Text = (pose[5] * 180.0 / Math.PI).ToString();
                
             }
         }

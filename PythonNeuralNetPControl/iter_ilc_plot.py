@@ -2,14 +2,14 @@ from ilc_utility import *
 
 if __name__ == '__main__':
 
-    TEST = True
-    # TEST = False
+    # TEST = True
+    TEST = False
 
     # Test arguments
     test_args = [
-        r'C:\Users\Tao\LocalRepos\Fanuc Experiments\mbpo\test-0516\eval-2\output\iteration_3',
-        r'C:\Users\Tao\LocalRepos\Fanuc Experiments\mbpo\test-0516\eval-2\output\iteration_3\iter_ilc_fig_xyz',
-        r'C:\Users\Tao\LocalRepos\Fanuc Experiments\mbpo\test-0516\eval-2\output\iteration_3\iter_ilc_fig_wpr'
+        r'D:\Fanuc Experiments\test\test-1029\eval-1\output\iteration_0',
+        r'D:\Fanuc Experiments\test\test-1029\eval-1\output\iteration_0\iter_ilc_fig_xyz',
+        r'D:\Fanuc Experiments\test\test-1029\eval-1\output\iteration_0\iter_ilc_fig_wpr'
     ]
 
     # Argument parsing

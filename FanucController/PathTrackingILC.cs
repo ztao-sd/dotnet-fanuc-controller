@@ -13,7 +13,9 @@ using MathNet.Numerics.LinearAlgebra.Solvers;
 
 namespace FanucController
 {
-
+    /// <summary>
+    /// Not used.
+    /// </summary>
     public class IterativeLearningControl
     {
         // Raw data
@@ -60,7 +62,7 @@ namespace FanucController
         {
             Reset();
             TimeArray = MathLib.LinSpace(0, endTime, Length);
-            ControlArray = ControlArray.Select(u => CreateVector.Dense<double>(6)).ToArray();
+            ControlArray = ControlArray.Select(u => u = CreateVector.Dense<double>(6)).ToArray();
         }
 
         public void Init(IterativeLearningControl lastIlc)
@@ -261,14 +263,14 @@ namespace FanucController
         // Python script directory.
         public string ScriptDir = @"D:\LocalRepos\dotnet-fanuc-controller\PythonNeuralNetPControl";
 
-        public PidIlc(string firstIterDir)
+        public PidIlc(string firstIterDir=null)
         {
             this.firstIterDir = firstIterDir;
 
             // PID Gains
             var pGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
-            var iGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
-            var dGains = new double[] { 0.01, 0.01, 0.01, 0.0, 0.0, 0.0 };
+            var iGains = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+            var dGains = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
             for (int i = 0; i < dim; i++)
             {
                 kp[i, i] = pGains[i];
@@ -283,7 +285,10 @@ namespace FanucController
         {
             Reset();
             times = MathLib.LinSpace(0.0, 2000, timeSteps);
-            controls.Select(control => CreateVector.Dense<double>(6));
+            for(int i = 0; i < timeSteps; i++)
+            {
+                controls[i] = CreateVector.Dense<double>(6);
+            }
             firstLoading = false;
         }
 
@@ -326,23 +331,27 @@ namespace FanucController
         {
 
             // Resize times, errors and controls.
-            //nextTimes = MathLib.LinSpace(tempTimes.First(), tempTimes.Last(), timeSteps);
-            nextTimes = MathLib.LinSpace(0.0, 17.0, timeSteps);
+            nextTimes = MathLib.LinSpace(tempTimes.First(), tempTimes.Last(), timeSteps);
+            //nextTimes = MathLib.LinSpace(0.0, 17.0, timeSteps);
             controls = MathLib.InterpV(controls, times, nextTimes);
-            if (!firstLoading && iterCount > 0)
+            if (!firstLoading)
             {
                 errors = MathLib.InterpV(tempErrors.ToArray(), tempTimes.ToArray(), nextTimes);
             }
-            else
+            else if (iterCount == 0)
             {
                 errors = MathLib.InterpV(errors, times, nextTimes);
             }
 
             // Derivative of the errors.
-            errorDots = errors.Skip(1).Append(CreateVector.Dense<double>(6)).Zip(errors, (e1, e0) => e1 - e0).ToArray();
-            errorDots[errorDots.Length - 1] = CreateVector.Dense<double>(dim);
-            errorDotDots = errorDots.Skip(1).Append(CreateVector.Dense<double>(6)).Zip(errorDots, (e1, e0) => e1 - e0).ToArray();
-            errorDotDots[errorDots.Length - 1] = CreateVector.Dense<double>(dim);
+            var tempError = errors.ToList();
+            tempError.Insert(0, CreateVector.Dense<double>(6));
+            tempError.RemoveAt(tempError.Count - 1);
+            errorDots = tempError.Zip(errors, (e1, e0) => e0 - e1).ToArray();
+            var tempErrorDot = errorDots.ToList();
+            tempErrorDot.Insert(0, CreateVector.Dense<double>(6));
+            tempErrorDot.RemoveAt(tempErrorDot.Count - 1);
+            errorDotDots = tempErrorDot.Zip(errorDots, (e1, e0) => e0 - e1).ToArray();
 
             // Compute ILC control.
             var ilcControl = CreateVector.Dense<double>(6);
@@ -354,6 +363,7 @@ namespace FanucController
 
             // Export to Csv files.
             ToCsv(iterDir, verbose);
+            System.Threading.Thread.Sleep(50);
 
             // Update.
             iterCount++;
